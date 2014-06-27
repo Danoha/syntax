@@ -1,0 +1,7 @@
+{
+  "port": 1560,
+  "credentials": {
+    "privateKey": "certificate/key.pem",
+    "certificate": "certificate/cert.pem"
+  }
+}
