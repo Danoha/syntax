@@ -2,6 +2,8 @@
   "name": "syntax-server",
   "version": "0.0.1",
   "dependencies": {
-    "socket.io" : "1.0.6"
+    "socket.io": "1.0.6",
+    "mysql": "2.3.2",
+    "nodemailer": "0.7.0"
   }
 }

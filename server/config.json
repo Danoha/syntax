@@ -3,5 +3,11 @@
   "credentials": {
     "privateKey": "certificate/key.pem",
     "certificate": "certificate/cert.pem"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "user": "host",
+    "password": "Vxr9GGJLnbefTdFz",
+    "database": "syntax"
   }
 }

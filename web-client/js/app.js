@@ -16,9 +16,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+'use strict';
+
 (function() {
-  'use strict';
-  
   var App = function() {
     this.server = 'https://127.0.0.1:1560';
 
@@ -33,19 +33,7 @@
   };
 
   App.prototype.init = function() {
-    var self = this;
-    $('form.message-form').submit(function() {
-      var input = $('input.message');
-
-      self.io.emit('chat message', input.val());
-      
-      input.val('');
-      return false;
-    });
     
-    this.io.on('chat message', function(msg) {
-      $('.messages').prepend($('<div class="message">').text(msg));
-    });
   };
 
   document.syntaxApp = new App();
