@@ -185,9 +185,9 @@ Api.prototype.createAccount = function(session, data) {
       html: self.mailTemplates.activation.replace(/%link%/gi, link)
     };
     
-    self.mailer.sendMail(mailOptions, function(err, res) {
+    self.mailer.sendMail(mailOptions, function(err) {
       if(err)
-        session.emit('create account', 'ERR_COULNT_SEND_MAIL');
+        session.emit('create account', 'ERR_COULDNT_SEND_MAIL');
       else
         session.emit('create account', 'OK');
     });
