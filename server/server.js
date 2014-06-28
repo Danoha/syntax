@@ -21,11 +21,16 @@
 var config = require('./config.json');
 var AccManager = require('./lib/account_manager.js');
 var Server = require('./lib/server.js');
+var Api = require('./lib/api.js');
+var nodemailer = require('nodemailer');
 
 //
 
 var accMan = new AccManager(config.database);
-accMan.connect(function() {  
-  var server = new Server(config.credentials, accMan);
+accMan.connect(function() {
+  var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
+  var api = new Api(accMan, mailer);
+  
+  var server = new Server(config.credentials, api);
   server.listen(config.port);
 });

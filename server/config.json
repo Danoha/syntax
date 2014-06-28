@@ -9,5 +9,9 @@
     "user": "host",
     "password": "Vxr9GGJLnbefTdFz",
     "database": "syntax"
+  },
+  "mailer": {
+    "method": "direct",
+    "opts": { }
   }
 }

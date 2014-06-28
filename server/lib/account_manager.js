@@ -57,7 +57,7 @@ var getCallback = function(self, callback) {
     if(err)
       self.onError(err);
     
-    if(rows && rows.length === 1)
+    if(!err && rows && rows.length === 1)
       callback(rows[0]);
     else
       callback(null);
@@ -77,8 +77,8 @@ AccManager.prototype.getById = function(id, callback) {
  * @param {String} nick
  * @param {Function} callback
  */
-AccManager.prototype.getByNick = function(nick, callback) {
-  this.connection.query("SELECT * FROM users WHERE nick = ?", nick, getCallback(this, callback));
+AccManager.prototype.getByEmail = function(email, callback) {
+  this.connection.query("SELECT * FROM users WHERE email = ?", email, getCallback(this, callback));
 };
 
 /**
@@ -94,7 +94,7 @@ AccManager.prototype.create = function(values, callback) {
     if(err)
       self.onError(err);
     
-    callback(result !== undefined && result.insertId > 0);
+    callback(!err && result !== undefined && result.insertId > 0);
   });
 };
 
@@ -109,7 +109,27 @@ AccManager.prototype.delete = function(id, callback) {
     if(err)
       self.onError(err);
     
-    callback(result !== undefined && result.affectedRows > 0);
+    callback(!err && result !== undefined);
+  });
+};
+
+AccManager.prototype.update = function(id, values, callback) {
+  var self = this;
+  this.connection.query("UPDATE users SET ? WHERE id = ?", [values, id], function(err, result) {
+    if(err)
+      self.onError(err);
+    
+    callback(!err && result !== undefined);
+  });
+};
+
+AccManager.prototype.activateAccount = function(code, callback) {
+  var self = this;
+  this.connection.query("UPDATE users SET isActivated = 1, activationCode = NULL WHERE activationCode = ?", code, function(err, result) {
+    if(err)
+      self.onError(err);
+    
+    callback(!err && result !== undefined && result.affectedRows > 0);
   });
 };
 

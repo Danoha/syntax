@@ -20,8 +20,6 @@
 
 (function() {
   var App = function() {
-    this.server = 'https://127.0.0.1:1560';
-
     var self = this;
     $.getScript(this.server + '/socket.io/socket.io.js', function() {
       self.io = io(self.server);
@@ -32,8 +30,66 @@
     });
   };
 
+  var hostname = location.hostname;
+  if(!hostname)
+    hostname = '127.0.0.1';
+
+  App.prototype.server = 'https://' + hostname + ':1560';
   App.prototype.init = function() {
+    var self = this;
     
+    var createAccount = $('form.create-account');
+    this.io.on('create account', function(result) {
+      createAccount.find('span.result').text(result);
+    });
+    
+    createAccount.submit(function() {
+      self.io.emit('create account', {
+        email: createAccount.find('[name=email]').val(),
+        nick: createAccount.find('[name=nick]').val(),
+        hash: CryptoJS.SHA256(createAccount.find('[name=password]').val()).toString()
+      });
+      
+      return false;
+    });
+    
+    var login = $('form.login');
+    this.io.on('login', function(result) {
+      login.find('span.result').text(result);
+    });
+    
+    login.submit(function() {
+      self.io.emit('login', {
+        email: login.find('[name=email]').val(),
+        hash: CryptoJS.SHA256(login.find('[name=password]').val()).toString()
+      });
+      
+      return false;
+    });
+    
+    var logout = $('form.logout');
+    this.io.on('logout', function(result) {
+      logout.find('span.result').text(result);
+    });
+    
+    logout.submit(function() {
+      self.io.emit('logout');
+      
+      return false;
+    });
+    
+    var activateAccount = $('form.activate-account');
+    this.io.on('activate account', function(result) {
+      activateAccount.find('span.result').text(result);
+    });
+    
+    activateAccount.submit(function() {
+      self.io.emit('activate account', {
+        code: activateAccount.find('[name=code]').val()
+      });
+      
+      return false;
+    });
   };
 
   document.syntaxApp = new App();

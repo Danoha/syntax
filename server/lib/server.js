@@ -27,12 +27,10 @@ var https = require('https');
 
 /**
  * @param {object} credentials
- * @param {AccManager} accMan
+ * @param {Api} api
  * @returns {Server}
  */
-var Server = function(credentials, accMan) {
-  this.accMan = accMan;
-  
+var Server = function(credentials, api) {
   var opts = {
     key: fs.readFileSync(credentials.privateKey).toString(),
     cert: fs.readFileSync(credentials.certificate).toString(),
@@ -42,16 +40,9 @@ var Server = function(credentials, accMan) {
   this.https = https.createServer(opts);
   this.io = SocketIO.listen(this.https);
   
-  var self = this;
   this.io.on('connection', function(socket) {
-    // TODO: set login and register socket events
-    
-    socket.on('disconnect', function() {
-      // TODO: set logged user offline
-    });
+    api.initSession(socket);
   });
-  
-  
 };
 
 /**
