@@ -34,6 +34,10 @@ var Api = function(accMan, mailer) {
   this.mailer = mailer;
 };
 
+Api.prototype.setIO = function(io) {
+  this.io = io;
+};
+
 Api.prototype.defaultListeners = { disconnect: 'destroySession', login: 'login', 'create account': 'createAccount', 'activate account': 'activateAccount' };
 Api.prototype.loggedInListeners = { logout: 'logout',  'chat message': 'chatMessage'};
 
@@ -112,7 +116,7 @@ Api.prototype.login = function(session, data) {
       
       var userData = { };
       for(var k in user) {
-        if(k === 'hash')
+        if(k === 'hash' || k === 'activationCode' || k === 'isActivated')
           continue;
         
         userData[k] = user[k];
@@ -156,7 +160,7 @@ Api.prototype.logout = function(session, data, allowEmit) {
  */
 Api.prototype.createAccount = function(session, data) {
   if(!data || typeof data.email !== 'string' ||  typeof data.nick !== 'string' || typeof data.hash !== 'string' ||
-    data.email.length < 8 || data.nick.length < 4 /* || data.hash.length !== 64 */) { // TODO remove comment
+    data.email.length < 8 || data.nick.length < 4 || data.hash.length !== 64) {
     session.emit('create account', 'ERR_INVALID_VALUES');
     return;
   };
@@ -206,6 +210,10 @@ Api.prototype.activateAccount = function(session, data) {
     else
       session.emit('activate account', 'ERR_NOT_FOUND');
   });
+};
+
+Api.prototype.chatMessage = function(session, data) {
+  this.io.emit('chat message', data);
 };
 
 module.exports = Api;

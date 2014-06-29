@@ -43,6 +43,8 @@ var Server = function(credentials, api) {
   this.io.on('connection', function(socket) {
     api.initSession(socket);
   });
+  
+  api.setIO(this.io);
 };
 
 /**

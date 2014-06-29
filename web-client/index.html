@@ -1,43 +1,114 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>syntax</title>
+    <title>syntax.im</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <script src="https://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha256.js" type="text/javascript"></script>
-    <script src="vendor/jquery-1.11.1.min.js" type="text/javascript"></script>
+    <link type="text/css" href="css/normalize.css" rel="stylesheet">
+    <link type="text/css" href="css/app.css" rel="stylesheet">
+    <link type="text/css" href="css/bootswatch.min.css" rel="stylesheet">
     <script src="js/app.js" type="text/javascript"></script>
   </head>
   <body>
-    <form class="create-account">
-      <h3>create account</h3>
-      <input type="email" name="email" placeholder="e-mail"><br>
-      <input type="text" name="nick" placeholder="nickname"><br>
-      <input type="password" name="password" placeholder="password"><br>
-      <input type="submit" value="create account"><br>
-      <span class="result"></span>
-    </form>
+    <div class="app" data-bind="with: app">
+      <div class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-brand">syntax.im</div>
+          
+          <ul class="nav navbar-nav navbar-right" data-bind="with: account">
+            <li id="fat-menu" class="dropdown">
+              <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: nick"></span> <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="accountButtonDrop">
+                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-bind="click: logout">logout</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="messages">
+        <div class="container" data-bind="foreach: messages">
+          <div class="message row">
+            <div class="col-xs-1 sender" data-bind="text: sender"></div>
+            <div class="col-xs-10 text" data-bind="text: text"></div>
+            <div class="col-xs-1 time" data-bind="text: $parent.formatTime($data.time)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <div class="container" data-bind="with: composer">
+          <form data-bind="submit: submit">
+            <div class="input-group">
+              <input type="text" data-bind="value: text" class="form-control">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="button">send</button>
+              </span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
     
-    <form class="login">
-      <h3>login</h3>
-      <input type="email" name="email" placeholder="e-mail"><br>
-      <input type="password" name="password" placeholder="password"><br>
-      <input type="submit" value="login"><br>
-      <span class="result"></span>
-    </form>
+    <div class="account">
+      <div class="syntax-logo">syntax.im</div>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6" data-bind="with: createAccount">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">create account</h3>
+              </div>
+              <div class="panel-body">
+                <form data-bind="submit: submit">
+                  <div class="form-group">
+                    <label for="accountEmail">email address</label>
+                    <input type="email" required class="form-control" id="accountEmail" data-bind="value: email">
+                  </div>
+                  <div class="form-group">
+                    <label for="accountNick">nick</label>
+                    <input type="text" required class="form-control" id="accountNick" data-bind="value: nick">
+                  </div>
+                  <div class="form-group">
+                    <label for="accountPassword">password</label>
+                    <input type="password" required class="form-control" id="accountPassword" data-bind="value: password">
+                  </div>
+                  <div class="form-group">
+                    <label for="accountPasswordAgain">retype password</label>
+                    <input type="password" required class="form-control" id="accountPasswordAgain" data-bind="value: passwordAgain">
+                  </div>
+                  <button type="submit" class="btn btn-default">submit</button>
+                </form>
+              </div>
+            </div>
+          </div>
+            
+          <div class="col-md-6" data-bind="with: login">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">login</h3>
+              </div>
+              <div class="panel-body">
+                <form data-bind="submit: submit">
+                  <div class="form-group">
+                    <label for="loginEmail">email address</label>
+                    <input type="email" required class="form-control" id="loginEmail" data-bind="value: email">
+                  </div>
+                  <div class="form-group">
+                    <label for="loginPassword">password</label>
+                    <input type="password" required class="form-control" id="loginPassword" data-bind="value: password">
+                  </div>
+                  <button type="submit" class="btn btn-default">submit</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     
-    <form class="logout">
-      <h3>logout</h3>
-      <input type="submit" value="logout"><br>
-      <span class="result"></span>
-    </form>
-    
-    <form class="activate-account">
-      <h3>activate account</h3>
-      <input type="text" name="code" placeholder="code"><br>
-      <input type="submit" value="activate account"><br>
-      <span class="result"></span>
-    </form>
+    <div class="loading">
+      <h1>please wait while things are loading</h1>
+    </div>
   </body>
 </html>
