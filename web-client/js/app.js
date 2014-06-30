@@ -89,17 +89,22 @@
   var AppModelView = function(api) {
     var self = this;
     self.createAccount = { email: ko.observable(''), nick: ko.observable(''), password: ko.observable(''), passwordAgain: ko.observable(''), submit: function() {
-        if(self.createAccount.nick.length < 4) {
+        var email = self.createAccount.email();
+        var nick = self.createAccount.nick();
+        var password = self.createAccount.password();
+        var passwordAgain = self.createAccount.passwordAgain();
+        
+        if(nick < 4) {
           bootbox.alert('nick is too short');
           return;
         }
         
-        if(self.createAccount.password.length < 5) {
+        if(password.length < 5) {
           bootbox.alert('password is too short');
           return;
         }
         
-        if(self.createAccount.password !== self.createAccount.passwordAgain) {
+        if(password !== passwordAgain) {
           bootbox.alert('passwords do not match');
           return;
         }
@@ -110,7 +115,7 @@
           closeButton: false
         });
         
-        api.createAccount(self.createAccount.email, self.createAccount.nick, self.createAccount.password, function(result) {
+        api.createAccount(email, nick, password, function(result) {
           wait.modal('hide');
           
           var message;
@@ -140,7 +145,10 @@
           closeButton: false
         });
         
-        api.login(self.login.email, self.login.password, function(result) {
+        var email = self.login.email();
+        var pwd = self.login.password();
+        
+        api.login(email, pwd, function(result) {
           wait.modal('hide');
           
           var message = null;
