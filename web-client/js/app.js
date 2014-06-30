@@ -88,7 +88,7 @@
   
   var AppModelView = function(api) {
     var self = this;
-    self.createAccount = { email: "", nick: "", password: "", passwordAgain: "", submit: function() {
+    self.createAccount = { email: ko.observable(''), nick: ko.observable(''), password: ko.observable(''), passwordAgain: ko.observable(''), submit: function() {
         if(self.createAccount.nick.length < 4) {
           bootbox.alert('nick is too short');
           return;
@@ -133,7 +133,7 @@
         });
     }};
   
-    self.login = { email: "", password: "", submit: function() {
+    self.login = { email: ko.observable(''), password: ko.observable(''), submit: function() {
         var wait = bootbox.dialog({
           message: 'please wait',
           title: 'logging in',
