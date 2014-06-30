@@ -241,20 +241,50 @@
   ];
   
   App.prototype.loadScripts = function() {
+    var pb = function() {
+      return document.getElementById('loadingProgressBar');
+    };
+    
     var stack = this.scripts;
     var self = this;
+    var total = stack.length;
+    var progressBar = null;
     var next = function() {
       if(stack.length === 0) {
         self.initSocket();
         return;
       }
       
+      var url = stack.shift();
+    
+      if(progressBar === null)
+        progressBar = pb();
+      if(progressBar !== null)
+        progressBar.innerHTML = url;
+      
       var script = document.createElement('script');
       document.head.appendChild(script);
       script.onload = function() {
+        var current = stack.length;
+        var percent = ((total - current) * 100) / total;
+        
+        if(progressBar === null)
+          progressBar = pb();
+        if(progressBar !== null)
+          progressBar.style.width = percent + '%';
+        
         next();
       };
-      script.src = stack.shift();
+      script.onerror = function() {
+        setTimeout(function() {
+          if(progressBar === null)
+            progressBar = pb;
+          progressBar.innerHTML = 'error, could not load ' + url;
+          progressBar.style.width = '100%';
+          progressBar.className = 'progress-bar progress-bar-danger';
+        }, 200);
+      };
+      script.src = url;
     };
     
     next();

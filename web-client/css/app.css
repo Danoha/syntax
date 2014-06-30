@@ -32,6 +32,14 @@ div.loading > h1 {
   text-align: center;
 }
 
+div.loading > div.container {
+  margin-top: 30px;
+}
+
+div.loading div.progress {
+  height: 26px;
+}
+
 div.syntax-logo {
   text-align: center;
   font-size: 50px;
