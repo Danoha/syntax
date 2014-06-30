@@ -231,24 +231,25 @@
   App.prototype.server = 'https://' + hostname + ':1560';
   App.prototype.scripts = [
     'js/jquery-1.11.1.min.js',
-    App.prototype.server + '/socket.io/socket.io.js',
     'js/knockout-3.1.0.min.js',
     'https://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha256.js',
     'js/bootstrap.min.js',
     'js/bootbox.min.js',
     'js/URI.min.js',
-    'js/moment.min.js'
+    'js/moment.min.js',
+    App.prototype.server + '/socket.io/socket.io.js'
   ];
   
   App.prototype.loadScripts = function() {
+    var progressBar = null;
     var pb = function() {
-      return document.getElementById('loadingProgressBar');
+      progressBar = document.getElementById('loadingProgressBar');
     };
     
     var stack = this.scripts;
     var self = this;
     var total = stack.length;
-    var progressBar = null;
+    
     var next = function() {
       if(stack.length === 0) {
         self.initSocket();
@@ -257,8 +258,7 @@
       
       var url = stack.shift();
     
-      if(progressBar === null)
-        progressBar = pb();
+      pb();
       if(progressBar !== null)
         progressBar.innerHTML = url;
       
@@ -268,8 +268,7 @@
         var current = stack.length;
         var percent = ((total - current) * 100) / total;
         
-        if(progressBar === null)
-          progressBar = pb();
+        pb();
         if(progressBar !== null)
           progressBar.style.width = percent + '%';
         
@@ -277,12 +276,11 @@
       };
       script.onerror = function() {
         setTimeout(function() {
-          if(progressBar === null)
-            progressBar = pb;
+          pb();
           progressBar.innerHTML = 'error, could not load ' + url;
           progressBar.style.width = '100%';
           progressBar.className = 'progress-bar progress-bar-danger';
-        }, 200);
+        }, 0);
       };
       script.src = url;
     };
@@ -293,7 +291,9 @@
   App.prototype.initSocket = function() {
     var self = this;
     this.io = io(this.server);
+    $('#loadingProgressBar').text('connecting to chat server');
     this.io.on('connect', function() {
+      $('#loadingProgressBar').text('done');
       self.io.removeAllListeners('connect');
       self.init();
     });
