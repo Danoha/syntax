@@ -69,3 +69,7 @@ div.app div.message {
 div.app div.message div.time {
   text-align: right;
 }
+
+div.app div.message div.text {
+  word-wrap: break-word;
+}

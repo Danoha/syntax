@@ -240,7 +240,7 @@
   App.prototype.scripts = [
     'js/jquery-1.11.1.min.js',
     'js/knockout-3.1.0.min.js',
-    'https://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha256.js',
+    'js/sha256.min.js',
     'js/bootstrap.min.js',
     'js/bootbox.min.js',
     'js/URI.min.js',

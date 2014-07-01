@@ -185,7 +185,7 @@ Api.prototype.createAccount = function(session, data) {
     var mailOptions = {
       from: 'syntax.im registration <noreply@syntax.im>',
       to: values.email,
-      subject: 'Account activation',
+      subject: 'syntax.im account activation',
       html: self.mailTemplates.activation.replace(/%link%/gi, link)
     };
     
