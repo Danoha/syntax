@@ -45,7 +45,7 @@ Api.prototype.setIO = function(io) {
   this.io = io;
 };
 
-Api.prototype.defaultListeners = { disconnect: 'destroySession', login: 'login', 'create account': 'createAccount', 'activate account': 'activateAccount' };
+Api.prototype.defaultListeners = { disconnect: 'destroySession', login: 'login', 'create account': 'createAccount', 'activate account': 'activateAccount', 'restore login': 'restoreLogin' };
 Api.prototype.loggedInListeners = { logout: 'logout',  'chat message': 'chatMessage'};
 
 Api.prototype.mailTemplates = {
@@ -100,6 +100,27 @@ Api.prototype.destroySession = function(session) {
   this.removeSessionListeners(session, this.defaultListeners);
 };
 
+var loginValid = function(self, session, cmd) {
+  var user = session.user;
+  self.addSessionListeners(session, self.loggedInListeners);
+      
+  var userData = { };
+  for(var k in user) {
+    if(k === 'hash' || k === 'activationCode')
+      continue;
+
+    userData[k] = user[k];
+  }
+
+  // TODO add contact list to userData
+
+  session.emit(cmd, userData);
+
+  // TODO tell all user contacts that their friend is online
+
+  console.log('user ' + session.user.email + ' logged in');
+};
+
 /**
  * @param {Object} data
  * @param {Socket} session
@@ -114,38 +135,46 @@ Api.prototype.login = function(session, data) {
   this.accMan.getByEmail(data.email, function(user) {
     if(user === null || user.hash === null || user.hash !== data.hash)
       session.emit('login', 'ERR_NOT_FOUND');
-    else if(!user.isActivated)
+    else if(user.activationCode !== null)
       session.emit('login', 'ERR_NOT_ACTIVATED');
     else {
       session.user = user;
       
-      self.addSessionListeners(session, self.loggedInListeners);
+      user.loginToken = crypto.randomBytes(18).toString('base64').replace(/(\/|\+)/g, '0');
+      self.accMan.update(user.id, { loginToken: user.loginToken }, function(result) {
+        if(!result)
+          throw new Error('Could not update user\'s login token');
+      });
       
-      var userData = { };
-      for(var k in user) {
-        if(k === 'hash' || k === 'activationCode' || k === 'isActivated')
-          continue;
-        
-        userData[k] = user[k];
-      }
-      
-      // TODO add contact list to userData
-      
-      session.emit('login', userData);
-      
-      // TODO tell all user contacts that their friend is online
-      
-      console.log('user ' + session.user.email + ' logged in');
+      loginValid(self, session, 'login');
     }
+  });
+};
+
+Api.prototype.restoreLogin = function(session, data) {
+  if(!data || typeof data.loginToken !== 'string') {
+    session.emit('restore login', 'ERR_INVALID_VALUES');
+    return;
+  }
+  
+  var self = this;
+  this.accMan.getByLoginToken(data.loginToken, function(user) {
+    if(user === null) {
+      session.emit('restore login', 'ERR_INVALID');
+      return;
+    }
+    
+    session.user = user;
+    loginValid(self, session, 'restore login');
   });
 };
 
 /**
  * @param {Socket} session
  */
-Api.prototype.logout = function(session, data, allowEmit) {
+Api.prototype.logout = function(session, data, sessionStillOpen) {
   if(typeof session.user === 'undefined') {
-    if(allowEmit !== false)
+    if(sessionStillOpen !== false)
       session.emit('logout', 'ERR_NO_USER');
     
     return;
@@ -153,11 +182,18 @@ Api.prototype.logout = function(session, data, allowEmit) {
   
   this.removeSessionListeners(session, this.loggedInListeners);
   
+  if(sessionStillOpen !== false) {
+    this.accMan.update(session.user.id, { loginToken: null }, function(result) {
+      if(!result)
+        throw new Error('Could not remove user\'s login token');
+    });
+  }
+  
   // TODO tell all user contacts that their friend went offline
   
   console.log('user ' + session.user.email + ' logged out');
   session.user = undefined;
-  if(allowEmit !== false)
+  if(sessionStillOpen !== false)
     session.emit('logout', 'OK');
 };
 

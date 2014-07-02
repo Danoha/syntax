@@ -84,6 +84,19 @@
     });
   };
   
+  Api.prototype.restoreLogin = function(loginToken, callback) {
+    var self = this;
+    self.io.on('restore login', function(result) {
+      self.io.removeAllListeners('restore login');
+      
+      callback(result);
+    });
+    
+    self.io.emit('restore login', {
+      loginToken: loginToken
+    });
+  };
+  
   ////
   
   var AppModelView = function(api) {
@@ -138,7 +151,16 @@
         });
     }};
   
-    self.login = { email: ko.observable(''), password: ko.observable(''), submit: function() {
+    var loginValid = function(result) {
+      var acc = self.app.account;
+      for(var k in result) {
+        if(k in acc)
+          acc[k](result[k]);
+      }
+      $('div.account').fadeOut(200);
+    };
+  
+    self.login = { email: ko.observable(''), password: ko.observable(''), stayOnline: ko.observable(true), submit: function() {
         var wait = bootbox.dialog({
           message: 'please wait',
           title: 'logging in',
@@ -163,12 +185,10 @@
               message = 'invalid values were entered';
               break;
             default:
-              var acc = self.app.account;
-              for(var k in result) {
-                if(k in acc)
-                  acc[k](result[k]);
-              }
-              $('div.account').fadeOut(200);
+              if(self.login.stayOnline())
+                $.cookie('loginToken', result.loginToken, { expires: 365 });
+              
+              loginValid(result);
               break;
           }
           
@@ -198,6 +218,7 @@
         logout: function() {
           bootbox.confirm('do you really want to logout?', function(result) {
             if(result) {
+              $.removeCookie('loginToken');
               api.logout();
               $('div.account').fadeIn(200);
 
@@ -237,6 +258,24 @@
       } else
         self.app.messages.push(data);
     });
+    
+    var loginToken = $.cookie('loginToken');
+    if(loginToken !== undefined) {
+      var wait = bootbox.dialog({
+        message: 'please wait',
+        title: 'logging in',
+        closeButton: false
+      });
+      
+      api.restoreLogin(loginToken, function(result) {
+        wait.modal('hide');
+        
+        if(result === 'ERR_INVALID')
+          bootbox.alert('could not restore your login');
+        else
+          loginValid(result);
+      });
+    }
   };
   
   ////
@@ -258,6 +297,7 @@
     'js/bootbox.min.js',
     'js/URI.min.js',
     'js/moment.min.js',
+    'js/jquery.cookie.js',
     App.prototype.server + '/socket.io/socket.io.js'
   ];
   

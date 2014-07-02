@@ -24,10 +24,29 @@ var MySQL = require('mysql');
 
 var AccManager = function(credentials) {
   this.connection = MySQL.createConnection(credentials);
+  
+  this.handleServerDisconnect(this.connection);
+};
+
+AccManager.prototype.handleServerDisconnect = function(conn) {
+  var self = this;
+  conn.on('error', function(err) {
+    if (!err.fatal)
+      return;
+
+    if (err.code !== 'PROTOCOL_CONNECTION_LOST')
+      throw err;
+
+    console.log('reconnecting lost connection: ' + err.stack);
+
+    self.connection = MySQL.createConnection(conn.config);
+    self.handleServerDisconnect(self.connection);
+    self.connection.connect();
+  });
 };
 
 AccManager.prototype.onError = function(err) {
-  console.error("mysql error", err);
+  console.error('mysql error', err);
 };
 
 /**
@@ -38,7 +57,7 @@ AccManager.prototype.connect = function(callback) {
   
   this.connection.query('SET NAMES UTF8', function(err) {
     if(err) {
-      console.error("FAILED", err);
+      console.error('FAILED', err);
       return;
     }
 
@@ -70,7 +89,7 @@ var getCallback = function(self, callback) {
  * @param {Function} callback
  */
 AccManager.prototype.getById = function(id, callback) {
-  this.connection.query("SELECT * FROM users WHERE id = ?", id, getCallback(this, callback));
+  this.connection.query('SELECT * FROM users WHERE id = ?', id, getCallback(this, callback));
 };
 
 /**
@@ -78,7 +97,15 @@ AccManager.prototype.getById = function(id, callback) {
  * @param {Function} callback
  */
 AccManager.prototype.getByEmail = function(email, callback) {
-  this.connection.query("SELECT * FROM users WHERE email = ?", email, getCallback(this, callback));
+  this.connection.query('SELECT * FROM users WHERE email = ?', email, getCallback(this, callback));
+};
+
+/**
+  * @param {String} loginToken
+ * @param {Function} callback
+ */
+AccManager.prototype.getByLoginToken = function(loginToken, callback) {
+  this.connection.query('SELECT * FROM users WHERE loginToken = ?', loginToken, getCallback(this, callback));
 };
 
 /**
@@ -90,7 +117,7 @@ AccManager.prototype.create = function(values, callback) {
     return callback(false);
   
   var self = this;
-  this.connection.query("INSERT INTO users SET ?", values, function(err, result) {
+  this.connection.query('INSERT INTO users SET ?', values, function(err, result) {
     if(err)
       self.onError(err);
     
@@ -105,7 +132,7 @@ AccManager.prototype.create = function(values, callback) {
  */
 AccManager.prototype.delete = function(id, callback) {
   var self = this;
-  this.connection.query("DELETE FROM users WHERE id = ?", id, function(err, result) {
+  this.connection.query('DELETE FROM users WHERE id = ?', id, function(err, result) {
     if(err)
       self.onError(err);
     
@@ -113,9 +140,14 @@ AccManager.prototype.delete = function(id, callback) {
   });
 };
 
+/**
+ * @param {Number} id
+ * @param {Object} values
+ * @param {Function} callback
+ */
 AccManager.prototype.update = function(id, values, callback) {
   var self = this;
-  this.connection.query("UPDATE users SET ? WHERE id = ?", [values, id], function(err, result) {
+  this.connection.query('UPDATE users SET ? WHERE id = ?', [values, id], function(err, result) {
     if(err)
       self.onError(err);
     
@@ -123,9 +155,13 @@ AccManager.prototype.update = function(id, values, callback) {
   });
 };
 
+/**
+ * @param {String} code
+ * @param {Function} callback
+ */
 AccManager.prototype.activateAccount = function(code, callback) {
   var self = this;
-  this.connection.query("UPDATE users SET isActivated = 1, activationCode = NULL WHERE activationCode = ?", code, function(err, result) {
+  this.connection.query('UPDATE users SET activationCode = NULL WHERE activationCode = ?', code, function(err, result) {
     if(err)
       self.onError(err);
     

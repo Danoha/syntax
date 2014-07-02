@@ -25,7 +25,7 @@ var https = require('https');
 //
 
 /**
- * @param {object} credentials
+ * @param {Object} credentials
  * @param {Api} api
  * @returns {Server}
  */
