@@ -20,6 +20,7 @@
 
 var crypto = require('crypto');
 var fs = require('fs');
+var Dns = require('./dns.js');
 
 //
 
@@ -32,6 +33,12 @@ var fs = require('fs');
 var Api = function(accMan, mailer) {
   this.accMan = accMan;
   this.mailer = mailer;
+  
+  var self = this;
+  new Dns().getHostname(function(hostname) {
+    self.hostname = hostname;
+    console.log('api ready (hostname seems to be ' + self.hostname + ')');
+  });
 };
 
 Api.prototype.setIO = function(io) {
@@ -180,12 +187,12 @@ Api.prototype.createAccount = function(session, data) {
       return;
     }
     
-    var link = 'https://syntax.im/?activate=' + values.activationCode;
+    var link = 'https://' + self.hostname + '/?activate=' + values.activationCode;
     
     var mailOptions = {
-      from: 'syntax.im registration <noreply@syntax.im>',
+      from: 'syntax.im <noreply@syntax.im>',
       to: values.email,
-      subject: 'syntax.im account activation',
+      subject: 'account activation',
       html: self.mailTemplates.activation.replace(/%link%/gi, link)
     };
     
