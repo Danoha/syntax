@@ -51,6 +51,8 @@ div.app div.messages {
   position: fixed;
   bottom: 55px;
   width: 100%;
+  max-height: calc(100% - 100px);
+  overflow-y: scroll;
 }
 
 div.app div.bottom {

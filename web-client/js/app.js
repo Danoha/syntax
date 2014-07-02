@@ -221,8 +221,21 @@
       }
     };
     
+    var messagesDiv = $('.messages');
+    var isMessageDivScrolledToBottom = function() {
+      return messagesDiv.scrollTop() === messagesDiv.prop('scrollHeight') - messagesDiv.height();
+    };
+    
+    var scrollMessageDivToBottom = function() {
+      messagesDiv.animate({ scrollTop: messagesDiv.prop('scrollHeight') - messagesDiv.height() });
+    };
+    
     api.on('chat message', function(data) {
-      self.app.messages.push(data);
+      if($('.bottom input[type=text]').is(':focus') && isMessageDivScrolledToBottom()) {
+        self.app.messages.push(data);
+        scrollMessageDivToBottom();
+      } else
+        self.app.messages.push(data);
     });
   };
   
