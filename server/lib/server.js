@@ -38,7 +38,6 @@ var Server = function(credentials, api) {
   
   this.https = https.createServer(opts);
   this.io = SocketIO.listen(this.https);
-  this.io.set('transports', ['websocket', 'htmlfile']);
   
   this.io.on('connection', function(socket) {
     api.initSession(socket);
