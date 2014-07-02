@@ -227,7 +227,7 @@
     };
     
     var scrollMessageDivToBottom = function() {
-      messagesDiv.animate({ scrollTop: messagesDiv.prop('scrollHeight') - messagesDiv.height() });
+      messagesDiv.scrollTop(messagesDiv.prop('scrollHeight') - messagesDiv.height());
     };
     
     api.on('chat message', function(data) {
