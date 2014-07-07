@@ -24,7 +24,13 @@
   };
   
   Api.prototype.on = function(eventName, listener) {
-    this.io.on(eventName, listener);
+    this.io.on(eventName, function() {
+      try {
+        listener.apply(this, arguments);
+      } catch(err) {
+        console.error('api error', err);
+      }
+    });
   };
 
   Api.prototype.chatMessage = function(data) {
@@ -97,10 +103,184 @@
     });
   };
   
+  Api.prototype.searchAccounts = function(search, callback) {
+    var self = this;
+    self.io.on('search accounts', function(result) {
+      self.io.removeAllListeners('search accounts');
+      
+      callback(result);
+    });
+    
+    self.io.emit('search accounts', {
+      search: search
+    });
+  };
+  
+  Api.prototype.friendRequest = function(targetId, callback) {
+    var self = this;
+    self.io.on('friend request', function(result) {
+      self.io.removeAllListeners('friend request');
+      
+      callback(result);
+    });
+    
+    self.io.emit('friend request', {
+      targetId: targetId
+    });
+  };
+  
+  Api.prototype.friendResponse = function(invokerId, decision, callback) {
+    var self = this;
+    self.io.on('friend response', function(result) {
+      self.io.removeAllListeners('friend response');
+      
+      callback(result);
+    });
+    
+    self.io.emit('friend response', {
+      invokerId: invokerId,
+      decision: decision
+    });
+  };
+  
   ////
   
-  var AppModelView = function(api) {
+  var AppModelView = function(api, app) {
     var self = this;
+    
+    var MessageModel = function(init, sender, target) {
+      this.text = ko.observable(init.text);
+      
+      this._sender = sender;
+      this._target = target;
+      this._time = moment.unix(init.time);
+      
+      if(this._sender === 'self')
+        this.sender = self.app.account.nick();
+      else
+        this.sender = this._sender.nick();
+      
+      var m = this;
+      this.formattedTime = ko.computed(function() {
+        return m._time.format('HH:mm');
+      });
+    };
+    
+    var ComposerModel = function() {
+      this.text = ko.observable('');
+      
+      this.submit = ComposerModel.send;
+    };
+    
+    ComposerModel.send = function() {
+      var target = self.app.target();
+      if(target === null)
+        return;
+      
+      var text = target.composer.text();
+      if(text.trim().length === 0)
+        return;
+      
+      target.composer.text('');
+      
+      var msg = {
+        text: text
+      };
+      
+      if(target instanceof FriendModel)
+        msg.recipientId = target.id();
+      else if(target instanceof GroupModel)
+        msg.groupId = target.id();
+      else
+        throw new Error('Target not supported');
+      
+      api.chatMessage(msg);
+    };
+    
+    var FriendModel = function(init) {
+      this.id = ko.observable(init.id);
+      this.nick = ko.observable(init.nick);
+      this.isOnline = ko.observable(init.isOnline);
+      this.state = ko.observable(init.state);
+      this.messages = ko.observableArray();
+      this.invokerId = ko.observable(init.invokerId);
+      
+      var m = this;
+      this.displayName = ko.computed(function() {
+        return m.nick();
+      });
+      
+      this.isActive = ko.computed(function() {
+        return self.app.target() === m;
+      });
+      
+      this.setActive = function() {
+        self.app.target(m);
+      };
+      
+      this.isAccepted = ko.computed(function() {
+        return m.state() === 'accepted';
+      });
+      
+      this.isVisible = ko.computed(function() {
+        return m.state() === null || m.isAccepted();
+      });
+      
+      this.isCurrentUserInvoker = ko.computed(function() {
+        return m.invokerId() === self.app.account.id();
+      });
+      
+      this.hasBeenResponded = ko.computed(function() {
+        return m.state() !== null;
+      });
+      
+      this.gotResponse = function(decision) {
+        m.state(decision);
+            
+        if(decision === 'denied') {
+          if(self.app.target() === m)
+            self.app.target(null);
+        }
+      };
+      
+      this.respond = function(decision) {
+        var wait = bootbox.dialog({
+          message: 'please wait',
+          title: 'sending response',
+          closeButton: false
+        });
+        
+        api.friendResponse(m.id(), decision, function(result) {
+          wait.modal('hide');
+          
+          if(result === 'OK') {
+            m.gotResponse(decision);
+          } else
+            bootbox.alert('something went wrong');
+        });
+      };
+      
+      this.respondAccept = function() {
+        m.respond('accepted');
+      };
+      
+      this.respondDeny = function() {
+        m.respond('denied');
+      };
+      
+      this.composer = new ComposerModel();
+    };
+    
+    FriendModel.fromSearchResult = function(row) {
+      return new FriendModel({
+        id: row.id,
+        nick: row.nick,
+        isOnline: false,
+        state: null,
+        invokerId: self.app.account.id()
+      });
+    };
+    
     self.createAccount = { email: ko.observable(''), nick: ko.observable(''), password: ko.observable(''), passwordAgain: ko.observable(''), submit: function() {
         var email = self.createAccount.email();
         var nick = self.createAccount.nick();
@@ -154,9 +334,18 @@
     var loginValid = function(result) {
       var acc = self.app.account;
       for(var k in result) {
+        if(k === 'friendlist')
+          continue;
+        
         if(k in acc)
           acc[k](result[k]);
       }
+      
+      acc.friendlist([]);
+      for(var k in result.friendlist) {
+        acc.friendlist.push(new FriendModel(result.friendlist[k]));
+      }
+      
       $('div.account').fadeOut(200);
     };
   
@@ -197,20 +386,6 @@
         });
     }};
   
-    var composerSubmit = function() {
-      var text = self.app.composer.text();
-      if(text.trim().length === 0)
-        return;
-      
-      self.app.composer.text('');
-      
-      api.chatMessage({
-        sender: self.app.account.nick(),
-        text: text,
-        time: moment().unix()
-      });
-    };
-  
     self.app = {
       account: {
         id: ko.observable(0),
@@ -220,43 +395,185 @@
             if(result) {
               $.removeCookie('loginToken');
               api.logout();
-              $('div.account').fadeIn(200);
-
-              self.app.account.id(0);
-              self.app.account.nick('');
-              
-              self.app.messages([]);
-              
-              self.app.composer.text('');
+              $('div.account').fadeIn(200, function() {
+                if($('.add-friend').is(':visible'))
+                  self.app.addFriend.toggle();
+                
+                self.app.account.id(0);
+                self.app.account.nick('');
+                self.app.account.friendlist.removeAll();
+                
+                self.app.target(null);
+              });
+            }
+          });
+        },
+        friendlist: ko.observableArray()
+      },
+      target: ko.observable(null),
+      clearTarget: function() {
+        self.app.target(null);
+      },
+      addFriend: {
+        submit: function() {
+          var wait = bootbox.dialog({
+            message: 'please wait',
+            title: 'searching',
+            closeButton: false
+          });
+          
+          api.searchAccounts(self.app.addFriend.search(), function(results) {
+            wait.modal('hide');
+            
+            self.app.addFriend.results.removeAll();
+            for(var k in results)
+              self.app.addFriend.results.push(results[k]);
+          });
+        },
+        search: ko.observable(''),
+        results: ko.observableArray([]),
+        toggle: function() {
+          var add = $('.add-friend');
+          var contacts = $('.contacts');
+          if(add.is(':visible')) {
+            add.slideUp(function() {
+              self.app.addFriend.search('');
+              self.app.addFriend.results.removeAll();
+            });
+            contacts.slideDown();
+          } else {
+            add.hide().removeClass('hidden').slideDown(function() {
+              add.find('input').focus();
+            });
+            contacts.slideUp();
+          }
+        },
+        sendRequest: function(row) {
+          var wait = bootbox.dialog({
+            message: 'please wait',
+            title: 'sending request',
+            closeButton: false
+          });
+          
+          api.friendRequest(row.id, function(result) {
+            wait.modal('hide');
+            
+            bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
+            
+            if(result === 'OK') {
+              self.app.addFriend.results.remove(row);
+            
+              self.app.account.friendlist.push(FriendModel.fromSearchResult(row));
             }
           });
         }
-      },
-      messages: ko.observableArray(),
-      composer: {
-        text: ko.observable(''),
-        submit: composerSubmit
-      },
-      formatTime: function(date) {
-        return moment.unix(date).format('HH:mm');
       }
     };
     
-    var messagesDiv = $('.messages');
+    var onlineOffline = function(id, state) {
+      var fl = self.app.account.friendlist();
+      for(var k in fl) {
+        if(fl[k].id() !== id)
+          continue;
+        
+        fl[k].isOnline(state);
+      }
+    };
+    
+    api.on('friend offline', function(data) {
+      if(typeof data !== 'object')
+        return;
+      
+      onlineOffline(data.friendId, false);
+    });
+    
+    api.on('friend online', function(data) {
+      if(typeof data !== 'object')
+        return;
+      
+      onlineOffline(data.friendId, true);
+    });
+    
+    api.on('friend response', function(data) {
+      if(typeof data !== 'object')
+        return;
+      
+      var fl = self.app.account.friendlist();
+      for(var k in fl) {
+        if(fl[k].id() !== data.targetId)
+          continue;
+        
+        fl[k].gotResponse(data.decision);
+      }
+    });
+    
+    api.on('friend request', function(data) {
+      if(typeof data !== 'object')
+        return;
+      
+      var friend = FriendModel.fromSearchResult(data.invoker);
+      friend.invokerId(data.invoker.id);
+      self.app.account.friendlist.push(friend);
+    });
+    
+    
     var isMessageDivScrolledToBottom = function() {
-      return messagesDiv.scrollTop() === messagesDiv.prop('scrollHeight') - messagesDiv.height();
+      var messagesPanel = $('.messages .panel-body');
+      return messagesPanel.scrollTop() === messagesPanel.prop('scrollHeight') - messagesPanel.outerHeight();
     };
     
     var scrollMessageDivToBottom = function() {
-      messagesDiv.scrollTop(messagesDiv.prop('scrollHeight') - messagesDiv.height());
+      var messagesPanel = $('.messages .panel-body');
+      messagesPanel.scrollTop(messagesPanel.prop('scrollHeight') - messagesPanel.outerHeight());
     };
     
     api.on('chat message', function(data) {
-      if($('.bottom input[type=text]').is(':focus') && isMessageDivScrolledToBottom()) {
-        self.app.messages.push(data);
+      var target = null;
+      var sender = null;
+      
+      if(data.recipientId) {
+        var friend = null;
+        var friendlist = self.app.account.friendlist();
+        for(var k in friendlist) {
+          var f = friendlist[k];
+          
+          if(f.id() !== data.recipientId && f.id() !== data.senderId)
+            continue;
+          
+          if(f.state() !== 'accepted')
+            return;
+
+          friend = f;
+          break;
+        }
+        
+        if(data.recipientId === self.app.account.id()) {
+          target = 'self';
+          sender = friend;
+        } else {
+          sender = 'self';
+          target = friend;
+        }
+      }
+      
+      // TODO search for group target
+      
+      if(target === null || sender === null)
+        return;
+      
+      var msg = new MessageModel(data, sender, target);
+      
+      if(target === 'self')
+        target = sender;
+      
+      if(target.isActive() && $('.composer input[type=text]').is(':focus') && isMessageDivScrolledToBottom()) {
+        target.messages.push(msg);
         scrollMessageDivToBottom();
       } else
-        self.app.messages.push(data);
+        target.messages.push(msg);
+      
+      if(!app.isFocused || !target.isActive())
+        app.sfxs['o-ou'].play();
     });
     
     var loginToken = $.cookie('loginToken');
@@ -298,6 +615,7 @@
     'js/URI.min.js',
     'js/moment.min.js',
     'js/jquery.cookie.js',
+    'js/howler.min.js',
     App.prototype.server + '/socket.io/socket.io.js'
   ];
   
@@ -313,6 +631,7 @@
     
     var next = function() {
       if(stack.length === 0) {
+        self.initSfxs();
         self.initSocket();
         return;
       }
@@ -347,6 +666,21 @@
     };
     
     next();
+  };
+  
+  App.prototype.sfxs = ['o-ou'];
+  App.prototype.initSfxs = function() {
+    var cache = { };
+    
+    for(var k in this.sfxs) {
+      var n = this.sfxs[k];
+      
+      cache[n] = new Howl({
+        urls: ['sfx/' + n + '.ogg', 'sfx/' + n + '.mp3']
+      });
+    }
+    
+    this.sfxs = cache;
   };
   
   App.prototype.initSocket = function() {
@@ -394,9 +728,18 @@
     }
   };
   
+  App.prototype.isFocused = true;
   App.prototype.init = function() {
+    var self = this;
+    $(window).on('focus', function() {
+        self.isFocused = true;
+    });
+    $(window).on('blur', function() {
+        self.isFocused = false;
+    });
+    
     this.api = new Api(this.io);
-    this.modelView = new AppModelView(this.api);
+    this.modelView = new AppModelView(this.api, this);
     ko.applyBindings(this.modelView);
     
     $('div.loading').fadeOut(200);

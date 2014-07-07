@@ -21,6 +21,7 @@
 var crypto = require('crypto');
 var fs = require('fs');
 var Dns = require('./dns.js');
+var moment = require('moment');
 
 //
 
@@ -39,6 +40,45 @@ var Api = function(accMan, mailer) {
     self.hostname = hostname;
     console.log('api ready (hostname seems to be ' + self.hostname + ')');
   });
+  
+  this.accMan.on('group invite', function(data) {
+    self.io.to('user-' + data.userId).emit('group invite', {
+      groupId: data.groupId
+    });
+  });
+  
+  this.accMan.on('group remove', function(data) {
+    var obj = { groupId: data.groupId };
+    for(var k in data.userIds) {
+      var id = data.userIds[k];
+      self.io.to('user-' + id).emit('group remove', obj);
+    }
+  });
+  
+  this.accMan.on('friend request', function(data) {
+    self.io.to('user-' + data.userId).emit('friend request', {
+      invoker: data.invoker
+    });
+  });
+  
+  this.accMan.on('friend response', function(data) {
+    self.io.to('user-' + data.userId).emit('friend response', {
+      targetId: data.targetId,
+      decision: data.decision
+    });
+  });
+  
+  this.accMan.on('friend online', function(data) {
+    self.io.to('user-' + data.userId).emit('friend online', {
+      friendId: data.friendId
+    });
+  });
+  
+  this.accMan.on('friend offline', function(data) {
+    self.io.to('user-' + data.userId).emit('friend offline', {
+      friendId: data.friendId
+    });
+  });
 };
 
 Api.prototype.setIO = function(io) {
@@ -46,7 +86,7 @@ Api.prototype.setIO = function(io) {
 };
 
 Api.prototype.defaultListeners = { disconnect: 'destroySession', login: 'login', 'create account': 'createAccount', 'activate account': 'activateAccount', 'restore login': 'restoreLogin' };
-Api.prototype.loggedInListeners = { logout: 'logout',  'chat message': 'chatMessage'};
+Api.prototype.loggedInListeners = { logout: 'logout',  'chat message': 'chatMessage', 'friend request': 'friendRequest', 'friend response': 'friendResponse', 'search accounts': 'searchAccounts'};
 
 Api.prototype.mailTemplates = {
   "activation": fs.readFileSync('mail_templates/account_activation.html').toString()
@@ -100,10 +140,21 @@ Api.prototype.destroySession = function(session) {
   this.removeSessionListeners(session, this.defaultListeners);
 };
 
+/**
+ * @param {Api} self
+ * @param {Socket} session
+ * @param {String} cmd
+ */
 var loginValid = function(self, session, cmd) {
-  var user = session.user;
   self.addSessionListeners(session, self.loggedInListeners);
-      
+  
+  var user = session.user;
+  user.loginToken = crypto.randomBytes(34).toString('base64').replace(/(\/|\+)/g, '0');
+  self.accMan.update(user.id, { loginToken: user.loginToken }, function(result) {
+    if(!result)
+      throw new Error('Could not update user\'s login token');
+  });
+  
   var userData = { };
   for(var k in user) {
     if(k === 'hash' || k === 'activationCode')
@@ -112,11 +163,16 @@ var loginValid = function(self, session, cmd) {
     userData[k] = user[k];
   }
 
-  // TODO add contact list to userData
+  session.join('user-' + user.id);
+  // TODO join groups
 
-  session.emit(cmd, userData);
+  self.accMan.getFriendlist(user.id, function(friendlist) {
+    userData.friendlist = friendlist;
+    
+    session.emit(cmd, userData);
+  });
 
-  // TODO tell all user contacts that their friend is online
+  self.accMan.setOnline(user.id);
 
   console.log('user ' + session.user.email + ' logged in');
 };
@@ -140,17 +196,15 @@ Api.prototype.login = function(session, data) {
     else {
       session.user = user;
       
-      user.loginToken = crypto.randomBytes(18).toString('base64').replace(/(\/|\+)/g, '0');
-      self.accMan.update(user.id, { loginToken: user.loginToken }, function(result) {
-        if(!result)
-          throw new Error('Could not update user\'s login token');
-      });
-      
       loginValid(self, session, 'login');
     }
   });
 };
 
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
 Api.prototype.restoreLogin = function(session, data) {
   if(!data || typeof data.loginToken !== 'string') {
     session.emit('restore login', 'ERR_INVALID_VALUES');
@@ -189,7 +243,7 @@ Api.prototype.logout = function(session, data, sessionStillOpen) {
     });
   }
   
-  // TODO tell all user contacts that their friend went offline
+  this.accMan.setOffline(session.user.id);
   
   console.log('user ' + session.user.email + ' logged out');
   session.user = undefined;
@@ -241,6 +295,10 @@ Api.prototype.createAccount = function(session, data) {
   });
 };
 
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
 Api.prototype.activateAccount = function(session, data) {
   if(!data || typeof data.code !== 'string') {
     session.emit('activate account', 'ERR_INVALID_VALUES');
@@ -255,8 +313,82 @@ Api.prototype.activateAccount = function(session, data) {
   });
 };
 
-Api.prototype.chatMessage = function(session, data) {
-  this.io.emit('chat message', data);
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
+Api.prototype.chatMessage = function(session, data) { // TODO group message
+  if(!data || typeof data.recipientId !== 'number')
+    return session.emit('chat message', 'ERR_INVALID_VALUES');
+  
+  data.senderId = session.user.id;
+  data.time = moment().unix();
+  
+  var self = this;
+  if(data.recipientId) { // friend message
+    this.accMan.getFriendship(data.senderId, data.recipientId, function(result) {
+      if(result === null || result.state !== 'accepted')
+        return;
+      
+      self.io.to('user-' + data.recipientId).to('user-' + data.senderId).emit('chat message', data);
+    });
+  }
+};
+
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
+Api.prototype.friendRequest = function(session, data) {
+  if(!data || typeof data.targetId !== 'number')
+    return session.emit('friend request', 'ERR_INVALID_VALUES');
+  
+  this.accMan.requestFriendship(session.user.id, data.targetId, function(result) {
+    session.emit('friend request', result ? 'OK' : 'ERR');
+  });
+};
+
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
+Api.prototype.friendResponse = function(session, data) {
+  if(!data || typeof data.invokerId !== 'number' || ['accepted', 'denied'].indexOf(data.decision) < 0)
+    return session.emit('friend response', 'ERR_INVALID_VALUES');
+  
+  this.accMan.respondFriendship(session.user.id, data.invokerId, data.decision, function(result) {
+    session.emit('friend response', result ? 'OK' : 'ERR');
+  });
+};
+
+/**
+ * @param {Socket} session
+ * @param {Object} data
+ */
+Api.prototype.searchAccounts = function(session, data) {
+  if(!data || typeof data.search !== 'string')
+    return session.emit('search accounts', 'ERR_INVALID_VALUES');
+  
+  if(data.search.trim() === '') {
+    process.nextTick(function() {
+      session.emit('search accounts', []);
+    });
+    return;
+  }
+  
+  this.accMan.searchAccounts(data.search, session.user.id, function(accounts) {
+    var ret = [];
+    
+    for(var k in accounts) {
+      var acc = accounts[k];
+      ret.push({
+        id: acc.id,
+        nick: acc.nick
+      });
+    }
+    
+    session.emit('search accounts', ret);
+  });
 };
 
 module.exports = Api;

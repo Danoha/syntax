@@ -26,11 +26,17 @@ var nodemailer = require('nodemailer');
 
 //
 
+process.on('uncaughtException', function(err) {
+  console.error('unhandled exception: ' + err);
+});
+
 var accMan = new AccManager(config.database);
 accMan.connect(function() {
-  var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
-  var api = new Api(accMan, mailer);
-  
-  var server = new Server(config.credentials, api);
-  server.listen(config.port);
+  accMan.resetOnlineCounters(function() {
+    var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
+    var api = new Api(accMan, mailer);
+
+    var server = new Server(config.credentials, api);
+    server.listen(config.port);
+  });
 });

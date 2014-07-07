@@ -13,39 +13,118 @@
     <div class="app" data-bind="with: app">
       <div class="navbar navbar-default">
         <div class="container-fluid">
-          <div class="navbar-brand">syntax.im</div>
+          <a class="navbar-brand" href="#" data-bind="click: clearTarget">syntax.im</a>
           
           <ul class="nav navbar-nav navbar-right" data-bind="with: account">
             <li id="fat-menu" class="dropdown">
               <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: nick"></span> <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu" aria-labelledby="accountButtonDrop">
-                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-bind="click: logout">logout</a></li>
+                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-bind="click: logout"><span class="glyphicon glyphicon-off"></span> logout</a></li>
               </ul>
             </li>
           </ul>
         </div>
       </div>
       
-      <div class="messages">
-        <div class="container" data-bind="foreach: messages">
-          <div class="message row">
-            <div class="col-xs-1 sender" data-bind="text: sender"></div>
-            <div class="col-xs-10 text" data-bind="text: text"></div>
-            <div class="col-xs-1 time" data-bind="text: $parent.formatTime($data.time)"></div>
+      <div class="col-xs-2">
+        <div class="add-friend panel panel-default hidden" data-bind="with: addFriend">
+          <div class="panel-heading">
+            <a class="pull-right" href="#" data-bind="click: $parent.addFriend.toggle"><span class="glyphicon glyphicon-remove"></span></a>
+            <h3 class="panel-title">add friend</h3>
+          </div>
+          <div class="panel-body">
+            <div data-bind="foreach: results">
+              <div class="friend">
+                <span class="glyphicon glyphicon-user status offline"></span>
+                <span class="nick" data-bind="text: nick"></span>
+                <button class="btn btn-primary btn-xs pull-right" data-bind="click: $parent.sendRequest">add</button>
+              </div>
+            </div>
+            <div class="no-result" data-bind="visible: results().length === 0">
+              no result
+            </div>
+          </div>
+          <div class="panel-footer">
+            <form data-bind="submit: submit">
+              <div class="input-group">
+                <input type="text" data-bind="value: search" class="form-control">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit">search</button>
+                </span>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div class="contacts panel panel-default" data-bind="with: account">
+          <div class="panel-heading">
+            <a class="pull-right" href="#" data-bind="click: $parent.addFriend.toggle"><span class="glyphicon glyphicon-plus"></span></a>
+            <h3 class="panel-title">contacts</h3>
+          </div>
+          <div class="panel-body">
+            <div data-bind="foreach: friendlist">
+              <div class="friend" data-bind="css: { active: isActive() }, click: setActive, visible: isVisible()">
+                <span class="glyphicon glyphicon-user status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
+                <span class="nick" data-bind="text: nick"></span>
+              </div>
+            </div>
+            <div class="no-result" data-bind="visible: friendlist().length === 0">
+              no contacts
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="bottom">
-        <div class="container" data-bind="with: composer">
-          <form data-bind="submit: submit">
-            <div class="input-group">
-              <input type="text" data-bind="value: text" class="form-control">
-              <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">send</button>
-              </span>
+      <div class="col-xs-10">
+        <div data-bind="if: target() !== null">
+          <div class="messages panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title" data-bind="text: target().displayName()"></h3>
             </div>
-          </form>
+            <div class="panel-body">
+              <div class="no-result col-md-8 col-md-offset-2" data-bind="visible: target().messages().length === 0">
+                there are no messages
+              </div>
+              <div class="col-md-8 col-md-offset-2 messages-content" data-bind="foreach: target().messages">
+                <div class="message row">
+                  <div class="col-xs-1 sender" data-bind="text: sender"></div>
+                  <div class="col-xs-10 text" data-bind="text: text"></div>
+                  <div class="col-xs-1 time" data-bind="text: formattedTime"></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-footer clearfix">
+              <div class="col-md-8 col-md-offset-2 composer" data-bind="with: target">
+                <div data-bind="visible: isAccepted, with: composer">
+                  <form data-bind="submit: submit">
+                    <div class="input-group">
+                      <input type="text" data-bind="value: text" class="form-control">
+                      <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">send</button>
+                      </span>
+                    </div>
+                  </form>
+                </div>
+                <div data-bind="visible: isCurrentUserInvoker() && !hasBeenResponded()" class="no-result">
+                  waiting for response
+                </div>
+                <div data-bind="visible: !isCurrentUserInvoker() && !hasBeenResponded()">
+                  respond to friendship request:&nbsp;
+                  <span class="btn-group btn-group-sm">
+                    <button class="btn btn-success" data-bind="click: respondAccept">accept</button>
+                    <button class="btn btn-danger" data-bind="click: respondDeny">deny</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel panel-default" data-bind="visible: target() === null">
+          <div class="panel-heading">
+            <h3 class="panel-title">no contact selected</h3>
+          </div>
+          <div class="panel-body">
+            start with selecting contact on the left side
+          </div>
         </div>
       </div>
     </div>
