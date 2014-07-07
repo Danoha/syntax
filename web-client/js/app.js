@@ -332,6 +332,9 @@
     }};
   
     var loginValid = function(result) {
+      if(self.login.stayOnline())
+        $.cookie('loginToken', result.loginToken, { expires: 365 });
+      
       var acc = self.app.account;
       for(var k in result) {
         if(k === 'friendlist')
@@ -356,6 +359,8 @@
           closeButton: false
         });
         
+        $.removeCookie('loginToken');
+        
         var email = self.login.email();
         var pwd = self.login.password();
         
@@ -374,9 +379,6 @@
               message = 'invalid values were entered';
               break;
             default:
-              if(self.login.stayOnline())
-                $.cookie('loginToken', result.loginToken, { expires: 365 });
-              
               loginValid(result);
               break;
           }
@@ -574,6 +576,9 @@
       
       if(!app.isFocused || !target.isActive())
         app.sfxs['o-ou'].play();
+      
+      if(!app.isFocused)
+        app.title.unread++;
     });
     
     var loginToken = $.cookie('loginToken');
@@ -586,6 +591,8 @@
       
       api.restoreLogin(loginToken, function(result) {
         wait.modal('hide');
+        
+        $.removeCookie('loginToken');
         
         if(result === 'ERR_INVALID')
           bootbox.alert('could not restore your login');
@@ -604,6 +611,37 @@
   var hostname = location.hostname;
   if(!hostname)
     hostname = '127.0.0.1';
+
+  App.prototype.title = {
+    _position: 0,
+    _handlers: {
+      title: function() { return 'syntax.im'; },
+      unread: function() { if(!this.unread) return false; return this.unread + ' unread'; }
+    },
+    _order: ['title', 'unread'],
+    
+    title: true,
+    unread: 0
+  };
+  
+  App.prototype.nextTitle = function() {
+    this.title._position = (this.title._position + 1) % this.title._order.length;
+    var key = this.title._order[this.title._position];
+    var value = this.title._handlers[key].call(this.title);
+    
+    if(!value)
+      return this.nextTitle();
+    
+    if(this.title._position !== 0)
+      value = this.title._handlers.title() + ' - ' + value;
+    
+    document.title = value;
+    
+    var self = this;
+    setTimeout(function() {
+      self.nextTitle();
+    }, 1000);
+  };
 
   App.prototype.server = 'https://' + hostname + ':1560';
   App.prototype.scripts = [
@@ -732,12 +770,15 @@
   App.prototype.init = function() {
     var self = this;
     $(window).on('focus', function() {
-        self.isFocused = true;
+      self.isFocused = true;
+
+      self.title.unread = 0;
     });
     $(window).on('blur', function() {
-        self.isFocused = false;
+      self.isFocused = false;
     });
     
+    this.nextTitle();
     this.api = new Api(this.io);
     this.modelView = new AppModelView(this.api, this);
     ko.applyBindings(this.modelView);
