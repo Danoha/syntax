@@ -197,13 +197,14 @@
       api.chatMessage(msg);
     };
     
-    var FriendModel = function(init) {
-      this.id = ko.observable(init.id);
-      this.nick = ko.observable(init.nick);
-      this.isOnline = ko.observable(init.isOnline);
-      this.state = ko.observable(init.state);
+    var FriendModel = function() {
+      this.id = ko.observable(0);
+      this.nick = ko.observable('');
+      this.isOnline = ko.observable(false);
+      this.state = ko.observable(null);
       this.messages = ko.observableArray();
-      this.invokerId = ko.observable(init.invokerId);
+      this.invokerId = ko.observable(0);
+      this.unreadMessages = ko.observable(0);
       
       var m = this;
       this.displayName = ko.computed(function() {
@@ -216,6 +217,7 @@
       
       this.setActive = function() {
         self.app.target(m);
+        m.unreadMessages(0);
       };
       
       this.isAccepted = ko.computed(function() {
@@ -237,10 +239,13 @@
       this.gotResponse = function(decision) {
         m.state(decision);
             
-        if(decision === 'denied') {
+        if(decision !== 'accepted') {
           if(self.app.target() === m)
             self.app.target(null);
         }
+        
+        if(decision === 'denied')
+          self.app.account.friendlist.remove(m);
       };
       
       this.respond = function(decision) {
@@ -268,17 +273,16 @@
         m.respond('denied');
       };
       
+      this.respondIgnore = function() {
+        bootbox.confirm('do you really want to ignore this user?', function(result) {
+          if(!result)
+            return;
+          
+          m.respond('ignored');
+        });
+      };
+      
       this.composer = new ComposerModel();
-    };
-    
-    FriendModel.fromSearchResult = function(row) {
-      return new FriendModel({
-        id: row.id,
-        nick: row.nick,
-        isOnline: false,
-        state: null,
-        invokerId: self.app.account.id()
-      });
     };
     
     self.createAccount = { email: ko.observable(''), nick: ko.observable(''), password: ko.observable(''), passwordAgain: ko.observable(''), submit: function() {
@@ -331,6 +335,22 @@
         });
     }};
   
+    var setFriend = function(id) {
+      var fl = self.app.account.friendlist();
+      
+      for(var k in fl) {
+        var f = fl[k];
+        
+        if(f.id() === id)
+          return f;
+      }
+      
+      var f = new FriendModel();
+      f.id(id);
+      self.app.account.friendlist.push(f);
+      return f;
+    };
+  
     var loginValid = function(result) {
       if(self.login.stayOnline())
         $.cookie('loginToken', result.loginToken, { expires: 365 });
@@ -344,9 +364,15 @@
           acc[k](result[k]);
       }
       
-      acc.friendlist([]);
+      acc.friendlist.removeAll();
       for(var k in result.friendlist) {
-        acc.friendlist.push(new FriendModel(result.friendlist[k]));
+        var row = result.friendlist[k];
+        
+        var f = setFriend(row.id);
+        f.nick(row.nick);
+        f.state(row.state);
+        f.isOnline(row.isOnline);
+        f.invokerId(row.invokerId);
       }
       
       $('div.account').fadeOut(200);
@@ -465,7 +491,10 @@
             if(result === 'OK') {
               self.app.addFriend.results.remove(row);
             
-              self.app.account.friendlist.push(FriendModel.fromSearchResult(row));
+              var f = setFriend(row.id);
+              f.nick(row.nick);
+              f.invokerId(self.app.account.id());
+              f.state(null);
             }
           });
         }
@@ -506,6 +535,7 @@
           continue;
         
         fl[k].gotResponse(data.decision);
+        break;
       }
     });
     
@@ -513,9 +543,9 @@
       if(typeof data !== 'object')
         return;
       
-      var friend = FriendModel.fromSearchResult(data.invoker);
-      friend.invokerId(data.invoker.id);
-      self.app.account.friendlist.push(friend);
+      var f = setFriend(data.invoker.id);
+      f.nick(data.invoker.nick);
+      f.invokerId(data.invoker.id);
     });
     
     
@@ -579,6 +609,9 @@
       
       if(!app.isFocused)
         app.title.unread++;
+      
+      if(!target.isActive())
+        target.unreadMessages(target.unreadMessages() + 1);
     });
     
     var loginToken = $.cookie('loginToken');
@@ -613,14 +646,17 @@
     hostname = '127.0.0.1';
 
   App.prototype.title = {
-    _position: 0,
+    _position: -1,
     _handlers: {
       title: function() { return 'syntax.im'; },
-      unread: function() { if(!this.unread) return false; return this.unread + ' unread'; }
+      unread: function() {
+        if(!this.unread)
+          return false;
+        
+        return this.unread + ' unread message' + (this.unread > 1 ? 's' : ''); }
     },
     _order: ['title', 'unread'],
     
-    title: true,
     unread: 0
   };
   
@@ -631,9 +667,6 @@
     
     if(!value)
       return this.nextTitle();
-    
-    if(this.title._position !== 0)
-      value = this.title._handlers.title() + ' - ' + value;
     
     document.title = value;
     

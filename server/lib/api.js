@@ -353,7 +353,7 @@ Api.prototype.friendRequest = function(session, data) {
  * @param {Object} data
  */
 Api.prototype.friendResponse = function(session, data) {
-  if(!data || typeof data.invokerId !== 'number' || ['accepted', 'denied'].indexOf(data.decision) < 0)
+  if(!data || typeof data.invokerId !== 'number' || ['accepted', 'denied', 'ignored'].indexOf(data.decision) < 0)
     return session.emit('friend response', 'ERR_INVALID_VALUES');
   
   this.accMan.respondFriendship(session.user.id, data.invokerId, data.decision, function(result) {

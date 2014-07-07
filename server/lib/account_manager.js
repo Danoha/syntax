@@ -352,8 +352,12 @@ AccManager.prototype.searchAccounts = function(search, userId, callback) {
   self.getFriendlist(userId, function(results) {
     var except = [userId];
     
-    for(var k in results)
+    for(var k in results) {
+      if(results[k].state === 'denied')
+        continue;
+      
       except.push(results[k].id);
+    }
     
     self.connection.query('SELECT id, nick, created FROM users WHERE (nick LIKE ? OR email = ?) AND id NOT IN (?)', ['%' + search + '%', search, except], function(err, rows) {
       if(err)
@@ -406,22 +410,40 @@ AccManager.prototype.requestFriendship = function(invokerId, targetId, callback)
 AccManager.prototype.respondFriendship = function(userId, invokerId, decision, callback) {
   var self = this;
   
-  self.connection.query('UPDATE friendlist SET state = ? WHERE invokerId = ? AND targetId = ? AND state IS NULL', [
-    decision, invokerId, userId
-  ], function(err, result) {
-    if(err)
-      return self.onError(err);
-    
+  var done = function() {
     self.emit('friend response', {
       userId: invokerId,
       targetId: userId,
       decision: decision
     });
+  };
+  
+  if(decision === 'denied') {
+    self.connection.query('DELETE FROM friendlist WHERE invokerId = ? AND targetId = ?', [invokerId, userId], function(err, result) {
+      if(err)
+        self.onError(err);
+      
+      done();
+      callback(!err && result && result.affectedRows === 1);
+    });
     
-    if(decision === 'accepted')
-      self.promoteOnline(userId, invokerId);
+    return;
+  }
+  
+  self.connection.query('UPDATE friendlist SET state = ? WHERE invokerId = ? AND targetId = ? AND state IS NULL', [decision, invokerId, userId], function(err, result) {
+    if(err)
+      return self.onError(err);
     
-    callback(!err && result.affectedRows === 1);
+    var res = !err && result.affectedRows === 1;
+    
+    if(res) {
+      done();
+
+      if(decision === 'accepted')
+        self.promoteOnline(userId, invokerId);
+    }
+    
+    callback(res);
   });
 };
 

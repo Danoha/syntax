@@ -66,6 +66,7 @@
               <div class="friend" data-bind="css: { active: isActive() }, click: setActive, visible: isVisible()">
                 <span class="glyphicon glyphicon-user status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
                 <span class="nick" data-bind="text: nick"></span>
+                <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
               </div>
             </div>
             <div class="no-result" data-bind="visible: friendlist().length === 0">
@@ -111,7 +112,8 @@
                   respond to friendship request:&nbsp;
                   <span class="btn-group btn-group-sm">
                     <button class="btn btn-success" data-bind="click: respondAccept">accept</button>
-                    <button class="btn btn-danger" data-bind="click: respondDeny">deny</button>
+                    <button class="btn btn-warning" data-bind="click: respondDeny">not now</button>
+                    <button class="btn btn-danger" data-bind="click: respondIgnore">ignore user</button>
                   </span>
                 </div>
               </div>
