@@ -17,11 +17,12 @@
  */
 
 (function(app) {
-  var templateBegin = '<span class="emoticon emoticon-';
-  var templateMiddle = '" title="';
-  var templateEnd = '"></span>';
+  var templateBegin = '$1<span class="emoticon emoticon-';
+  var templateEnd = '" title="$2"></span>';
   
-  var emoticons = {
+  var all = ['angel', 'angry', 'aww', 'blushing', 'confused', 'cool', 'creepy', 'crying', 'cthulhu', 'cute', 'cute_winking', 'devil', 'frowning', 'gasping', 'greedy', 'grinning', 'happy', 'happy_smiling', 'heart', 'irritated', 'irritated_2', 'kissing', 'laughing', 'lips_sealed', 'madness', 'malicious', 'naww', 'pouting', 'shy', 'sick', 'smiling', 'speechless', 'spiteful', 'stupid', 'surprised', 'surprised_2', 'terrified', 'thumbs_down', 'thumbs_up', 'tired', 'tongue_out', 'tongue_out_laughing', 'tongue_out_left', 'tongue_out_up', 'tongue_out_up_left', 'unsure', 'unsure_2', 'winking', 'winking_grinning', 'winking_tongue_out'];
+  
+  var mapping = {
     'cool': ['B)', '8)', 'B-)', '8-)'],
     'frowning': [':(', ':-('],
     'heart': ['&lt;3'],
@@ -58,25 +59,34 @@
   var Emoticons = function() {
     this.emoticons = { };
 
-    for(var k in emoticons) {
+    var re = function(value) {
+      return new RegExp('(\\s|^)(' + quote(value) + ')(?=(\\s|$))', 'gim'); // gim - global, case-insensitive, multiline
+    };
+
+    for(var k in mapping) {
       var regexps = [];
-      var list = emoticons[k].slice(0);
-      list.push('(' + k + ')');
+      var list = mapping[k];
       
-      for(var i in list) {
-        var sequence = list[i];
-        
-        regexps.push(new RegExp('(\\s|^)(' + quote(sequence) + ')(?=(\\s|$))', 'gim')); // gim - global, case-insensitive, multiline
-      }
+      for(var i in list)
+        regexps.push(re(list[i]));
       
       this.emoticons[k] = regexps;
+    }
+    
+    for(var i in all) {
+      var name = all[i];
+      var list = this.emoticons[name] || [];
+      
+      list.push(re('(' + name + ')'));
+      
+      this.emoticons[name] = list;
     }
   };
   
   Emoticons.prototype.replace = function(text) {
     for(var k in this.emoticons) {
       var regexps = this.emoticons[k];
-      var span = '$1' + templateBegin + k + templateMiddle + '$2' + templateEnd;
+      var span = templateBegin + k + templateEnd;
       for(var i in regexps)
         text = text.replace(regexps[i], span);
     }
@@ -86,57 +96,3 @@
   
   app.utils.emoticons = new Emoticons();
 })(document.syntaxApp);
-
-/*
- * List of available emoticons (* - used):
-  angel
-  angry
-  aww
-  blushing
-  confused
-  cool *
-  creepy
-  crying
-  cthulhu
-  cute
-  cute_winking
-  devil
-  frowning *
-  gasping
-  greedy
-  grinning
-  happy
-  happy_smiling
-  heart *
-  irritated
-  irritated_2
-  kissing *
-  laughing *
-  lips_sealed *
-  madness
-  malicious
-  naww *
-  pouting *
-  shy
-  sick
-  smiling *
-  speechless *
-  spiteful
-  stupid
-  surprised *
-  surprised_2
-  terrified
-  thumbs_down
-  thumbs_up
-  tired
-  tongue_out
-  tongue_out_laughing
-  tongue_out_left
-  tongue_out_up
-  tongue_out_up_left
-  unsure *
-  unsure_2
-  winking
-  winking_grinning
-  winking_tongue_out
- */
