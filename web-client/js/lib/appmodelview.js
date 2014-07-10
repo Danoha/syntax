@@ -157,6 +157,8 @@
       if(self.login.stayOnline())
         $.cookie('loginToken', result.loginToken, { expires: 365 });
       
+      self.login.lastLoginToken = result.loginToken;
+      
       var acc = self.app.account;
       for(var k in result) {
         if(k === 'friendlist' || k === 'grouplist')
@@ -188,7 +190,7 @@
       $('div.account').fadeOut(200);
     };
   
-    self.login = { email: ko.observable(''), password: ko.observable(''), stayOnline: ko.observable(true), submit: function() {
+    self.login = { email: ko.observable(''), password: ko.observable(''), stayOnline: ko.observable(true), lastLoginToken: '', submit: function() {
         var wait = bootbox.dialog({
           message: 'please wait',
           title: 'logging in',
@@ -555,6 +557,42 @@
           loginValid(result);
       });
     }
+    
+    var reconnectingDialog = null;
+    app.io.on('reconnecting', function() {
+      if(reconnectingDialog !== null)
+        return;
+      
+      reconnectingDialog = app.utils.waitDialog('connection lost, reconnecting');
+    });
+    
+    app.io.on('reconnect', function() {
+      reconnectingDialog.modal('hide');
+      reconnectingDialog = null;
+      
+      if(!self.app.account.id())
+        return;
+      
+      var wait = app.utils.waitDialog('relogging in');
+      var targetIndex = self.app.account.contacts().indexOf(self.app.target());
+      
+      api.restoreLogin(self.login.lastLoginToken, function(result) {
+        wait.modal('hide');
+        $.removeCookie('loginToken');
+        if(result === 'ERR_INVALID') {
+          self.app.account.logout();
+          bootbox.alert('could not restore your login');
+        } else {
+          loginValid(result);
+          
+          if(targetIndex >= 0) {
+            var contacts = self.app.account.contacts();
+            if(contacts.length > targetIndex)
+              self.app.target(contacts[targetIndex]);
+          }
+        }
+      });
+    });
   };
   
   app.modelViews.AppModelView = AppModelView;

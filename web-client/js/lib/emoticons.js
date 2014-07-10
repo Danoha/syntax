@@ -50,7 +50,7 @@
       for(var i in list) {
         var sequence = list[i];
         
-        regexps.push(new RegExp('(\\s|^)(' + quote(sequence) + ')(\\s|$)', 'gim')); // gi - global case-insensitive
+        regexps.push(new RegExp('(\\s|^)(' + quote(sequence) + ')(\\s|$)', 'gim')); // gim - global, case-insensitive, multiline
       }
       
       this.emoticons[k] = regexps;
