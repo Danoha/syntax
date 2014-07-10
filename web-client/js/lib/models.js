@@ -217,14 +217,10 @@
     });
 
     this.setActive = function() {
-      var messagesBody = $('.messages .panel-body');
-
-      var old = mv.app.target();
-      if(old)
-        old.scrollTop = messagesBody.scrollTop();
+      mv.app.clearTarget();
 
       mv.app.target(m);
-      messagesBody.scrollTop(m.scrollTop);
+      $('.messages .panel-body').scrollTop(m.scrollTop);
       m.unreadMessages(0);
     };
 
@@ -326,14 +322,10 @@
     });
 
     this.setActive = function() {
-      var messagesBody = $('.messages .panel-body');
-
-      var old = mv.app.target();
-      if(old)
-        old.scrollTop = messagesBody.scrollTop();
-
+      mv.app.clearTarget();
+      
       mv.app.target(m);
-      messagesBody.scrollTop(m.scrollTop);
+      $('.messages .panel-body').scrollTop(m.scrollTop);
       m.unreadMessages(0);
     };
 

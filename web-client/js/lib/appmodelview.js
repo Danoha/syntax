@@ -261,6 +261,10 @@
       },
       target: ko.observable(null),
       clearTarget: function() {
+        var old = self.app.target();
+        if(old)
+          old.scrollTop = $('.messages .panel-body').scrollTop();
+        
         self.app.target(null);
       },
       addFriend: {
