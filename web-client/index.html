@@ -16,8 +16,11 @@
         <div class="container-fluid">
           <a class="navbar-brand" href="#" data-bind="click: clearTarget">syntax.im</a>
           
-          <ul class="nav navbar-nav navbar-right" data-bind="with: account">
-            <li id="fat-menu" class="dropdown">
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <a href="#" data-bind="click: toggleMute"><span class="glyphicon" data-bind="css: { 'glyphicon-volume-up': !isMuted(), 'glyphicon-volume-off': isMuted }"></span></a>
+            </li>
+            <li id="fat-menu" class="dropdown" data-bind="with: account">
               <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: nick"></span> <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu" aria-labelledby="accountButtonDrop">
                 <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-bind="click: logout"><span class="glyphicon glyphicon-off"></span> logout</a></li>

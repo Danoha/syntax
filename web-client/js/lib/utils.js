@@ -17,9 +17,7 @@
  */
 
 (function(app) {
-  function Utils() {
-  
-  }
+  function Utils() { }
   
   Utils.prototype.waitDialog = function(text) {
     return bootbox.dialog({

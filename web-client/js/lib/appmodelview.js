@@ -323,8 +323,18 @@
             }
           });
         }
+      },
+      isMuted: ko.observable(false),
+      toggleMute: function() {
+        self.app.isMuted(!self.app.isMuted());
+        
+        if('localStorage' in window)
+          window.localStorage['isMuted'] = self.app.isMuted();
       }
     };
+    
+    if('localStorage' in window)
+      self.app.isMuted(window.localStorage['isMuted'] ? true : false);
     
     self.app.account.contacts = ko.computed(function() {
       var ret = self.app.account.grouplist().sort(function(l, r) {
@@ -491,7 +501,7 @@
       } else
         target.messages.push(msg);
       
-      if(sender !== 'self' && (!app.isFocused || !target.isActive()))
+      if(!self.app.isMuted() && sender !== 'self' && (!app.isFocused || !target.isActive()))
         app.sfxs['o-ou'].play();
       
       if(!app.isFocused)
