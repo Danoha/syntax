@@ -102,19 +102,19 @@
                 there are no messages
               </div>
               <div class="col-md-8 col-md-offset-2 messages-content" data-bind="foreach: target().messages">
-                <!-- ko if type === 'chat' -->
+                <div data-bind="if: type === 'chat'">
                   <div class="message row">
                     <div class="col-xs-1 sender" data-bind="text: sender"></div>
                     <div class="col-xs-10 text" data-bind="html: formattedText"></div>
                     <div class="col-xs-1 time" data-bind="text: formattedTime"></div>
                   </div>
-                <!-- /ko -->
-                <!-- ko if: type === 'system' -->
+                </div>
+                <div data-bind="if: type === 'system'">
                   <div class="message system row">
-                    <div class="col-xs-11 text" data-bind="text: text"></div>
+                    <div class="col-xs-11 text" data-bind="html: formattedText"></div>
                     <div class="col-xs-1 time" data-bind="text: formattedTime"></div>
                   </div>
-                <!-- /ko -->
+                </div>
               </div>
             </div>
             <div class="panel-footer clearfix">
