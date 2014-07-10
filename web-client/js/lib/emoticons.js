@@ -49,7 +49,7 @@
     'cthulhu': [':~'],
     'cute_winking': [';3'],
     'gasping': [':O', ':-O'],
-    'crying': [';(', ';-(', ':&quot;(']
+    'crying': [';(', ';-(', ':\'(']
   };
   
   var quote = function(str) {
