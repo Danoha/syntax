@@ -71,7 +71,7 @@ AccManager.prototype.handleServerDisconnect = function(conn) {
 };
 
 AccManager.prototype.onError = function(err) {
-  console.error('mysql error', err);
+  console.error('mysql error', err, err.stack);
 };
 
 /**
@@ -192,57 +192,119 @@ AccManager.prototype.activateAccount = function(code, callback) {
 };
 
 /**
+ * @param {Number} groupId
+ * @param {Function} callback
+ */
+AccManager.prototype.getGroup = function(groupId, callback) {
+  var self = this;
+  self.connection.query('SELECT * FROM groups WHERE id = ?', groupId, getCallback(self, function(group) {
+    if(group === null)
+      return null;
+    
+    self.connection.query('SELECT userId AS id, users.nick AS nick, role, isBanned, doNotInviteAgain FROM groupUsers JOIN users ON users.id = userId WHERE groupId = ?', groupId, function(err, rows) {
+      if(err)
+        return self.onError(err);
+      
+      group.members = rows;
+      
+      callback(group);
+    });
+  }));
+};
+
+/**
  * @param {Number} userId
  * @param {Function} callback
  */
 AccManager.prototype.getGroups = function(userId, callback) {
   var self = this;
-  this.connection.query('SELECT * FROM groupUsers JOIN groups ON group.id = groupUsers.groupId WHERE userId = ?', userId, function(err, result) {
+  this.connection.query('SELECT groupId, role, isBanned, doNotInviteAgain, isFavorite FROM groupUsers WHERE userId = ?', userId, function(err, rows) {
     if(err)
       return self.onError(err);
     
-    callback(result);
+    var groups = [];
+    
+    var left = rows.length;
+    var done = function() {
+      if(left !== 0)
+        return;
+      
+      callback(groups);
+    };
+    
+    var cb = function(row) {
+      return function(group) {
+        group.role = row.role;
+        group.isBanned = row.isBanned;
+        group.doNotInviteAgain = row.doNotInviteAgain;
+        group.isFavorite = row.isFavorite;
+        
+        for(var k in group.members) {
+          var m = group.members[k];
+          if(m.id !== userId)
+            continue;
+          
+          group.members.splice(k, 1);
+          break;
+        }
+        
+        groups.push(group);
+        
+        left--;
+        done();
+      };
+    };
+    
+    for(var k in rows) {
+      var group = rows[k];
+      
+      self.getGroup(group.groupId, cb(group));
+    }
+    
+    done();
   });
 };
 
 /**
  * @param {Number} userId
  * @param {Number} groupId
+ * @param {Number} inviterId
  * @param {Function} callback
  */
-AccManager.prototype.addToGroup = function(userId, groupId, emitInvite, callback) {
+AccManager.prototype.inviteToGroup = function(userId, groupId, inviterId, callback) {
   var self = this;
-  this.connection.query('SELECT * FROM groupUsers WHERE userId = ? AND groupId = ?', [userId, groupId], function(err, rows) {
-    if(err)
-      return self.onError(err);
+  self.getById(userId, function(user) {
+    if(user === null)
+      return callback(false); // user not found
     
-    if(rows && rows.length)
-      return callback(false); // already member
-    
-    self.connection.query('SELECT id FROM groups WHERE id = ?', groupId, function(err, rows) {
+    self.connection.query('SELECT * FROM groupUsers WHERE userId = ? AND groupId = ?', [userId, groupId], function(err, rows) {
       if(err)
         return self.onError(err);
-      
-      if(!rows || !rows.length)
-        return callback(false); // group doesn't exist
-      
-      self.connection.query('INSERT INTO groupUsers SET ?', {
-        groupId: groupId,
-        userId: userId,
-        role: 'member'
-      }, function(err, result) {
-        if(err)
-          self.onError(err);
-        
-        var result = !err && result !== undefined;
-        callback(result);
-        
-        if(emitInvite) {
-          self.emit('group invite', {
-            groupId: groupId,
-            userId: userId
+
+      if(rows && rows.length)
+        return callback(false); // already member
+
+      self.getGroup(groupId, function(group) {
+        if(group === null)
+          return callback(false); // group doesn't exist
+
+        self.connection.query('INSERT INTO groupUsers SET ?', {
+          groupId: groupId,
+          userId: userId,
+          role: 'member'
+        }, function(err, result) {
+          if(err)
+            self.onError(err);
+
+          var result = !err && result !== undefined;
+          callback(result);
+
+          self.emit('group invitation', {
+            group: group,
+            user: user,
+            inviterId: inviterId
           });
-        }
+        });
       });
     });
   });
@@ -293,7 +355,16 @@ AccManager.prototype.leaveGroup = function(userId, groupId, doNotInviteAgain, ca
       }
     });
     
-    callback(!err && result && result.affectedRows === 1);
+    var res = !err && result && result.affectedRows === 1;
+    
+    if(res) {
+      self.emit('group member leave', {
+        memberId: userId,
+        groupId: groupId
+      });
+    }
+    
+    callback(res);
   };
   
   if(doNotInviteAgain)
@@ -304,10 +375,9 @@ AccManager.prototype.leaveGroup = function(userId, groupId, doNotInviteAgain, ca
 
 /**
  * @param {Number} creatorId
- * @param {Array} memberIds
  * @param {Function} callback
  */
-AccManager.prototype.createGroup = function(creatorId, memberIds, callback) {
+AccManager.prototype.createGroup = function(creatorId, callback) {
   var self = this;
   
   self.connection.query('INSERT INTO groups VALUES ()', function(err, result) {
@@ -315,30 +385,25 @@ AccManager.prototype.createGroup = function(creatorId, memberIds, callback) {
       return self.onError(err);
  
     var groupId = result.insertId;
-    memberIds.push(creatorId);
-    var left = memberIds.length;
-    var end = function() {
-      if(left !== 0)
-        return;
-      
-      self.connection.query('UPDATE groupUsers SET role = ? WHERE groupId = ? AND userId = ?', ['admin', groupId, creatorId], function(err) {
-        if(err)
-          return self.onError(err);
-        
-        callback(groupId);
-      });
-    };
     
-    for(var k in memberIds) {
-      var memberId = memberIds[k];
-      self.addToGroup(memberId, groupId, memberId !== creatorId, function(done) {
-        left--;
-        end();
-      });
-    }
-    
-    end();
+    self.connection.query('INSERT INTO groupUsers SET groupId = ?, userId = ?, role = ?', [groupId, creatorId, 'admin'], function(err) {
+      if(err)
+        return self.onError(err);
+
+      callback(groupId);
+    });
   });
+};
+
+/**
+ * @param {Number} userId
+ * @param {Number} groupId
+ * @param {Function} callback
+ */
+AccManager.prototype.isValidGroupMember = function(userId, groupId, callback) {
+  this.connection.query('SELECT userId FROM groupUsers WHERE userId = ? AND groupId = ? AND isBanned = 0 AND doNotInviteAgain = 0', [userId, groupId], getCallback(this, function(result) {
+    callback(result !== null);
+  }));
 };
 
 /**
@@ -483,7 +548,8 @@ AccManager.prototype.getFriendlist = function(userId, callback) {
             nick: user.nick,
             isOnline: friendship.state === 'accepted' && user.onlineCounter > 0,
             state: friendship.state,
-            invokerId: friendship.invokerId
+            invokerId: friendship.invokerId,
+            isFavorite: friendship.isFavorite
           });
         }
         

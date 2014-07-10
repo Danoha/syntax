@@ -61,6 +61,12 @@ div.app div.message {
   padding: 5px;
 }
 
+div.app div.message.system {
+  background-color: #f6f6f6;
+  border: 1px solid #f2f2f2;
+  padding: 4px;
+}
+
 div.app div.message div.time {
   text-align: right;
 }
@@ -69,27 +75,35 @@ div.app div.message div.text {
   word-wrap: break-word;
 }
 
-div.app .friend .status.online {
+div.app .contact .rename {
+  display: none;
+}
+
+div.app .contact:hover .rename.available {
+  display: inline;
+}
+
+div.app .contact .status.online {
   color: rgb(127, 186, 0);
 }
 
-div.app .friend .status.offline {
+div.app .contact .status.offline {
   color: #888;
 }
 
-div.app .friend {
+div.app .contact {
   padding: 10px;
   margin: 3px 0;
 }
 
-div.app .contacts .friend:hover {
+div.app .contacts .contact:hover {
   background-color: #fafafa;
   border: 1px solid #f6f6f6;
   padding: 9px;
   cursor: pointer;
 }
 
-div.app .contacts .friend.active {
+div.app .contacts .contact.active {
   background-color: #f6f6f6;
   border: 1px solid #f2f2f2;
   padding: 9px;

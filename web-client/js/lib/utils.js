@@ -16,27 +16,32 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-'use strict';
+(function(app) {
+  function Utils() {
+  
+  }
+  
+  Utils.prototype.waitDialog = function(text) {
+    return bootbox.dialog({
+      message: 'please wait',
+      title: text,
+      closeButton: false
+    });
+  };
 
-var config = require('./config.json');
-var AccManager = require('./lib/account_manager.js');
-var Server = require('./lib/server.js');
-var Api = require('./lib/api.js');
-var nodemailer = require('nodemailer');
+  Utils.prototype.systemMessage = function(target, text) {
+    var msg = new app.models.MessageModel({
+      text: text,
+      time: moment().unix()
+    });
+    msg.type = 'system';
 
-//
-
-process.on('uncaughtException', function(err) {
-  console.error('unhandled exception: ' + err.stack);
-});
-
-var accMan = new AccManager(config.database);
-accMan.connect(function() {
-  accMan.resetOnlineCounters(function() {
-    var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
-    var api = new Api(accMan, mailer);
-
-    var server = new Server(config.credentials, api);
-    server.listen(config.port);
-  });
-});
+    target.messages.push(msg);
+  };
+  
+  Utils.prototype.replaceEmoticons = function(text) {
+    
+  };
+  
+  app.utils = new Utils();
+})(document.syntaxApp);

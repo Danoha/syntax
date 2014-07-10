@@ -41,10 +41,28 @@ var Api = function(accMan, mailer) {
     console.log('api ready (hostname seems to be ' + self.hostname + ')');
   });
   
-  this.accMan.on('group invite', function(data) {
-    self.io.to('user-' + data.userId).emit('group invite', {
-      groupId: data.groupId
+  var joinGroup = function(groupId, memberId) {
+    var clients = self.io.sockets.adapter.rooms['user-' + memberId];
+    var group = self.io.sockets.adapter.rooms['group-' + groupId] || { };
+    for(var id in clients)
+      group[id] = true;
+    
+    self.io.sockets.adapter.rooms['group-' + groupId] = group;
+  };
+  
+  this.accMan.on('group invitation', function(data) {
+    self.io.to('user-' + data.user.id).emit('group invitation', {
+      group: data.group,
+      inviterId: data.inviterId
     });
+    
+    self.io.to('group-' + data.group.id).emit('group invitation', {
+      inviterId: data.inviterId,
+      groupId: data.group.id,
+      user: data.user
+    });
+    
+    joinGroup(data.group.id, data.user.id);
   });
   
   this.accMan.on('group remove', function(data) {
@@ -79,14 +97,41 @@ var Api = function(accMan, mailer) {
       friendId: data.friendId
     });
   });
+  
+  this.accMan.on('group member leave', function(data) {
+    self.io.to('group-' + data.groupId).emit('group member leave', {
+      memberId: data.memberId,
+      groupId: data.groupId
+    });
+  });
+  
+  this.accMan.on('group join member', function(data) {
+    joinGroup(data.groupId, data.memberId);
+  });
 };
 
 Api.prototype.setIO = function(io) {
   this.io = io;
 };
 
-Api.prototype.defaultListeners = { disconnect: 'destroySession', login: 'login', 'create account': 'createAccount', 'activate account': 'activateAccount', 'restore login': 'restoreLogin' };
-Api.prototype.loggedInListeners = { logout: 'logout',  'chat message': 'chatMessage', 'friend request': 'friendRequest', 'friend response': 'friendResponse', 'search accounts': 'searchAccounts'};
+Api.prototype.defaultListeners = {
+  'disconnect': 'destroySession',
+  'login': 'login',
+  'create account': 'createAccount',
+  'activate account': 'activateAccount',
+  'restore login': 'restoreLogin'
+};
+
+Api.prototype.loggedInListeners = {
+  'logout': 'logout',
+  'chat message': 'chatMessage',
+  'friend request': 'friendRequest',
+  'friend response': 'friendResponse',
+  'search accounts': 'searchAccounts',
+  'group leave': 'groupLeave',
+  'group create': 'groupCreate',
+  'group invite': 'groupInvite'
+};
 
 Api.prototype.mailTemplates = {
   "activation": fs.readFileSync('mail_templates/account_activation.html').toString()
@@ -164,12 +209,22 @@ var loginValid = function(self, session, cmd) {
   }
 
   session.join('user-' + user.id);
-  // TODO join groups
 
   self.accMan.getFriendlist(user.id, function(friendlist) {
     userData.friendlist = friendlist;
     
-    session.emit(cmd, userData);
+    self.accMan.getGroups(user.id, function(groups) {
+      userData.grouplist = groups;
+      session.emit(cmd, userData);
+      
+      for(var k in groups) {
+        var g = groups[k];
+        if(g.isBanned || g.doNotInviteAgain)
+          continue;
+        
+        session.join('group-' + g.id);
+      }
+    });
   });
 
   self.accMan.setOnline(user.id);
@@ -318,7 +373,7 @@ Api.prototype.activateAccount = function(session, data) {
  * @param {Object} data
  */
 Api.prototype.chatMessage = function(session, data) { // TODO group message
-  if(!data || typeof data.recipientId !== 'number')
+  if(!data || (typeof data.recipientId !== 'number' && typeof data.groupId !== 'number'))
     return session.emit('chat message', 'ERR_INVALID_VALUES');
   
   data.senderId = session.user.id;
@@ -331,6 +386,13 @@ Api.prototype.chatMessage = function(session, data) { // TODO group message
         return;
       
       self.io.to('user-' + data.recipientId).to('user-' + data.senderId).emit('chat message', data);
+    });
+  } else if(data.groupId) { // group message
+    this.accMan.isValidGroupMember(data.senderId, data.groupId, function(result) {
+      if(!result)
+        return;
+      
+      self.io.to('group-' + data.groupId).emit('chat message', data);
     });
   }
 };
@@ -388,6 +450,41 @@ Api.prototype.searchAccounts = function(session, data) {
     }
     
     session.emit('search accounts', ret);
+  });
+};
+
+Api.prototype.groupLeave = function(session, data) {
+  if(!data || typeof data.groupId !== 'number' || typeof data.doNotInviteAgain !== 'boolean')
+    return session.emit('group leave', 'ERR_INVALID_VALUES');
+  
+  this.accMan.leaveGroup(session.user.id, data.groupId, data.doNotInviteAgain, function(result) {
+    if(result)
+      session.leave('group-' + data.groupId);
+    
+    session.emit('group leave', result ? 'OK' : 'ERR');
+  });
+};
+
+Api.prototype.groupCreate = function(session) {
+  this.accMan.createGroup(session.user.id, function(id) {
+    session.emit('group create', {
+      groupId: id
+    });
+  });
+};
+
+Api.prototype.groupInvite = function(session, data) {
+  if(!data || typeof data.groupId !== 'number' || typeof data.friendId !== 'number')
+    return session.emit('group invite', 'ERR_INVALID_VALUES');
+  
+  var self = this;
+  self.accMan.getFriendship(session.user.id, data.friendId, function(result) {
+    if(result === null || result.state !== 'accepted')
+      return session.emit('group invite', 'ERR_NOT_FRIENDS');
+    
+    self.accMan.inviteToGroup(data.friendId, data.groupId, session.user.id, function(result) {
+      session.emit('group invite', result ? 'OK' : 'ERR');
+    });
   });
 };
 

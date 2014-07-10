@@ -1,0 +1,57 @@
+.emoticon {
+  background: url(../img/emoticons.png) no-repeat top left;
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+}
+
+.emoticon.emoticon-angel { background-position: 0 0; } 
+.emoticon.emoticon-angry { background-position: 0 -22px; } 
+.emoticon.emoticon-aww { background-position: 0 -42px; } 
+.emoticon.emoticon-blushing { background-position: 0 -62px; } 
+.emoticon.emoticon-confused { background-position: 0 -82px; } 
+.emoticon.emoticon-cool { background-position: 0 -102px; } 
+.emoticon.emoticon-creepy { background-position: 0 -122px; } 
+.emoticon.emoticon-crying { background-position: 0 -142px; } 
+.emoticon.emoticon-cthulhu { background-position: 0 -162px; } 
+.emoticon.emoticon-cute { background-position: 0 -183px; } 
+.emoticon.emoticon-cute_winking { background-position: 0 -203px; } 
+.emoticon.emoticon-devil { background-position: 0 -223px; } 
+.emoticon.emoticon-frowning { background-position: 0 -245px; } 
+.emoticon.emoticon-gasping { background-position: 0 -265px; } 
+.emoticon.emoticon-greedy { background-position: 0 -285px; } 
+.emoticon.emoticon-grinning { background-position: 0 -305px; } 
+.emoticon.emoticon-happy { background-position: 0 -325px; } 
+.emoticon.emoticon-happy_smiling { background-position: 0 -345px; } 
+.emoticon.emoticon-heart { background-position: 0 -365px; } 
+.emoticon.emoticon-irritated { background-position: 0 -385px; } 
+.emoticon.emoticon-irritated_2 { background-position: 0 -405px; } 
+.emoticon.emoticon-kissing { background-position: 0 -425px; } 
+.emoticon.emoticon-laughing { background-position: 0 -445px; } 
+.emoticon.emoticon-lips_sealed { background-position: 0 -465px; } 
+.emoticon.emoticon-madness { background-position: 0 -485px; } 
+.emoticon.emoticon-malicious { background-position: 0 -505px; } 
+.emoticon.emoticon-naww { background-position: 0 -525px; } 
+.emoticon.emoticon-pouting { background-position: 0 -545px; } 
+.emoticon.emoticon-shy { background-position: 0 -565px; } 
+.emoticon.emoticon-sick { background-position: 0 -585px; } 
+.emoticon.emoticon-smiling { background-position: 0 -605px; } 
+.emoticon.emoticon-speechless { background-position: 0 -625px; } 
+.emoticon.emoticon-spiteful { background-position: 0 -645px; } 
+.emoticon.emoticon-stupid { background-position: 0 -665px; } 
+.emoticon.emoticon-surprised { background-position: 0 -685px; } 
+.emoticon.emoticon-surprised_2 { background-position: 0 -705px; } 
+.emoticon.emoticon-terrified { background-position: 0 -725px; } 
+.emoticon.emoticon-thumbs_down { background-position: 0 -745px; } 
+.emoticon.emoticon-thumbs_up { background-position: 0 -764px; } 
+.emoticon.emoticon-tired { background-position: 0 -783px; } 
+.emoticon.emoticon-tongue_out { background-position: 0 -803px; } 
+.emoticon.emoticon-tongue_out_laughing { background-position: 0 -823px; } 
+.emoticon.emoticon-tongue_out_left { background-position: 0 -843px; } 
+.emoticon.emoticon-tongue_out_up { background-position: 0 -863px; } 
+.emoticon.emoticon-tongue_out_up_left { background-position: 0 -883px; } 
+.emoticon.emoticon-unsure { background-position: 0 -903px; } 
+.emoticon.emoticon-unsure_2 { background-position: 0 -923px; } 
+.emoticon.emoticon-winking { background-position: 0 -943px; } 
+.emoticon.emoticon-winking_grinning { background-position: 0 -963px; } 
+.emoticon.emoticon-winking_tongue_out { background-position: 0 -983px; } 
