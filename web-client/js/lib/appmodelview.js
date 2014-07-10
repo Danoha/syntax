@@ -230,23 +230,31 @@
       account: {
         id: ko.observable(0),
         nick: ko.observable(''),
-        logout: function() {
-          bootbox.confirm('do you really want to logout?', function(result) {
-            if(result) {
-              $.removeCookie('loginToken');
-              api.logout();
-              $('div.account').fadeIn(200, function() {
-                if($('.add-friend').is(':visible'))
-                  self.app.addFriend.toggle();
-                
-                self.app.account.id(0);
-                self.app.account.nick('');
-                self.app.account.friendlist.removeAll();
-                
-                self.app.target(null);
-              });
-            }
-          });
+        logout: function(force) {
+          var lo = function() {
+            $.removeCookie('loginToken');
+            api.logout();
+            $('div.account').fadeIn(200, function() {
+              if($('.add-friend').is(':visible'))
+                self.app.addFriend.toggle();
+
+              self.login.lastLoginToken = '';
+              self.app.account.id(0);
+              self.app.account.nick('');
+              self.app.account.friendlist.removeAll();
+
+              self.app.target(null);
+            });
+          };
+          
+          if(force)
+            lo();
+          else {
+            bootbox.confirm('do you really want to logout?', function(result) {
+              if(result)
+                lo();
+            });
+          }
         },
         friendlist: ko.observableArray(),
         grouplist: ko.observableArray()
@@ -580,7 +588,7 @@
         wait.modal('hide');
         $.removeCookie('loginToken');
         if(result === 'ERR_INVALID') {
-          self.app.account.logout();
+          self.app.account.logout(true);
           bootbox.alert('could not restore your login');
         } else {
           loginValid(result);
