@@ -41,15 +41,6 @@ var Api = function(accMan, mailer) {
     console.log('api ready (hostname seems to be ' + self.hostname + ')');
   });
   
-  var joinGroup = function(groupId, memberId) {
-    var clients = self.io.sockets.adapter.rooms['user-' + memberId];
-    var group = self.io.sockets.adapter.rooms['group-' + groupId] || { };
-    for(var id in clients)
-      group[id] = true;
-    
-    self.io.sockets.adapter.rooms['group-' + groupId] = group;
-  };
-  
   this.accMan.on('group invitation', function(data) {
     self.io.to('user-' + data.user.id).emit('group invitation', {
       group: data.group,
@@ -62,7 +53,7 @@ var Api = function(accMan, mailer) {
       user: data.user
     });
     
-    joinGroup(data.group.id, data.user.id);
+    self.joinGroup(data.group.id, data.user.id);
   });
   
   this.accMan.on('group remove', function(data) {
@@ -106,7 +97,7 @@ var Api = function(accMan, mailer) {
   });
   
   this.accMan.on('group join member', function(data) {
-    joinGroup(data.groupId, data.memberId);
+    self.joinGroup(data.groupId, data.memberId);
   });
 };
 
@@ -135,6 +126,15 @@ Api.prototype.loggedInListeners = {
 
 Api.prototype.mailTemplates = {
   "activation": fs.readFileSync('mail_templates/account_activation.html').toString()
+};
+
+Api.prototype.joinGroup = function(groupId, memberId) {
+  var clients = this.io.sockets.adapter.rooms['user-' + memberId];
+  var group = this.io.sockets.adapter.rooms['group-' + groupId] || { };
+  for(var id in clients)
+    group[id] = true;
+
+  this.io.sockets.adapter.rooms['group-' + groupId] = group;
 };
 
 /**
@@ -466,10 +466,13 @@ Api.prototype.groupLeave = function(session, data) {
 };
 
 Api.prototype.groupCreate = function(session) {
+  var self = this;
   this.accMan.createGroup(session.user.id, function(id) {
     session.emit('group create', {
       groupId: id
     });
+    
+    self.joinGroup(id, session.user.id);
   });
 };
 
