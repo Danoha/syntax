@@ -230,7 +230,7 @@
       account: {
         id: ko.observable(0),
         nick: ko.observable(''),
-        logout: function(force) {
+        logout: function(dataOrForce) {
           var lo = function() {
             $.removeCookie('loginToken');
             api.logout();
@@ -247,7 +247,7 @@
             });
           };
           
-          if(force)
+          if(dataOrForce === true)
             lo();
           else {
             bootbox.confirm('do you really want to logout?', function(result) {
