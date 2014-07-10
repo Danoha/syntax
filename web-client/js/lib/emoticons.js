@@ -26,14 +26,29 @@
     'frowning': [':(', ':-('],
     'heart': ['&lt;3'],
     'kissing': [':*', ':-*'],
-    'laughing': [':D', ':-D'],
+    'grinning': [':D', ':-D'],
     'lips_sealed': [':X', ':-X'],
     'naww': [':3', ':-3'],
     'pouting': [':C', ':-C'],
     'smiling': [':)', ':-)'],
     'speechless': [':|', ':-|'],
-    'surprised': ['o.o'],
-    'unsure': [':/', ':-/']
+    'surprised': ['o.o', 'o_o'],
+    'unsure': [':/', ':-/'],
+    'thumbs_up': ['(y)'],
+    'thumbs_down': ['(n)'],
+    'tongue_out': [':P', ':-P'],
+    'tongue_out_laughing': ['xP'],
+    'winking': [';)', ';-)'],
+    'winking_grinning': [';D', ';-D'],
+    'winking_tongue_out': [';P', ';-P'],
+    'tired': ['-_-', '-.-'],
+    'happy': ['^^', '^_^'],
+    'laughing': ['xD'],
+    'malicious': ['&gt;:D'],
+    'cthulhu': [':~'],
+    'cute_winking': [';3'],
+    'gasping': [':O', ':-O'],
+    'crying': [';(', ';-(', ':&quot;(']
   };
   
   var quote = function(str) {
@@ -44,8 +59,9 @@
     this.emoticons = { };
 
     for(var k in emoticons) {
-      var list = emoticons[k];
       var regexps = [];
+      var list = emoticons[k].slice(0);
+      list.push('(' + k + ')');
       
       for(var i in list) {
         var sequence = list[i];
