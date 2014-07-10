@@ -60,7 +60,7 @@
   Emoticons.prototype.replace = function(text) {
     for(var k in this.emoticons) {
       var regexps = this.emoticons[k];
-      var span = '$1' + templateBegin + k + templateMiddle + '$2' + templateEnd + '$3';
+      var span = '$1' + templateBegin + k + templateMiddle + '$2' + templateEnd;
       for(var i in regexps)
         text = text.replace(regexps[i], span);
     }
