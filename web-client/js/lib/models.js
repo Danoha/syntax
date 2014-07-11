@@ -121,6 +121,17 @@
 
 
 (function(app) {
+  var newLineRegEx = /(?:\r\n|\r|\n)/g;
+  
+  var format = function(msg) {
+    var html = $('<div>').text(msg.text()).html();
+    html = html.replace(newLineRegEx, '<br>');
+    html = app.utils.emoticons.replace(html);
+    html = app.utils.links.replace(html);
+    
+    return html;
+  };
+  
   var MessageModel = function(init, sender, target) {
     this.text = ko.observable(init.text);
 
@@ -151,9 +162,7 @@
     }
 
     this.formattedTime = this._time.format('HH:mm');
-    
-    var html = $('<div>').text(this.text()).html();
-    this.formattedText = app.utils.emoticons.replace(html);
+    this.formattedText = format(this);
   };
   
   app.models.MessageModel = MessageModel;

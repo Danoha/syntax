@@ -16,26 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+
 (function(app) {
-  function Utils() { }
+  var Links = function() { };
   
-  Utils.prototype.waitDialog = function(text) {
-    return bootbox.dialog({
-      message: 'please wait',
-      title: text,
-      closeButton: false
+  Links.prototype.replace = function(html) {
+    return URI.withinString(html, function(url) {
+      var uri = URI(url);
+      if(!uri.protocol())
+        uri.protocol('http');
+      
+      return '<a target="_blank" href="' + uri.toString() + '">' + url + '</a>';
     });
   };
-
-  Utils.prototype.systemMessage = function(target, text) {
-    var msg = new app.models.MessageModel({
-      text: text,
-      time: moment().unix()
-    });
-    msg.type = 'system';
-
-    target.messages.push(msg);
-  };
   
-  app.utils = new Utils();
+  document.syntaxApp.utils.links = new Links();
 })(document.syntaxApp);

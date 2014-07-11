@@ -75,6 +75,7 @@
     'js/knockout-3.1.0.min.js',
     'js/lib/utils.js',
     'js/lib/emoticons.js',
+    'js/lib/links.js',
     'js/lib/api.js',
     'js/lib/appmodelview.js',
     'js/lib/models.js',
