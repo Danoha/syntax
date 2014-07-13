@@ -228,8 +228,6 @@ var loginValid = function(self, session, cmd) {
   });
 
   self.accMan.setOnline(user.id);
-
-  console.log('user ' + session.user.email + ' logged in');
 };
 
 /**
@@ -300,7 +298,6 @@ Api.prototype.logout = function(session, data, sessionStillOpen) {
   
   this.accMan.setOffline(session.user.id);
   
-  console.log('user ' + session.user.email + ' logged out');
   session.user = undefined;
   if(sessionStillOpen !== false)
     session.emit('logout', 'OK');

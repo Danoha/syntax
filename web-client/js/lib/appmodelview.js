@@ -334,7 +334,7 @@
     };
     
     if('localStorage' in window)
-      self.app.isMuted(window.localStorage['isMuted'] ? true : false);
+      self.app.isMuted(window.localStorage['isMuted'] === "true" ? true : false);
     
     self.app.account.contacts = ko.computed(function() {
       var ret = self.app.account.grouplist().sort(function(l, r) {

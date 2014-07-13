@@ -125,10 +125,9 @@
   
   var format = function(msg) {
     var html = $('<div>').text(msg.text()).html();
-    html = html.replace(newLineRegEx, '<br>');
     html = app.utils.emoticons.replace(html);
     html = app.utils.links.replace(html);
-    
+    html = html.replace(newLineRegEx, '<br>');
     return html;
   };
   
