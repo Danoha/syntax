@@ -2,7 +2,9 @@
   background: url(../img/emoticons.png) no-repeat top left;
   display: inline-block;
   width: 15px;
-  height: 15px;
+  height: 19px;
+  vertical-align: middle;
+  margin-top: 1px;
 }
 
 .emoticon.emoticon-angel { background-position: 0 0; } 

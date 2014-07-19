@@ -17,8 +17,8 @@
  */
 
 (function(app) {
-  var templateBegin = '$1<span class="emoticon emoticon-';
-  var templateEnd = '" title="$2"></span>';
+  var templateBegin = '$1<span class="text-hide emoticon emoticon-';
+  var templateEnd = '" title="$2">$2</span>';
   
   var all = ['angel', 'angry', 'aww', 'blushing', 'confused', 'cool', 'creepy', 'crying', 'cthulhu', 'cute', 'cute_winking', 'devil', 'frowning', 'gasping', 'greedy', 'grinning', 'happy', 'happy_smiling', 'heart', 'irritated', 'irritated_2', 'kissing', 'laughing', 'lips_sealed', 'madness', 'malicious', 'naww', 'pouting', 'shy', 'sick', 'smiling', 'speechless', 'spiteful', 'stupid', 'surprised', 'surprised_2', 'terrified', 'thumbs_down', 'thumbs_up', 'tired', 'tongue_out', 'tongue_out_laughing', 'tongue_out_left', 'tongue_out_up', 'tongue_out_up_left', 'unsure', 'unsure_2', 'winking', 'winking_grinning', 'winking_tongue_out'];
   
