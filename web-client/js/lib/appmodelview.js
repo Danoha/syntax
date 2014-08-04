@@ -330,7 +330,9 @@
         
         if('localStorage' in window)
           window.localStorage['isMuted'] = self.app.isMuted();
-      }
+      },
+      areNotificationsAllowed: ko.observable(false),
+      toggleNotifications: function() {}
     };
     
     if('localStorage' in window)
@@ -376,6 +378,45 @@
         g.messages.push(msg);
       });
     };
+    
+    self.app.toggleNotifications = function() {
+      if(!('Notification' in window)) {
+        bootbox.alert('this browser does not support desktop notifications');
+        return;
+      }
+      
+      var f = self.app.areNotificationsAllowed;
+      var set = function(val) {
+        f(val);
+        
+        if('localStorage' in window)
+          window.localStorage['notifications'] = "" + val;
+      };
+      
+      if(f()) {
+        set(false);
+        return;
+      }
+      
+      if (Notification.permission === 'granted') {
+        set(true);
+        return;
+      }
+      
+      var wait = app.utils.waitDialog('waiting for notification permission');
+      Notification.requestPermission(function(permission) {
+        wait.modal('hide');
+        
+        if(!('permission' in Notification))
+          Notification.permission = permission;
+
+        if(permission === 'granted')
+          set(true);
+      });
+    };
+    
+    if('localStorage' in window && 'Notification' in window && window.localStorage['notifications'] === "true" && Notification.permission === "granted")
+      self.app.toggleNotifications();
     
     var onlineOffline = function(id, state) {
       var fl = self.app.account.friendlist();
@@ -495,7 +536,7 @@
       if(target === 'self')
         target = sender;
       
-      if(target.isActive() && $('.composer input[type=text]').is(':focus') && isMessageDivScrolledToBottom()) {
+      if(target.isActive() && $('.composer textarea').is(':focus') && isMessageDivScrolledToBottom()) {
         target.messages.push(msg);
         scrollMessageDivToBottom();
       } else
@@ -504,8 +545,16 @@
       if(!self.app.isMuted() && sender !== 'self' && (!app.isFocused || !target.isActive()))
         app.sfxs['o-ou'].play();
       
-      if(!app.isFocused)
+      if(!app.isFocused) {
         app.title.unread++;
+        
+        if(self.app.areNotificationsAllowed()) {
+          new Notification('syntax', {
+            body: 'you have ' + app.title.unread + ' unread message' + (app.title.unread > 1 ? 's' : ''),
+            tag: 'syntax_chat_unread'
+          });
+        }
+      }
       
       if(!target.isActive())
         target.unreadMessages(target.unreadMessages() + 1);

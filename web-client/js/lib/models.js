@@ -21,6 +21,15 @@
     this.text = ko.observable('');
 
     this.submit = ComposerModel.send;
+    
+    this.keyDown = function(c, event) {
+      if((event.which === 13 || event.keyCode === 13) && !event.shiftKey) {
+        c.submit();
+        return false;
+      }
+      
+      return true;
+    };
   };
 
   ComposerModel.cmdMsg = function(msg, target) {
@@ -113,6 +122,8 @@
     }
 
     app.api.chatMessage(msg);
+    
+    $('.app .composer textarea').focus();
   };
   
   app.models.ComposerModel = ComposerModel;

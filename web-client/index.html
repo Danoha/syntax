@@ -18,6 +18,9 @@
           
           <ul class="nav navbar-nav navbar-right">
             <li>
+              <a href="#" data-bind="click: toggleNotifications"><span class="glyphicon" data-bind="css: { 'glyphicon-eye-open': areNotificationsAllowed(), 'glyphicon-eye-close': !areNotificationsAllowed() }"></span></a>
+            </li>
+            <li>
               <a href="#" data-bind="click: toggleMute"><span class="glyphicon" data-bind="css: { 'glyphicon-volume-up': !isMuted(), 'glyphicon-volume-off': isMuted }"></span></a>
             </li>
             <li id="fat-menu" class="dropdown" data-bind="with: account">
@@ -124,11 +127,12 @@
               <div class="col-md-8 col-md-offset-2 composer" data-bind="with: target">
                 <div data-bind="visible: type === 'group' || isAccepted(), with: composer">
                   <form data-bind="submit: submit">
-                    <div class="input-group">
-                      <input type="text" data-bind="value: text" class="form-control">
-                      <span class="input-group-btn">
-                        <button class="btn btn-default" type="submit">send</button>
-                      </span>
+                    <div class="col-sm-10">
+                      <textarea data-bind="value: text, valueUpdate: 'keyup', event: { keydown: keyDown }" class="form-control"></textarea>
+                    </div>
+                    
+                    <div class="col-sm-2 send-btn-col">
+                      <button class="btn btn-sm btn-default" type="submit">send</button>
                     </div>
                   </form>
                 </div>
