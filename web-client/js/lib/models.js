@@ -116,12 +116,10 @@
     else
       throw new Error('Target not supported');
 
-    if(msg.text.indexOf('/') === 0) {
+    if(msg.text.indexOf('/') === 0)
       ComposerModel.cmdMsg(msg, target);
-      return;
-    }
-
-    app.api.chatMessage(msg);
+    else
+      app.api.chatMessage(msg);
     
     $('.app .composer textarea').focus();
   };
@@ -133,12 +131,61 @@
 
 (function(app) {
   var newLineRegEx = /(?:\r\n|\r|\n)/g;
+  var codeRegEx = /(<code(=([^>]*))?>)/;
+  
+  var processCode = function(msg) {
+    var text = msg.text();
+    var match = text.match(codeRegEx);
+    
+    if(!match)
+      return;
+    
+    var codeTag = match[1];
+    var codeTagIndex = text.indexOf(codeTag);
+    var code = text.substr(codeTagIndex + codeTag.length);
+    
+    var attachment = {
+      type: 'code',
+      code: code
+    };
+    
+    if(match.length >= 4)
+      attachment.syntax = match[3];
+    
+    msg.text(text.substr(0, codeTagIndex));
+    msg.attachments.push(attachment);
+  };
+  
+  var formatAttachment = function(att) {
+    switch(att.type) {
+      case 'code':
+        var hl;
+        try {
+          var hl = att.syntax ? hljs.highlight(att.syntax, att.code) : null;
+        } catch(e) {}
+        
+        if(!hl)
+          hl = hljs.highlightAuto(att.code);
+        
+        return '<pre>' + (hl && hl.value ? hl.value : att.code) + '</pre>';
+      default:
+        return '';
+    }
+  };
   
   var format = function(msg) {
+    msg.attachments = [];
+    
+    processCode(msg);
+    
     var html = $('<div>').text(msg.text()).html();
     html = app.utils.emoticons.replace(html);
     html = app.utils.links.replace(html);
     html = html.replace(newLineRegEx, '<br>');
+    
+    for(var i in msg.attachments)
+      html += formatAttachment(msg.attachments[i]);
+    
     return html;
   };
   

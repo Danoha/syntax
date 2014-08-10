@@ -123,3 +123,7 @@ div.app .composer .send-btn-col button {
   position: absolute;
   bottom: 0;
 }
+
+pre {
+  margin-top: 5px;
+}

@@ -73,6 +73,7 @@
     'js/vendor/jquery.cookie.js',
     'js/vendor/howler.min.js',
     'js/vendor/knockout-3.1.0.min.js',
+    'js/vendor/highlight.pack.js',
     'js/lib/utils.js',
     'js/lib/emoticons.js',
     'js/lib/links.js',
