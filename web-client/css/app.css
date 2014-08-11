@@ -77,10 +77,12 @@ div.app div.message div.text {
 
 div.app .contact .rename {
   display: none;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 div.app .contact:hover .rename.available {
-  display: inline;
+  display: inline-block;
 }
 
 div.app .contact .status.online {
@@ -126,4 +128,9 @@ div.app .composer .send-btn-col button {
 
 pre {
   margin-top: 5px;
+}
+
+img.tooltip-image {
+  max-width: 180px;
+  margin: 5px 0;
 }

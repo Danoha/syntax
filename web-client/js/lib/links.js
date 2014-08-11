@@ -18,17 +18,29 @@
 
 
 (function(app) {
-  var Links = function() { };
-  
-  Links.prototype.replace = function(html) {
+  var Links = function() {
+  };
+
+  Links.prototype.replace = function(html, opts) {
     return URI.withinString(html, function(url) {
       var uri = URI(url);
-      if(!uri.protocol())
+      if (!uri.protocol())
         uri.protocol('http');
-      
-      return '<a target="_blank" href="' + uri.toString() + '">' + url + '</a>';
+
+      var plus = ''; var inner = '';
+      if (opts && opts.youtube === true) {
+        var id = app.utils.youtube.parseId(uri.toString());
+
+        if (id !== null)
+          plus += ' <a href="#" onclick="document.syntaxApp.utils.youtube.showEmbed(\'' + id + '\'); return false;"><span class="glyphicon glyphicon-facetime-video"></span></a>';
+      }
+      if (opts && opts.images === true && app.utils.images.isImage(uri.filename())) {
+        inner += ' onmouseenter="document.syntaxApp.utils.images.showHover(this); return false;"';
+      }
+
+      return '<a' + inner + ' target="_blank" href="' + uri.toString() + '">' + url + '</a>' + plus;
     });
   };
-  
-  document.syntaxApp.utils.links = new Links();
+
+  app.utils.links = new Links();
 })(document.syntaxApp);

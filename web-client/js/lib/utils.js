@@ -17,8 +17,9 @@
  */
 
 (function(app) {
-  function Utils() { }
-  
+  function Utils() {
+  }
+
   Utils.prototype.waitDialog = function(text) {
     return bootbox.dialog({
       message: 'please wait',
@@ -36,6 +37,6 @@
 
     target.messages.push(msg);
   };
-  
+
   app.utils = new Utils();
 })(document.syntaxApp);

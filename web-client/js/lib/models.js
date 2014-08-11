@@ -22,7 +22,7 @@
 
     this.submit = ComposerModel.send;
     
-    this.keyDown = function(c, event) {
+    this.keyPress = function(c, event) {
       if((event.which === 13 || event.keyCode === 13) && !event.shiftKey) {
         c.submit();
         return false;
@@ -167,7 +167,8 @@
         if(!hl)
           hl = hljs.highlightAuto(att.code);
         
-        return '<pre>' + (hl && hl.value ? hl.value : att.code) + '</pre>';
+        var lang = hl.language ? ' ' + hl.language : '';
+        return '<pre class="hljs' + lang + '">' + hl.value + '</pre>';
       default:
         return '';
     }
@@ -180,7 +181,7 @@
     
     var html = $('<div>').text(msg.text()).html();
     html = app.utils.emoticons.replace(html);
-    html = app.utils.links.replace(html);
+    html = app.utils.links.replace(html, {youtube: true, images: true});
     html = html.replace(newLineRegEx, '<br>');
     
     for(var i in msg.attachments)
@@ -269,7 +270,7 @@
         if(result === null)
           return;
 
-        window.localStorage['alias-group-' + m.id()] = result;
+        app.storage.set('alias-group-' + m.id(), result);
         m.alias(result);
       });
     };
@@ -378,7 +379,7 @@
         if(result === null)
           return;
 
-        window.localStorage['alias-friend-' + m.id()] = result;
+        app.storage.set('alias-friend-' + m.id(), result);
         m.alias(result);
       });
     };

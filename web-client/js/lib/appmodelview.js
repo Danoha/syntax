@@ -21,6 +21,8 @@
     var api = app.api;
     var self = this;
     
+    self.appRoot = app;
+    
     self.getFriend = function(id) {
       var fl = self.app.account.friendlist();
       
@@ -43,8 +45,8 @@
       f = new app.models.FriendModel();
       f.id(id);
       
-      if('localStorage' in window)
-        f.alias(window.localStorage['alias-friend-' + f.id()]);
+      if(app.storage.isAvailable)
+        f.alias(app.storage.get('alias-friend-' + f.id()));
       
       self.app.account.friendlist.push(f);
       return f;
@@ -72,8 +74,8 @@
       g = new app.models.GroupModel();
       g.id(id);
       
-      if('localStorage' in window)
-        g.alias(window.localStorage['alias-group-' + g.id()]);
+      if(app.storage.isAvailable)
+        g.alias(app.storage.get('alias-group-' + g.id()));
       
       self.app.account.grouplist.push(g);
       return g;
@@ -227,6 +229,10 @@
     }};
   
     self.app = {
+      embed: ko.observable(null),
+      clearEmbed: function() {
+        self.app.embed(null);
+      },
       account: {
         id: ko.observable(0),
         nick: ko.observable(''),
@@ -328,15 +334,15 @@
       toggleMute: function() {
         self.app.isMuted(!self.app.isMuted());
         
-        if('localStorage' in window)
-          window.localStorage['isMuted'] = self.app.isMuted();
+        if(app.storage.isAvailable)
+          app.storage.set('isMuted', self.app.isMuted());
       },
       areNotificationsAllowed: ko.observable(false),
       toggleNotifications: function() {}
     };
     
-    if('localStorage' in window)
-      self.app.isMuted(window.localStorage['isMuted'] === "true" ? true : false);
+    if(app.storage.isAvailable)
+      self.app.isMuted(app.storage.get('isMuted') ? true : false);
     
     self.app.account.contacts = ko.computed(function() {
       var ret = self.app.account.grouplist().sort(function(l, r) {
@@ -389,8 +395,8 @@
       var set = function(val) {
         f(val);
         
-        if('localStorage' in window)
-          window.localStorage['notifications'] = "" + val;
+        if(app.storage.isAvailable)
+          app.storage.set('notifications', "" + val);
       };
       
       if(f()) {
@@ -415,7 +421,7 @@
       });
     };
     
-    if('localStorage' in window && 'Notification' in window && window.localStorage['notifications'] === "true" && Notification.permission === "granted")
+    if(app.storage.isAvailable && 'Notification' in window && app.storage.get('notifications') === "true" && Notification.permission === "granted")
       self.app.toggleNotifications();
     
     var onlineOffline = function(id, state) {

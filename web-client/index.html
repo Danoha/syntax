@@ -34,7 +34,7 @@
         </div>
       </div>
       
-      <div class="col-xs-2">
+      <div class="col-md-2">
         <div class="add-friend panel panel-default hidden" data-bind="with: addFriend">
           <div class="panel-heading">
             <a class="pull-right" href="#" data-bind="click: $parent.addFriend.toggle"><span class="glyphicon glyphicon-remove"></span></a>
@@ -82,8 +82,8 @@
                   <span class="glyphicon glyphicon-link"></span>
                 </span>
                 <span class="nick" data-bind="text: displayName"></span>
-                <a href="#" class="rename" title="rename" data-bind="click: rename, css: { available: 'localStorage' in window }"><span class="glyphicon glyphicon-pencil"></span></a>
                 <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
+                <a href="#" class="rename pull-right" title="rename" data-bind="click: rename, css: { available: $root.appRoot.storage.isAvailable }"><span class="glyphicon glyphicon-pencil"></span></a>
               </div>
             </div>
             <div class="no-result" data-bind="visible: contacts().length === 0">
@@ -91,24 +91,37 @@
             </div>
           </div>
         </div>
+        
+        <div class="panel panel-default" data-bind="visible: embed() !== null">
+          <div class="panel-heading">
+            <span class="pull-right">
+              <a href="#" data-bind="click: clearEmbed" title="close"><span class="glyphicon glyphicon-remove"></span></a>
+            </span>
+            <h3 class="panel-title">embed</h3>
+          </div>
+          <div class="panel-body" data-bind="html: embed"></div>
+        </div>
       </div>
-      <div class="col-xs-10">
+      <div class="col-md-10">
         <div data-bind="if: target() !== null">
           <div class="messages panel panel-default">
             <div class="panel-heading">
               <div class="pull-right">
-                <span data-bind="if: target().type === 'group'">
-                  <!--<a href="#" data-bind=""><span class="glyphicon glyphicon-plus" title="invite"></span></a>&nbsp;-->
-                  <a href="#" data-bind="click: target().leave"><span class="glyphicon glyphicon-trash" title="leave"></span></a>
-                </span>
+                <div class="dropdown">
+                  <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown" id="chatTargetDropdown"><span class="caret"></span></a>
+                  <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="chatTargetDropdown" data-bind="with: target()">
+                    <li data-bind="if: type === 'group'" role="presentation"><a href="#" data-bind="click: leave"><span class="glyphicon glyphicon-ban-circle"></span>&nbsp;leave</a></li>
+                    <li data-bind="if: type === 'friend'" role="presentation"><a href="#">coming soon...</a></li>
+                  </ul>
+                </div>
               </div>
               <h3 class="panel-title" data-bind="text: target().displayName()"></h3>
             </div>
             <div class="panel-body">
-              <div class="no-result col-md-8 col-md-offset-2" data-bind="visible: target().messages().length === 0">
+              <div class="no-result" data-bind="visible: target().messages().length === 0">
                 there are no messages
               </div>
-              <div class="col-md-8 col-md-offset-2 messages-content" data-bind="foreach: target().messages">
+              <div class="messages-content" data-bind="foreach: target().messages">
                 <div data-bind="if: type === 'chat'">
                   <div class="message row">
                     <div class="col-xs-1 sender" data-bind="text: sender"></div>
@@ -129,7 +142,7 @@
                 <div data-bind="visible: type === 'group' || isAccepted(), with: composer">
                   <form data-bind="submit: submit">
                     <div class="col-sm-10">
-                      <textarea data-bind="value: text, valueUpdate: 'keyup', event: { keydown: keyDown }" class="form-control"></textarea>
+                      <textarea data-bind="value: text, valueUpdate: 'keypress', event: { keypress: keyPress }" class="form-control"></textarea>
                     </div>
                     
                     <div class="col-sm-2 send-btn-col">
@@ -158,6 +171,8 @@
           </div>
           <div class="panel-body">
             start with selecting contact on the left side
+            
+            TODO: usage tips & tricks
           </div>
         </div>
       </div>
