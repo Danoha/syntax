@@ -318,8 +318,7 @@ Api.prototype.createAccount = function(session, data) {
     email: data.email,
     nick: data.nick,
     hash: data.hash,
-    activationCode: crypto.randomBytes(18).toString('base64').replace(/(\/|\+)/g, '0'),
-    isActivated: 0
+    activationCode: crypto.randomBytes(18).toString('base64').replace(/(\/|\+)/g, '0')
   };
   
   var self = this;
