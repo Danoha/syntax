@@ -18,209 +18,99 @@
 
 'use strict';
 
-(function() {
-  var App = function() {
-    this.models = { };
-    this.utils = { };
-    this.modelViews = { };
-    
-    this.loadScripts();
-  };
-
-  var hostname = location.hostname;
-  if(!hostname)
-    hostname = '127.0.0.1';
-
-  App.prototype.title = {
-    _position: -1,
-    _handlers: {
-      title: function() { return 'syntax.im'; },
-      unread: function() {
-        if(!this.unread)
-          return false;
-        
-        return this.unread + ' unread message' + (this.unread > 1 ? 's' : ''); }
+require.config({
+  baseUrl: 'js',
+  paths: {
+    'jquery': './vendor/jquery',
+    'moment': './vendor/moment'
+  },
+  shim: {
+    'vendor/bootbox': {
+      deps: ['vendor/bootstrap.min']
     },
-    _order: ['title', 'unread'],
-    
-    unread: 0
-  };
-  
-  App.prototype.nextTitle = function() {
-    this.title._position = (this.title._position + 1) % this.title._order.length;
-    var key = this.title._order[this.title._position];
-    var value = this.title._handlers[key].call(this.title);
-    
-    if(!value)
-      return this.nextTitle();
-    
-    document.title = value;
-    
-    var self = this;
-    setTimeout(function() {
-      self.nextTitle();
-    }, 1000);
-  };
+    'vendor/bootstrap.min': {
+      deps: ['jquery']
+    }
+  },
+  //urlArgs: "bust=" + (new Date()).getTime() // remove from production
+});
 
-  App.prototype.server = 'https://' + hostname + ':1560';
-  App.prototype.scripts = [
-    'js/vendor/jquery-1.11.1.min.js',
-    'js/vendor/sha256.min.js',
-    'js/vendor/bootstrap.min.js',
-    'js/vendor/bootbox.min.js',
-    'js/vendor/URI.min.js',
-    'js/vendor/moment.min.js',
-    'js/vendor/jquery.cookie.js',
-    'js/vendor/howler.min.js',
-    'js/vendor/knockout-3.1.0.min.js',
-    'js/vendor/highlight.pack.js',
-    'js/lib/storage.js',
-    'js/lib/utils.js',
-    'js/lib/emoticons.js',
-    'js/lib/links.youtube.js',
-    'js/lib/links.images.js',
-    'js/lib/links.js',
-    'js/lib/api.js',
-    'js/lib/appmodelview.js',
-    'js/lib/models.js',
-    App.prototype.server + '/socket.io/socket.io.js'
-  ];
-  
-  App.prototype.loadScripts = function() {
-    var progressBar = null;
-    var pb = function() {
-      progressBar = document.getElementById('loadingProgressBar');
-    };
-    
-    var stack = this.scripts;
+define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'], function(socket, $, require, focus, bootbox) {
+  bootbox.setDefaults({
+    closeButton: false
+  });
+
+  var SyntaxApp = function() {
     var self = this;
-    var total = stack.length;
-    
-    var next = function() {
-      if(stack.length === 0) {
-        self.initSfxs();
-        self.initSocket();
+
+    // socket.io probably not initialized so provide callback
+    socket(function(err, io, clientLibrary) {
+      if (err) {
+        console.log('socket error', err);
+        $('.loading .container').text('could not load socket.io library (' + clientLibrary + ')');
         return;
       }
-      
-      var url = stack.shift();
-    
-      pb();
-      if(progressBar !== null)
-        progressBar.innerHTML = url;
-      
-      var script = document.createElement('script');
-      document.head.appendChild(script);
-      script.onload = function() {
-        var current = stack.length;
-        var percent = ((total - current) * 100) / total;
-        
-        pb();
-        if(progressBar !== null)
-          progressBar.style.width = percent + '%';
-        
-        next();
-      };
-      script.onerror = function() {
-        setTimeout(function() {
-          pb();
-          progressBar.innerHTML = 'error, could not load ' + url;
-          progressBar.style.width = '100%';
-          progressBar.className = 'progress-bar progress-bar-danger';
-        }, 0);
-      };
-      script.src = url;
-    };
-    
-    next();
-  };
-  
-  App.prototype.sfxs = ['o-ou'];
-  App.prototype.initSfxs = function() {
-    var cache = { };
-    
-    for(var k in this.sfxs) {
-      var n = this.sfxs[k];
-      
-      cache[n] = new Howl({
-        urls: ['sfx/' + n + '.ogg', 'sfx/' + n + '.mp3']
-      });
-    }
-    
-    this.sfxs = cache;
-  };
-  
-  App.prototype.initSocket = function() {
-    var self = this;
-    this.io = io(this.server);
-    $('#loadingProgressBar').text('connecting to chat server');
-    this.io.on('connect', function() {
-      $('#loadingProgressBar').text('done');
-      self.io.removeAllListeners('connect');
-      
-      try {
-        self.init();
-      } catch(err) {
-        console.error('init error', err);
-      }
-    });
-  };
-  
-  App.prototype.activate = function(code) {
-    var wait = bootbox.dialog({
-      message: 'please wait',
-      title: 'activating your account',
-      closeButton: false
-    });
-    
-    this.api.activateAccount(code, function(result) {
-      wait.modal('hide');
-      
-      var message;
-      switch(result) {
-        case 'OK':
-          message = 'your account has been activated';
-          break;
-        case 'ERR_NOT_FOUND':
-          message = 'error, your code is invalid';
-          break;
-      }
-      
-      bootbox.alert(message);
-    });
-  };
-  
-  App.prototype.initActivation = function() {
-    var self = this;
-    var query = URI.parseQuery(location.search);
-    if(query && query.activate) {
-      $(function() {
-        self.activate(query.activate);
-      });
-    }
-  };
-  
-  App.prototype.isFocused = true;
-  App.prototype.init = function() {
-    var self = this;
-    $(window).on('focus', function() {
-      self.isFocused = true;
 
-      self.title.unread = 0;
+      socket = io;
+
+      self.init();
     });
-    $(window).on('blur', function() {
-      self.isFocused = false;
-    });
-    
-    this.nextTitle();
-    this.api = new this.utils.Api();
-    this.appModelView = new this.modelViews.AppModelView();
-    ko.applyBindings(this.appModelView);
-    
-    $('div.loading').fadeOut(200);
-    
-    this.initActivation();
   };
-  
-  document.syntaxApp = new App();
-})();
+
+  SyntaxApp.prototype.init = function() {
+    focus.bind();
+
+    // TODO: use Deferred or Promise, maybe?
+
+    var initCounter = 2;
+    var accountScreen = null;
+
+    var showAccountScreen = function() {
+      if (--initCounter > 0)
+        return;
+
+      $('.loading').fadeOut(function() {
+        $('.loading').remove();
+      });
+
+      accountScreen.show();
+    };
+
+    // load account screen logic
+    require(['./screens/account'], function(as) {
+      accountScreen = as;
+
+      showAccountScreen();
+    });
+
+    // connect to chat server
+    if (socket.connected)
+      showAccountScreen();
+    else {
+      socket.on('connect', function() {
+        socket.removeAllListeners('connect');
+
+        showAccountScreen();
+      });
+    }
+  };
+
+  var _uniqueId = null;
+  SyntaxApp.prototype.getUniqueId = function() {
+    if (_uniqueId === null) {
+      var charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_/=+-%';
+      _uniqueId = '';
+
+      for (var i = 0; i < 32; i++)
+        _uniqueId += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    return _uniqueId;
+  }
+
+  SyntaxApp.prototype.resetUniqueId = function() {
+    _uniqueId = null;
+  }
+
+  return new SyntaxApp();
+});

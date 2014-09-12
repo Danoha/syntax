@@ -1,0 +1,169 @@
+<div class="app">
+  <div class="navbar navbar-default">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#" data-bind="click: closeTarget">syntax.im</a>
+
+      <ul class="nav navbar-nav navbar-right" data-bind="with: panel">
+        <li>
+          <a href="#" data-bind="click: toggleNotifications"><span class="glyphicon" data-bind="css: { 'glyphicon-eye-open': areNotificationsAllowed(), 'glyphicon-eye-close': !areNotificationsAllowed() }"></span></a>
+        </li>
+        <li>
+          <a href="#" data-bind="click: toggleMute"><span class="glyphicon" data-bind="css: { 'glyphicon-volume-up': !isMuted(), 'glyphicon-volume-off': isMuted }"></span></a>
+        </li>
+        <li id="fat-menu" class="dropdown">
+          <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: $root.user.nick"></span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="accountButtonDrop" data-bind="with: menu">
+            <li role="presentation">
+              <a role="menuitem" tabindex="-1" href="#" data-bind="click: settings"><span class="glyphicon glyphicon-cog"></span> options</a>
+            </li>
+            <li role="presentation">
+              <a role="menuitem" tabindex="-1" href="#" data-bind="click: logout"><span class="glyphicon glyphicon-off"></span> logout</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="friend-search panel panel-default" data-bind="slideVisible: friendSearch.visible, with: friendSearch">
+      <div class="panel-heading">
+        <a class="pull-right" href="#" data-bind="click: toggle"><span class="glyphicon glyphicon-remove"></span></a>
+        <h3 class="panel-title">add friend</h3>
+      </div>
+      <div class="panel-body">
+        <div data-bind="foreach: results">
+          <div class="contact">
+            <span class="glyphicon glyphicon-user status offline"></span>
+            <span class="nick" data-bind="text: nick"></span>
+            <button class="btn btn-primary btn-xs pull-right" data-bind="click: $parent.sendRequest">add</button>
+          </div>
+        </div>
+        <div class="no-result" data-bind="visible: results().length === 0">
+          no results
+        </div>
+      </div>
+      <div class="panel-footer">
+        <form data-bind="submit: submit">
+          <div class="input-group">
+            <input type="text" data-bind="value: query" class="form-control">
+            <span class="input-group-btn">
+              <button class="btn btn-default" type="submit">search</button>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="contacts panel panel-default" data-bind="slideVisible: !friendSearch.visible(), with: contactList">
+      <div class="panel-heading">
+        <span class="pull-right">
+          <a href="#" data-bind="click: $parent.friendSearch.toggle" title="add friend"><span class="glyphicon glyphicon-user"></span></a>
+          &nbsp;
+          <a href="#" data-bind="click: createGroup" title="create group">G</a>
+        </span>
+        <h3 class="panel-title">contacts</h3>
+      </div>
+      <div class="panel-body">
+        <div data-bind="foreach: all">
+          <div class="contact" data-bind="css: { active: $root.isTargetActive($data) }, click: $root.openTarget">
+            <!-- ko if: type === 'contact' -->
+            <span class="glyphicon glyphicon-user status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
+            <!-- /ko -->
+
+            <!-- ko if: type === 'group' -->
+            <span class="glyphicon glyphicon-link"></span>
+            <!-- /ko -->
+
+            <span class="nick" data-bind="text: displayName"></span>
+            <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
+            <a href="#" class="rename pull-right" title="rename" data-bind="click: rename, css: { available: $root.isStorageAvailable }"><span class="glyphicon glyphicon-pencil"></span></a>
+          </div>
+        </div>
+        <div class="no-result" data-bind="visible: all().length === 0">
+          no contacts
+        </div>
+      </div>
+    </div>
+
+    <div class="embed panel panel-default" data-bind="visible: embed.html() !== null">
+      <div class="panel-heading">
+        <span class="pull-right">
+          <a href="#" data-bind="click: embed.close" title="close"><span class="glyphicon glyphicon-remove"></span></a>
+        </span>
+        <h3 class="panel-title">embed: <span data-bind="text: embed.title"></span></h3>
+      </div>
+      <div class="panel-body" data-bind="html: embed.html"></div>
+    </div>
+  </div>
+  <div class="col-md-10">
+    <div data-bind="if: target() !== null">
+      <div class="messages panel panel-default">
+        <div class="panel-heading">
+          <div class="pull-right">
+            <div class="dropdown">
+              <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown" id="chatTargetDropdown"><span class="caret"></span></a>
+              <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="chatTargetDropdown" data-bind="with: (target().type === 'group' ? groupMenu : contactMenu)">
+                <!-- ko if: $parent.target().type === 'contact' -->
+                <li role="presentation"><a href="#">coming soon...</a>
+                </li>
+                <!-- /ko -->
+                <!-- ko if: $parent.target().type === 'group' -->
+                <li role="presentation"><a href="#" data-bind="click: leave"><span class="glyphicon glyphicon-ban-circle"></span>&nbsp;leave</a>
+                </li>
+                <!-- /ko -->
+              </ul>
+            </div>
+          </div>
+          <h3 class="panel-title" data-bind="text: target().displayName()"></h3>
+        </div>
+        <div class="panel-body">
+          <div class="no-result" data-bind="visible: target().totalMessages() === 0">
+            there are no messages
+          </div>
+          <div class="messages-content" data-bind="contents: target().messages"></div>
+        </div>
+        <div class="panel-footer clearfix">
+          <div class="col-md-8 col-md-offset-2 composer" data-bind="with: target">
+            <!-- ko if: type === 'group' || state() === 'accepted' -->
+            <div data-bind="with: composer">
+              <form data-bind="submit: submit">
+                <div class="col-sm-10">
+                  <textarea data-bind="value: text, valueUpdate: 'keypress', event: { keypress: keyPress }" class="form-control"></textarea>
+                </div>
+
+                <div class="col-sm-2 send-btn-col">
+                  <button class="btn btn-sm btn-default" type="submit">send</button>
+                </div>
+              </form>
+            </div>
+            <!-- /ko -->
+            <!-- ko if: type === 'contact' && state() === 'waiting' -->
+            <div data-bind="if: invokerId === $root.user.id" class="no-result">
+              waiting for response
+            </div>
+            <div data-bind="if: invokerId !== $root.user.id">
+              respond to friendship request:&nbsp;
+              <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
+                  <button class="btn btn-success" data-bind="click: sendYes">accept</button>
+                  <button class="btn btn-warning" data-bind="click: sendNo">not now</button>
+                  <button class="btn btn-danger" data-bind="click: sendNever">ignore user</button>
+                </span>
+            </div>
+            <!-- /ko -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-default" data-bind="visible: target() === null">
+      <div class="panel-heading">
+        <h3 class="panel-title">no contact selected</h3>
+      </div>
+      <div class="panel-body">
+        start with selecting contact on the left side<br>
+        <br>
+        TODO: usage tips & tricks
+      </div>
+    </div>
+  </div>
+</div>

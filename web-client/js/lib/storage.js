@@ -16,24 +16,38 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-(function(app) {
-  function Storage() {
+define([], function() {
+  function Storage(prefix) {
     this.isAvailable = ('localStorage' in window && window.localStorage) ? true : false;
-    this.storage = this.isAvailable ? window.localStorage : null;
+    this.storage = this.isAvailable ? window.localStorage : {};
+    this._prefix = prefix;
   }
+
+  Storage.prototype._key = function(key) {
+    return this._prefix ? this._prefix + '.' + key : key;
+  };
 
   Storage.prototype.get = function(key) {
     try {
-      return this.storage ? JSON.parse(this.storage[key]) : undefined;
-    } catch (e) {
+      return this.storage ? JSON.parse(this.storage[this._key(key)]) : undefined;
+    }
+    catch (e) {
       return undefined;
     }
   };
 
   Storage.prototype.set = function(key, value) {
     if (this.storage)
-      this.storage[key] = JSON.stringify(value);
+      this.storage[this._key(key)] = JSON.stringify(value);
+  };
+  
+  Storage.prototype.remove = function(key) {
+    delete this.storage[this._key(key)];
+  };
+  
+  Storage.prototype.prefix = function(prefix) {
+    return new Storage(this._key(prefix));
   };
 
-  app.storage = new Storage();
-})(document.syntaxApp);
+  return new Storage();
+});

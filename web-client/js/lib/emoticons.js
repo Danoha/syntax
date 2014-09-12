@@ -16,7 +16,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-(function(app) {
+'use strict';
+
+define([], function() {
   var templateBegin = '$1<span class="text-hide emoticon emoticon-';
   var templateEnd = '" title="$2">$2</span>';
   
@@ -94,5 +96,5 @@
     return text;
   };
   
-  app.utils.emoticons = new Emoticons();
-})(document.syntaxApp);
+  return new Emoticons();
+});

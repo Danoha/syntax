@@ -16,22 +16,133 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-(function(app) {
-  var Api = function() {
-    this.io = app.io;
-  };
-  
+'use strict';
+
+define(['../core/socket', '../vendor/sha256.min'], function(socket) {
+  var io = socket();
+
+  function Api() {}
+
   var tryCallback = function() {
     var args = Array.prototype.slice.call(arguments);
     var cb = args.splice(0, 1)[0];
-    
+
     try {
       cb.apply(this, args);
-    } catch(err) {
-      console.error('api callback error', err.stack);
+    }
+    catch (err) {
+      console.error('Api callback error.', err.stack);
     }
   };
-  
+
+  var bind = function(name, event, params, listen) {
+    Api.prototype[name] = function() {
+
+      if (listen !== false) {
+        var callback = Array.prototype.slice.call(arguments, -1)[0];
+
+        io.on(event, function(result) {
+          io.removeAllListeners(event);
+
+          tryCallback(callback, result);
+        });
+      }
+
+      var data;
+      if (params) {
+        var args;
+        if(listen !== false)
+          args = Array.prototype.slice.call(arguments, 0, -1);
+        else
+          args = Array.prototype.slice.call(arguments);
+        data = params.apply(undefined, args);
+      }
+
+      io.emit(event, data);
+    };
+  };
+
+  bind('chatMessage', 'chat message', function(data) {
+    return data;
+  }, false)
+
+  bind('login', 'login', function(email, password) {
+    return {
+      email: email,
+      hash: CryptoJS.SHA256(password).toString()
+    };
+  });
+
+  bind('logout', 'logout');
+
+  bind('activateAccount', 'activate account', function(code) {
+    return {
+      code: code
+    };
+  });
+
+  bind('createAccount', 'create account', function(email, nick, password) {
+    return {
+      email: email,
+      nick: nick,
+      hash: CryptoJS.SHA256(password).toString()
+    };
+  });
+
+  bind('restoreLogin', 'restore login', function(loginToken) {
+    return {
+      loginToken: loginToken
+    };
+  });
+
+  bind('searchAccounts', 'search accounts', function(search) {
+    return {
+      search: search
+    };
+  });
+
+  bind('createGroup', 'group create');
+
+  bind('leaveGroup', 'group leave', function(groupId, doNotInviteAgain) {
+    return {
+      groupId: groupId,
+      doNotInviteAgain: doNotInviteAgain
+    };
+  });
+
+  bind('friendRequest', 'friend request', function(targetId) {
+    return {
+      targetId: targetId
+    };
+  });
+
+  bind('friendResponse', 'friend response', function(invokerId, decision) {
+    return {
+      invokerId: invokerId,
+      decision: decision
+    };
+  });
+
+  bind('groupInvite', 'group invite', function(groupId, friendId) {
+    return {
+      groupId: groupId,
+      friendId: friendId
+    };
+  });
+
+  Api.prototype.on = function(event, listener) {
+    io.on(event, function() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(listener);
+      
+      tryCallback.apply(this, args);
+    });
+  };
+
+  return new Api();
+});
+
+/*
   Api.prototype.on = function(eventName, listener) {
     this.io.on(eventName, function() {
       var args = Array.prototype.slice.call(arguments);
@@ -41,154 +152,4 @@
     });
   };
 
-  Api.prototype.chatMessage = function(data) {
-    this.io.emit('chat message', data);
-  };
-
-  Api.prototype.logout = function(callback) {
-    var self = this;
-    self.io.on('logout', function(result) {
-      self.io.removeAllListeners('logout');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('logout');
-  };
-  
-  Api.prototype.login = function(email, password, callback) {
-    var self = this;
-    self.io.on('login', function(result) {
-      self.io.removeAllListeners('login');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('login', {
-      email: email,
-      hash: CryptoJS.SHA256(password).toString()
-    });
-  };
-  
-  Api.prototype.activateAccount = function(code, callback) {
-    var self = this;
-    self.io.on('activate account', function(result) {
-      self.io.removeAllListeners('activate account');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('activate account', {
-      code: code
-    });
-  };
-  
-  Api.prototype.createAccount = function(email, nick, password, callback) {
-    var self = this;
-    self.io.on('create account', function(result) {
-      self.io.removeAllListeners('create account');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('create account', {
-      email: email,
-      nick: nick,
-      hash: CryptoJS.SHA256(password).toString()
-    });
-  };
-  
-  Api.prototype.restoreLogin = function(loginToken, callback) {
-    var self = this;
-    self.io.on('restore login', function(result) {
-      self.io.removeAllListeners('restore login');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('restore login', {
-      loginToken: loginToken
-    });
-  };
-  
-  Api.prototype.searchAccounts = function(search, callback) {
-    var self = this;
-    self.io.on('search accounts', function(result) {
-      self.io.removeAllListeners('search accounts');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('search accounts', {
-      search: search
-    });
-  };
-  
-  Api.prototype.createGroup = function(callback) {
-    var self = this;
-    self.io.on('group create', function(result) {
-      self.io.removeAllListeners('group create');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('group create');
-  };
-  
-  Api.prototype.leaveGroup = function(groupId, doNotInviteAgain, callback) {
-    var self = this;
-    self.io.on('group leave', function(result) {
-      self.io.removeAllListeners('group leave');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('group leave', {
-      groupId: groupId,
-      doNotInviteAgain: doNotInviteAgain
-    });
-  };
-  
-  Api.prototype.friendRequest = function(targetId, callback) {
-    var self = this;
-    self.io.on('friend request', function(result) {
-      self.io.removeAllListeners('friend request');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('friend request', {
-      targetId: targetId
-    });
-  };
-  
-  Api.prototype.friendResponse = function(invokerId, decision, callback) {
-    var self = this;
-    self.io.on('friend response', function(result) {
-      self.io.removeAllListeners('friend response');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('friend response', {
-      invokerId: invokerId,
-      decision: decision
-    });
-  };
-  
-  Api.prototype.groupInvite = function(groupId, friendId, callback) {
-    var self = this;
-    self.io.on('group invite', function(result) {
-      self.io.removeAllListeners('group invite');
-      
-      tryCallback(callback, result);
-    });
-    
-    self.io.emit('group invite', {
-      groupId: groupId,
-      friendId: friendId
-    });
-  };
-  
-  app.utils.Api = Api;
-})(document.syntaxApp);
+*/

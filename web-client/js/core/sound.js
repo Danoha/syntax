@@ -16,27 +16,32 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-(function(app) {
-  function Utils() {
-  }
+'use strict';
 
-  Utils.prototype.waitDialog = function(text) {
-    return bootbox.dialog({
-      message: 'please wait',
-      title: text,
-      closeButton: false
-    });
+define(['../vendor/howler'], function(howler) {
+  var SoundManager = function() {
+    this._initSfxs();
   };
-
-  Utils.prototype.systemMessage = function(target, text) {
-    var msg = new app.models.MessageModel({
-      text: text,
-      time: moment().unix()
-    });
-    msg.type = 'system';
-
-    target.messages.push(msg);
+  
+  SoundManager.prototype._sfxs = ['o-ou'];
+  
+  SoundManager.prototype._initSfxs = function() {
+    var cache = { };
+    
+    for(var k in this._sfxs) {
+      var n = this._sfxs[k];
+      
+      cache[n] = new howler.Howl({
+        urls: ['sfx/' + n + '.ogg', 'sfx/' + n + '.mp3']
+      });
+    }
+    
+    this._sfxs = cache;
   };
-
-  app.utils = new Utils();
-})(document.syntaxApp);
+  
+  SoundManager.prototype.play = function(name) {
+    this._sfxs[name].play();
+  };
+  
+  return new SoundManager();
+});

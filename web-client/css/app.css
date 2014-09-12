@@ -16,121 +16,164 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-div.loading, div.account, div.app {
+body {
+  background: #eee;
+}
+div.loading,
+div.account,
+div.app {
   position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #eee;
-  
   z-index: 0;
 }
-
+div.account,
+div.app {
+  display: none;
+}
 div.loading > h1 {
   margin-top: 200px;
   text-align: center;
 }
-
 div.loading > div.container {
   margin-top: 30px;
+  text-align: center;
 }
-
-div.loading div.progress {
-  height: 26px;
+div.loading div.spinner {
+  width: 30px;
+  height: 30px;
+  background-color: #333;
+  margin: 100px auto;
+  -webkit-animation: rotateplane 1.2s infinite ease-in-out;
+  animation: rotateplane 1.2s infinite ease-in-out;
 }
-
 div.syntax-logo {
   text-align: center;
   font-size: 50px;
   padding: 25px 0;
   font-weight: 300;
 }
-
 div.app .messages .panel-body {
   height: calc(100vh - 209px);
   overflow-y: scroll;
 }
-
 div.app .no-result {
   font-style: italic;
   color: #888;
 }
-
 div.app div.message {
   padding: 5px;
 }
-
+div.app div.message.unread {
+  background-color: #f8f8f8;
+}
 div.app div.message.system {
   background-color: #f6f6f6;
   border: 1px solid #f2f2f2;
   padding: 4px;
 }
-
 div.app div.message div.time {
   text-align: right;
 }
-
 div.app div.message div.text {
   word-wrap: break-word;
 }
-
 div.app .contact .rename {
   display: none;
   margin-left: 5px;
   margin-right: 5px;
 }
-
 div.app .contact:hover .rename.available {
   display: inline-block;
 }
-
 div.app .contact .status.online {
   color: rgb(127, 186, 0);
 }
-
 div.app .contact .status.offline {
   color: #888;
 }
-
 div.app .contact {
   padding: 10px;
   margin: 3px 0;
 }
-
 div.app .contacts .contact:hover {
   background-color: #fafafa;
   border: 1px solid #f6f6f6;
   padding: 9px;
   cursor: pointer;
 }
-
 div.app .contacts .contact.active {
   background-color: #f6f6f6;
   border: 1px solid #f2f2f2;
   padding: 9px;
 }
-
 div.app .composer textarea {
   resize: none;
   height: 60px;
 }
-
 div.app .composer .send-btn-col {
   position: relative;
   height: 60px;
 }
-
 div.app .composer .send-btn-col button {
   position: absolute;
   bottom: 0;
 }
-
 pre {
   margin-top: 5px;
 }
-
-img.tooltip-image {
-  max-width: 180px;
+.imagepreview {
   margin: 5px 0;
+  height: 90px;
+}
+.imagepreview > img {
+  max-width: 180px;
+  max-height: 90px;
+}
+/* loading animation */
+
+@-webkit-keyframes rotateplane {
+  0% {
+    -webkit-transform: perspective(120px)
+  }
+  50% {
+    -webkit-transform: perspective(120px) rotateY(180deg)
+  }
+  100% {
+    -webkit-transform: perspective(120px) rotateY(180deg) rotateX(180deg)
+  }
+}
+@keyframes rotateplane {
+  0% {
+    transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+    -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg)
+  }
+  50% {
+    transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+    -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg)
+  }
+  100% {
+    transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+    -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+  }
+}
+a.link-attachment {
+  margin-left: 6px;
+}
+div.panel.embed .panel-body {
+  padding: 5px 5px 0 5px;
+}
+span.icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+.message .icon {
+  margin: -3px 3px 0 3px;
+}
+span.icon-youtube {
+  background-image: url('https://youtube.com/favicon.ico');
 }

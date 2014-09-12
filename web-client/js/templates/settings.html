@@ -1,0 +1,20 @@
+<div class="settings">
+  <div class="clearfix">
+    <div class="col-sm-4">
+      <ul class="nav nav-pills nav-stacked">
+      <!-- ko foreach: sections -->
+        <li data-bind="css: {active: $parent.isSectionActive($data)}">
+          <a href="#" data-bind="click: $parent.openSection, text: title"></a>
+        </li>
+      <!-- /ko -->
+      </ul>
+    </div>
+    <div class="col-sm-8">
+      <!-- ko foreach: sections -->
+        <div class="section" data-bind="slideVisible: $parent.isSectionActive($data), with: viewModel">
+          <div data-bind="css: $root.getSectionClassList($parent), contents: $parent.html"></div>
+        </div>
+      <!-- /ko -->
+    </div>
+  </div>
+</div>
