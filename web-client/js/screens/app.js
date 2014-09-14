@@ -447,10 +447,19 @@ define(
       .on('focus', processMessageScroll);
       
     $('.messages > .panel-body').tooltip({
-      selector: '[data-imagepreview]',
+      selector: '[data-imagepreview],[data-tooltiptext]',
       html: true,
       title: function() {
-        return '<div class="imagepreview"><img src="' + this.getAttribute('data-imagepreview') + '" alt="image preview"></div>';
+        var el = $(this);
+        var html = '';
+        
+        if(el.is('[data-imagepreview]'))
+          html += '<div class="imagepreview"><img src="' + el.attr('data-imagepreview') + '" alt="image preview"></div>';
+        
+        if(el.is('[data-tooltiptext]'))
+          html += '<div class="tooltiptext">' + el.attr('data-tooltiptext') + '</div>';
+        
+        return html;
       },
       container: '.messages .panel-body',
       placement: 'auto right'

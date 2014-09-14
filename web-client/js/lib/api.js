@@ -64,7 +64,7 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
 
   bind('chatMessage', 'chat message', function(data) {
     return data;
-  }, false)
+  }, false);
 
   bind('login', 'login', function(email, password) {
     return {
@@ -141,15 +141,3 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
 
   return new Api();
 });
-
-/*
-  Api.prototype.on = function(eventName, listener) {
-    this.io.on(eventName, function() {
-      var args = Array.prototype.slice.call(arguments);
-      args.unshift(listener);
-      
-      tryCallback.apply(this, args);
-    });
-  };
-
-*/

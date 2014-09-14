@@ -39,7 +39,7 @@ define(['jquery'], function($) {
     return {
       title: 'Twitch',
       html: '<object bgcolor="#000000" data="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" height="100%" type="application/x-shockwave-flash" width="100%"><param name="movie" value="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" /><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="flashvars" value="auto_play=true&amp;start_volume=25&amp;chapter_id=5069854" /></object>'
-    }
+    };
   }
   
   EmbedManager.prototype.format = function(attachment) {

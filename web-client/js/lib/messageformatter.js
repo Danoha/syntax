@@ -21,8 +21,8 @@
 define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vendor/uri/main', '../core/bus', '../vendor/highlight.min'], function($, app, moment, emoticons, messageParser, URI, bus) {
   var MessageFormatter = function() {};
 
-  var spotifyRegEx = /([^\w]|^)(spotify:[a-zA-Z:0-9_]+)(?=[^\w]|$)/gm;
-  var magnetRegEx = /([^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?=[^\w]|$)/gm;
+  var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z:0-9_]+)(?:[^\w]|$)/gm;
+  var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?:[^\w]|$)/gm;
 
   var ytDefaultUrlRegEx = /^https?:\/\/(www.)youtube.com\/watch/;
   var ytShortUrlRegEx = /^http:\/\/youtu.be\/[a-zA-Z0-9\-_]+/;
@@ -55,6 +55,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   function escapeHtml(html) {
     return messageParser.escapeHtml(html);
   }
+  
 
   function formatEmoticons(node) {
     node.contents().each(function(i) {
@@ -91,70 +92,84 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           return;
 
         var t = $(this);
-        var html = escapeHtml(t.text());
+        var text = t.text();
+        var html = escapeHtml(text);
 
-        html = html.replace(spotifyRegEx, function(match, before, link) {
+        function replace(urls, classes) {
+          var replaced = false;
+          $.each(urls, function(i, url) {
+            var htmlUrl = escapeHtml(url);
+            html = html.replace(htmlUrl, '<a class="' + classes + '">' + url + '</a>');
+            replaced = true;
+          });
+          return replaced;
+        }
+        
+        function matchAndReplace(regex, classes) {
+          var item;
+          var urls = [];
+          while (item = spotifyRegEx.exec(text))
+            urls.push(item[1]);
+    
+          replace(urls, classes); 
+        }
+        
+        if(matchAndReplace(spotifyRegEx, 'ignore-unload spotify')) {
           again = true;
-
-          return before + '<a class="ignore-unload spotify">' + link + '</a>';
-        });
-
-        if (again) {
           t.replaceWith(html);
           return false;
         }
 
-        html = html.replace(magnetRegEx, function(match, before, link) {
+        if(matchAndReplace(magnetRegEx, 'ignore-unload magnet')) {
           again = true;
-
-          return before + '<a class="ignore-unload magnet">' + link + '</a>';
-        });
-
-        if (again) {
           t.replaceWith(html);
           return false;
         }
 
-        html = URI.withinString(html, function(url) {
-          again = true;
-
-          var uri = URI(url);
-          if (!uri.scheme()) {
-            uri.scheme('http');
-            uri = uri.toString();
-          }
-          else
-            uri = url;
-
-          return '<a class="link" href="' + escapeHtml(uri) + '" target="_blank">' + url + '</a>';
+        var urls = [];
+        URI.withinString(text, function(url) {
+          urls.push(url);
+          return false;
         });
 
-        if (again) {
+        if (replace(urls, 'link')) {
+          again = true;
           t.replaceWith(html);
           return false;
         }
       });
     }
 
-    node.find('a:not([href])').each(function() {
-      var t = $(this);
-      t.attr({
-        href: t.text()
-      });
-    });
-
     node.find('a').each(function() {
+      var t = $(this);
+      var href = t.text();
+
+      if(t.is('.link')) {
+        t.attr('target', '_blank');
+        
+        var uri = URI(href);
+
+        if (!uri.scheme()) {
+          uri.scheme('http');
+          href = uri.toString();
+        }
+      }
+      
+      t.attr({
+        href: href
+      });
+    }).each(function() {
       var a = $(this);
       var url = a.attr('href');
       var uri = new URI(url);
-      var yId, imagePreview = null;
+      var yId, imagePreview = null, tooltipText = null;
 
       if (bus.userStorage.get('embed.spotify.enabled') && a.is('.spotify')) {
         $('<a>').html('<span class="glyphicon glyphicon-music"></span>')
           .addClass('embed spotify link-attachment')
           .attr('href', url).insertAfter(a);
       }
-      else if ((yId = parseYoutubeId(url)) !== null) {
+      else if ((yId = parseYoutubeId(url))) {
         if(bus.userStorage.get('preview.youtube.enabled'))
           imagePreview = 'https://img.youtube.com/vi/' + yId + '/default.jpg';
 
@@ -174,7 +189,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
             a.prepend('<span class="icon icon-youtube"></span>');
           }
           else
-            a.attr('title', t);
+            a.attr('data-tooltiptext', t);
         });
 
         if (bus.userStorage.get('embed.youtube.enabled')) {
@@ -208,6 +223,9 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
 
       if (imagePreview !== null)
         a.attr('data-imagepreview', imagePreview);
+      
+      if(tooltipText !== null)
+        a.attr('data-tooltiptext', tooltipText);
     });
   }
 
