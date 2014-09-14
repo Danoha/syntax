@@ -108,7 +108,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
         function matchAndReplace(regex, classes) {
           var item;
           var urls = [];
-          while (item = spotifyRegEx.exec(text))
+          while (item = regex.exec(text))
             urls.push(item[1]);
     
           return replace(urls, classes);
