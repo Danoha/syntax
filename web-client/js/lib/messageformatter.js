@@ -111,7 +111,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           while (item = spotifyRegEx.exec(text))
             urls.push(item[1]);
     
-          replace(urls, classes); 
+          return replace(urls, classes);
         }
         
         if(matchAndReplace(spotifyRegEx, 'ignore-unload spotify')) {
