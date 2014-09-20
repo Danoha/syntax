@@ -37,7 +37,7 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
       tag: 'syntax_chat_unread',
       icon: 'img/syntax_64.png'
     });
-  };
+  }
   
   function chatSound(data) {
     if(isMuted())
@@ -46,7 +46,7 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
     // TODO is data.target muted?
     
     soundManager.play('o-ou');
-  };
+  }
   
   Notificator.prototype.showNotification = function(data) {
     if(!areNotificationsAllowed())
@@ -57,7 +57,7 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
         chatNotification(data);
         break;
       default:
-        throw new Error('Unkown notification type.');
+        throw new Error('Unknown notification type.');
     }
   };
   
@@ -67,7 +67,7 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
         chatSound(data);
         break;
       default:
-        throw new Error('Unkown sound type.');
+        throw new Error('Unknown sound type.');
     }
   };
   

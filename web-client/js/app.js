@@ -31,8 +31,8 @@ require.config({
     'vendor/bootstrap.min': {
       deps: ['jquery']
     }
-  },
-  //urlArgs: "bust=" + (new Date()).getTime() // remove from production
+  }/*,
+  urlArgs: "bust=" + (new Date()).getTime() // remove from production*/
 });
 
 define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'], function(socket, $, require, focus, bootbox) {
