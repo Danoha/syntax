@@ -126,10 +126,7 @@ define([
 
     codestyleVM.active.subscribe(function(newValue) {
       $.each(codestyleVM.styles, function(i, style) {
-        if(style.title !== newValue)
-          style.link.setAttribute('disabled', true);
-        else
-          style.link.removeAttribute('disabled');
+        style.link.disabled = style.title !== newValue;
       });
     });
 
@@ -145,8 +142,8 @@ define([
 
   function apply() {
     var stylesheets = $('link.highlight-style');
-    stylesheets.attr('disabled', true);
-    stylesheets.filter('[title="' + bus.userStorage.get('codestyle.highlight.title') + '"]').removeAttr('disabled');
+    stylesheets.prop('disabled', true);
+    stylesheets.filter('[title="' + bus.userStorage.get('codestyle.highlight.title') + '"]').prop('disabled', false);
   }
 
   SettingsModal.setDefaults = function() {
