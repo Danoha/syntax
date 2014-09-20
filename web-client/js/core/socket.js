@@ -19,7 +19,7 @@
 'use strict';
 
 (function() {
-  var ioServer = 'https://178.62.174.243:1560';
+  var ioServer = 'https://syntax-im.tk:1560';
   var clientLibrary = ioServer + '/socket.io/socket.io.js';
 
   define(['module'], function(module) {
