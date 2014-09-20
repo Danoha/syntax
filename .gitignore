@@ -28,7 +28,8 @@ build/Release
 /nbproject
 
 # SSL certificate
-/server/certificate/*
+/server/certificate/key.pem
+/server/certificate/cert.pem
 
 # MySQL Workbench backup
 /server/database/*.bak

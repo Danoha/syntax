@@ -35,7 +35,14 @@ var Server = function(credentials, api) {
     cert: fs.readFileSync(credentials.certificate).toString(),
     secure: true
   };
-  
+
+  if (credentials.caFiles) {
+    opts.ca = [];
+    credentials.caFiles.forEach(function(caFile) {
+      opts.ca.push(fs.readFileSync(caFile).toString());
+    });
+  }
+
   this.https = https.createServer(opts);
   this.io = SocketIO.listen(this.https);
   
