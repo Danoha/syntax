@@ -20,7 +20,7 @@ define([], function() {
   function Storage(prefix) {
     this.isAvailable = ('localStorage' in window && window.localStorage) ? true : false;
     this.storage = this.isAvailable ? window.localStorage : {};
-    this._prefix = prefix;
+    this._prefix = prefix || null;
   }
 
   Storage.prototype._key = function(key) {

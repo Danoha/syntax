@@ -155,7 +155,8 @@
         </div>
       </div>
     </div>
-    <div class="panel panel-default" data-bind="visible: target() === null">
+    <!-- ko if: target() === null -->
+    <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">no contact selected</h3>
       </div>
@@ -165,5 +166,18 @@
         TODO: usage tips & tricks
       </div>
     </div>
+    <div class="panel panel-success">
+      <div class="panel-heading">
+        <h3 class="panel-title">changelog</h3>
+      </div>
+      <div class="panel-body">
+        <h4 class="h4">20/9/2014</h4>
+        <ul>
+          <li>changelog added</li>
+          <li>added /me command</li>
+        </ul>
+      </div>
+    </div>
+    <!-- /ko -->
   </div>
 </div>

@@ -35,7 +35,7 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
     new Notification('syntax', {
       body: 'you have ' + count + ' unread message' + (count > 1 ? 's' : ''),
       tag: 'syntax_chat_unread',
-      icon: 'img/syntax.png'
+      icon: 'img/syntax_64.png'
     });
   };
   

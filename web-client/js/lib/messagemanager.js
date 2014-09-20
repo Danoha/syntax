@@ -98,9 +98,5 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
     putMessage(target, row, true);
   };
 
-  MessageManager.prototype.handleScroll = function(container) {
-    console.log(container);
-  };
-
   return new MessageManager();
 });
