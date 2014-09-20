@@ -280,9 +280,18 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       .find('.text').text(text).end();
   }
 
+  function stateMessage(msg, flow) {
+    var sender = flow.sender === 'self' ? app.user.nick : flow.sender.displayName();
+    var text = msg.text.substr(4);
+
+    return systemMessage(sender + ' ' + text);
+  }
+
   MessageFormatter.prototype.format = function(msg, flow) {
     if (typeof msg === 'string')
       return systemMessage(msg);
+    else if(msg.text.lastIndexOf('/me ', 0) === 0)
+      return stateMessage(msg, flow);
     else
       return chatMessage(msg, flow);
   };
