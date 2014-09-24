@@ -25,7 +25,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?:[^\w]|$)/gm;
 
   var ytDefaultUrlRegEx = /^https?:\/\/(?:www.|)youtube.com\/watch/;
-  var ytShortUrlRegEx = /^http:\/\/youtu.be\/[a-zA-Z0-9\-_]+/;
+  var ytShortUrlRegEx = /^http:\/\/(?:www.|)youtu.be\/[a-zA-Z0-9\-_]+/;
 
   var imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'];
 
@@ -177,9 +177,14 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           if('media$content' in data.entry.media$group)
             length = data.entry.media$group.media$content[0].duration;
           else
-            length = data.entry.yt$duration.seconds;
+            length = data.entry.media$group.yt$duration.seconds;
           var duration = moment.duration(length * 1000);
-          var t = title + ' [' + Math.floor(duration.asMinutes()) + ':' + (duration.seconds() > 9 ? duration.seconds() : '0' + duration.seconds()) + ']';
+          var hours = Math.floor(duration.asHours());
+          var minutes = duration.minutes();
+          var seconds = duration.seconds();
+          if(hours > 0 && minutes <= 9)
+            minutes = '0' + minutes;
+          var t = title + ' [' + (hours > 0 ? hours + ':' : '') + minutes + ':' + (seconds > 9 ? seconds : '0' + seconds) + ']';
 
           a.attr({
             'data-title': title,
