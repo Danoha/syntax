@@ -59,6 +59,8 @@ define([
         html: htmlToContents(embeddingHtml),
         viewModel: {
           allowSpotify: ko.observable(),
+          spotifyReplace: ko.observable(),
+
           allowTwitch: ko.observable(),
 
           allowYoutube: ko.observable(),
@@ -107,6 +109,8 @@ define([
     var codestyleVM = this.viewModel.sections[2].viewModel;
 
     observableToStorage(embedVM.allowSpotify, 'embed.spotify.enabled');
+    observableToStorage(embedVM.spotifyReplace, 'embed.spotify.replace');
+
     observableToStorage(embedVM.allowTwitch, 'embed.twitch.enabled');
 
     observableToStorage(embedVM.allowYoutube, 'embed.youtube.enabled');
@@ -148,10 +152,12 @@ define([
 
   SettingsModal.setDefaults = function() {
     setDefault('embed.spotify.enabled', true);
+    setDefault('embed.spotify.replace', true);
+
     setDefault('embed.twitch.enabled', true);
 
     setDefault('embed.youtube.enabled', true);
-    setDefault('embed.youtube.replace', false);
+    setDefault('embed.youtube.replace', true);
 
     setDefault('preview.images.enabled', true);
     setDefault('preview.youtube.enabled', true);

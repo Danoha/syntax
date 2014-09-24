@@ -170,10 +170,14 @@ span.icon {
   width: 16px;
   height: 16px;
   vertical-align: middle;
+  background-size: 100% 100%;
 }
 .message .icon {
   margin: -3px 3px 0 3px;
 }
 span.icon-youtube {
   background-image: url('https://youtube.com/favicon.ico');
+}
+span.icon-spotify {
+  background-image: url('https://www.spotify.com/favicon.ico');
 }

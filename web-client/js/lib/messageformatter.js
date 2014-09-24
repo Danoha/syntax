@@ -21,11 +21,13 @@
 define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vendor/uri/main', '../core/bus', '../vendor/highlight.min'], function($, app, moment, emoticons, messageParser, URI, bus) {
   var MessageFormatter = function() {};
 
-  var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z:0-9_]+)(?:[^\w]|$)/gm;
+  var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z:0-9_%&\?]+)(?:[^\w]|$)/gm;
   var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?:[^\w]|$)/gm;
 
   var ytDefaultUrlRegEx = /^https?:\/\/(?:www.|)youtube.com\/watch/;
   var ytShortUrlRegEx = /^http:\/\/(?:www.|)youtu.be\/[a-zA-Z0-9\-_]+/;
+
+  var spotifyTrackIdRegEx = /^spotify:track:([a-zA-Z0-9_]+)/;
 
   var imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'];
 
@@ -40,6 +42,27 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       return uri.filename();
     else
       return null;
+  }
+
+  function parseSpotifyTrackId(uri) {
+    if(!uri)
+      return null;
+
+    var match = spotifyTrackIdRegEx.exec(uri);
+    if(!match || match.length !== 2)
+      return null;
+
+    return match[1];
+  }
+
+  function formatDuration(length) {
+    var duration = moment.duration(length * 1000);
+    var hours = Math.floor(duration.asHours());
+    var minutes = duration.minutes();
+    var seconds = duration.seconds();
+    if(hours > 0 && minutes <= 9)
+      minutes = '0' + minutes;
+    return (hours > 0 ? hours + ':' : '') + minutes + ':' + (seconds > 9 ? seconds : '0' + seconds);
   }
 
   function formatCode(node) {
@@ -163,10 +186,43 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       var uri = new URI(url);
       var yId, imagePreview = null, tooltipText = null;
 
-      if (bus.userStorage.get('embed.spotify.enabled') && a.is('.spotify')) {
-        $('<a>').html('<span class="glyphicon glyphicon-music"></span>')
-          .addClass('embed spotify link-attachment')
-          .attr('href', url).insertAfter(a);
+      if (a.is('.spotify')) {
+        var trackId = parseSpotifyTrackId(url);
+
+        if(trackId !== null) {
+          $.getJSON('https://api.spotify.com/v1/tracks/' + trackId).done(function(data) {
+            var name = data.name;
+            var artists = [];
+            $.each(data.artists, function(j, artist) {
+              artists.push(artist.name);
+            });
+
+            var duration = Math.floor(data.duration_ms / 1000);
+            var length = formatDuration(duration);
+            name = artists.join(', ') + ' - ' + name;
+
+            a.attr({
+              'data-title': name,
+              'data-length': duration
+            });
+
+            var title = name + ' [' + length + ']';
+
+            if(bus.userStorage.get('embed.spotify.replace')) {
+              a.text(title);
+              a.prepend('<span class="icon icon-spotify"></span>');
+            } else
+              a.attr('data-tooltiptext', title);
+
+            // TODO: album image as previewimage
+          });
+        }
+
+        if(bus.userStorage.get('embed.spotify.enabled')) {
+          $('<a>').html('<span class="glyphicon glyphicon-music"></span>')
+            .addClass('embed spotify link-attachment')
+            .attr('href', url).insertAfter(a);
+        }
       }
       else if ((yId = parseYoutubeId(url))) {
         if(bus.userStorage.get('preview.youtube.enabled'))
@@ -178,13 +234,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
             length = data.entry.media$group.media$content[0].duration;
           else
             length = data.entry.media$group.yt$duration.seconds;
-          var duration = moment.duration(length * 1000);
-          var hours = Math.floor(duration.asHours());
-          var minutes = duration.minutes();
-          var seconds = duration.seconds();
-          if(hours > 0 && minutes <= 9)
-            minutes = '0' + minutes;
-          var t = title + ' [' + (hours > 0 ? hours + ':' : '') + minutes + ':' + (seconds > 9 ? seconds : '0' + seconds) + ']';
+          var t = title + ' [' + formatDuration(length) + ']';
 
           a.attr({
             'data-title': title,
