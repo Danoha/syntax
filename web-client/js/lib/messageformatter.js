@@ -24,7 +24,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z:0-9_]+)(?:[^\w]|$)/gm;
   var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?:[^\w]|$)/gm;
 
-  var ytDefaultUrlRegEx = /^https?:\/\/(www.)youtube.com\/watch/;
+  var ytDefaultUrlRegEx = /^https?:\/\/(?:www.|)youtube.com\/watch/;
   var ytShortUrlRegEx = /^http:\/\/youtu.be\/[a-zA-Z0-9\-_]+/;
 
   var imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'];
@@ -55,7 +55,6 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   function escapeHtml(html) {
     return messageParser.escapeHtml(html);
   }
-  
 
   function formatEmoticons(node) {
     node.contents().each(function(i) {
@@ -174,10 +173,13 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           imagePreview = 'https://img.youtube.com/vi/' + yId + '/default.jpg';
 
         $.getJSON('https://gdata.youtube.com/feeds/api/videos/' + yId + '?v=2&alt=json').done(function(data) {
-          var title = data.entry.title.$t;
-          var length = data.entry.media$group.media$content[0].duration;
+          var title = data.entry.title.$t, length;
+          if('media$content' in data.entry.media$group)
+            length = data.entry.media$group.media$content[0].duration;
+          else
+            length = data.entry.yt$duration.seconds;
           var duration = moment.duration(length * 1000);
-          var t = title + ' [' + duration.minutes() + ':' + (duration.seconds() > 9 ? duration.seconds() : '0' + duration.seconds()) + ']';
+          var t = title + ' [' + Math.floor(duration.asMinutes()) + ':' + (duration.seconds() > 9 ? duration.seconds() : '0' + duration.seconds()) + ']';
 
           a.attr({
             'data-title': title,
