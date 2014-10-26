@@ -21,8 +21,8 @@
 define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vendor/uri/main', '../core/bus', '../vendor/highlight.min'], function($, app, moment, emoticons, messageParser, URI, bus) {
   var MessageFormatter = function() {};
 
-  var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z:0-9_%&\?]+)(?:[^\w]|$)/gm;
-  var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-]+)(?:[^\w]|$)/gm;
+  var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z0-9:\.=&%+;\-_\?]+)(?:[^\w]|$)/gm;
+  var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-_\?]+)(?:[^\w]|$)/gm;
 
   var ytDefaultUrlRegEx = /^https?:\/\/(?:www.|)youtube.com\/watch/;
   var ytShortUrlRegEx = /^http:\/\/(?:www.|)youtu.be\/[a-zA-Z0-9\-_]+/;
