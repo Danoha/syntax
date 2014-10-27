@@ -76,6 +76,7 @@ div.app div.message.system {
 }
 div.app div.message div.time {
   text-align: right;
+  color: #999999;
 }
 div.app div.message div.text {
   word-wrap: break-word;

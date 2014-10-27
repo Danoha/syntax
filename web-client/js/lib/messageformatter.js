@@ -302,19 +302,19 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
 
   function getChatRow() {
     return $('<div>').addClass('message row').append(
-      $('<div>').addClass('col-xs-1 sender')
+      $('<div>').addClass('col-xs-10 col-sm-1 sender')
     ).append(
-      $('<div>').addClass('col-xs-10 text')
+        $('<div>').addClass('col-xs-2 col-sm-1 pull-right time')
     ).append(
-      $('<div>').addClass('col-xs-1 time')
+      $('<div>').addClass('col-xs-12 col-sm-9 text')
     );
   }
 
   function getSystemRow() {
     return $('<div>').addClass('message system row').append(
-      $('<div>').addClass('col-xs-offset-1 col-xs-10 text')
+      $('<div>').addClass('col-sm-offset-1 col-xs-10 text')
     ).append(
-      $('<div>').addClass('col-xs-1 time')
+      $('<div>').addClass('col-xs-2 col-sm-1 time')
     );
   }
 
