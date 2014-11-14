@@ -453,8 +453,15 @@ define(
         var el = $(this);
         var html = '';
         
-        if(el.is('[data-imagepreview]'))
-          html += '<div class="imagepreview"><img src="' + el.attr('data-imagepreview') + '" alt="image preview"></div>';
+        if(el.is('[data-imagepreview]')) {
+          var url = el.attr('data-imagepreview');
+          var ext = url.split('.').pop();
+
+          if(ext === 'webm' || ext === 'gifv') {
+            html += '<div class="imagepreview"><video autoplay loop src="' + url + '" alt="video preview"></video></div>';
+          } else
+            html += '<div class="imagepreview"><img src="' + url + '" alt="image preview"></div>';
+        }
         
         if(el.is('[data-tooltiptext]'))
           html += '<div class="tooltiptext">' + el.attr('data-tooltiptext') + '</div>';

@@ -129,7 +129,7 @@ pre {
   margin: 5px 0;
   height: 90px;
 }
-.imagepreview > img {
+.imagepreview > img, .imagepreview > video {
   max-width: 180px;
   max-height: 90px;
 }

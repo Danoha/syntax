@@ -29,7 +29,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
 
   var spotifyTrackIdRegEx = /^spotify:track:([a-zA-Z0-9_]+)/;
 
-  var imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'];
+  var imageExts = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp', 'webm', 'gifv'];
 
   function parseYoutubeId(url) {
     if (!url)
