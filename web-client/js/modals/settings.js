@@ -72,6 +72,10 @@ define([
         html: htmlToContents(previewHtml),
         viewModel: {
           allowImages: ko.observable(),
+
+          allowImgur: ko.observable(),
+          imgurReplace: ko.observable(),
+
           allowYoutube: ko.observable()
         }
       }, {
@@ -117,6 +121,8 @@ define([
     observableToStorage(embedVM.youtubeReplace, 'embed.youtube.replace');
 
     observableToStorage(previewVM.allowImages, 'preview.images.enabled');
+    observableToStorage(previewVM.allowImgur, 'preview.imgur.enabled');
+    observableToStorage(previewVM.imgurReplace, 'preview.imgur.replace');
     observableToStorage(previewVM.allowYoutube, 'preview.youtube.enabled');
 
     var active = observableToStorage(codestyleVM.active, 'codestyle.highlight.title');
@@ -160,6 +166,8 @@ define([
     setDefault('embed.youtube.replace', true);
 
     setDefault('preview.images.enabled', true);
+    setDefault('preview.imgur.enabled', true);
+    setDefault('preview.imgur.replace', true);
     setDefault('preview.youtube.enabled', true);
 
     setDefault('codestyle.highlight.title', 'Default');

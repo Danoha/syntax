@@ -45,11 +45,11 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   }
 
   function parseSpotifyTrackId(uri) {
-    if(!uri)
+    if (!uri)
       return null;
 
     var match = spotifyTrackIdRegEx.exec(uri);
-    if(!match || match.length !== 2)
+    if (!match || match.length !== 2)
       return null;
 
     return match[1];
@@ -184,7 +184,15 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       var a = $(this);
       var url = a.attr('href');
       var uri = new URI(url);
-      var yId, imagePreview = null, tooltipText = null;
+      var yId;
+
+      function setImagePreview(link) {
+        a.attr('data-imagepreview', link);
+      }
+
+      function setTooltipText(text) {
+        a.attr('data-tooltiptext', text);
+      }
 
       if (a.is('.spotify')) {
         var trackId = parseSpotifyTrackId(url);
@@ -212,7 +220,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
               a.text(title);
               a.prepend('<span class="icon icon-spotify"></span>');
             } else
-              a.attr('data-tooltiptext', title);
+              setTooltipText(title);
 
             // TODO: album image as previewimage
           });
@@ -226,7 +234,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       }
       else if ((yId = parseYoutubeId(url))) {
         if(bus.userStorage.get('preview.youtube.enabled'))
-          imagePreview = 'https://img.youtube.com/vi/' + yId + '/default.jpg';
+          setImagePreview('https://img.youtube.com/vi/' + yId + '/default.jpg');
 
         $.getJSON('https://gdata.youtube.com/feeds/api/videos/' + yId + '?v=2&alt=json').done(function(data) {
           var title = data.entry.title.$t, length;
@@ -246,7 +254,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
             a.prepend('<span class="icon icon-youtube"></span>');
           }
           else
-            a.attr('data-tooltiptext', t);
+            setTooltipText(t);
         });
 
         if (bus.userStorage.get('embed.youtube.enabled')) {
@@ -275,14 +283,51 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
             }).insertAfter(a);
         }
       }
-      else if (bus.userStorage.get('preview.images.enabled') && $.inArray(uri.suffix(), imageExts) >= 0)
-        imagePreview = url;
+      else if ((bus.userStorage.get('preview.imgur.enabled') || bus.userStorage.get('preview.imgur.replace')) && uri.domain() === 'imgur.com') {
+        var type = null, id = null;
 
-      if (imagePreview !== null)
-        a.attr('data-imagepreview', imagePreview);
-      
-      if(tooltipText !== null)
-        a.attr('data-tooltiptext', tooltipText);
+        if(uri.directory() === '/a') {
+          type = 'album';
+          id = uri.filename();
+        } else if(uri.directory() === '/gallery') {
+          type = 'gallery';
+          id = uri.filename();
+        } else if(uri.subdomain() === 'i') {
+          type = 'image';
+          id = uri.filename().replace('.' + uri.suffix(), '');
+        } else if(uri.subdomain() == '') {
+          type = 'image';
+          id = uri.filename();
+        }
+
+        $.ajax('https://api.imgur.com/3/' + type + '/' + id, {
+          headers: {'Authorization': 'Client-ID 5a9a4cd939646f6'}
+        }).done(function(response) {
+          var data = response.data;
+          var title = data.title || url;
+          var imagesCount = data.images_count;
+          var isAlbum = imagesCount ? true : false;
+          var isNsfw = data.nsfw;
+          var replace = bus.userStorage.get('preview.imgur.replace');
+
+          if(!isAlbum && bus.userStorage.get('preview.imgur.enabled'))
+            setImagePreview(data.link);
+
+          if(replace) {
+            a.text(title);
+            a.prepend('<span class="icon icon-imgur"></span>');
+
+            if(isAlbum)
+              a.append(' <span class="glyphicon glyphicon-film"></span>');
+
+            if(isNsfw)
+              a.append(' <span class="glyphicon glyphicon-flag"></span>');
+          } else
+            setTooltipText(title + (isNsfw ? ' [NSFW]' : ''));
+        });
+      }
+      else if (bus.userStorage.get('preview.images.enabled') && $.inArray(uri.suffix(), imageExts) >= 0)
+        setImagePreview(url);
     });
   }
 
