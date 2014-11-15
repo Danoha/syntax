@@ -53,7 +53,8 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
       // TODO: move to appScreen
 
       bootbox.prompt('enter new alias (leave empty for default name)', function(result) {
-        self.alias(result);
+        if(result !== null)
+          self.alias(result);
       });
     };
   };
