@@ -24,6 +24,58 @@ define([
   '../vendor/highlight.min'
   ], function($, bootbox, require, ko, BaseModal, bus, embeddingHtml, previewHtml, codestyleHtml) {
 
+  var highlightSheets = [
+    {title: 'Default', href: 'css/highlight/default.css'},
+    {title: 'Dark', href: 'css/highlight/dark.css'},
+    {title: 'FAR', href: 'css/highlight/far.css'},
+    {title: 'IDEA', href: 'css/highlight/idea.css'},
+    {title: 'Sunburst', href: 'css/highlight/sunburst.css'},
+    {title: 'Zenburn', href: 'css/highlight/zenburn.css'},
+    {title: 'Visual Studio', href: 'css/highlight/vs.css'},
+    {title: 'Ascetic', href: 'css/highlight/ascetic.css'},
+    {title: 'Magula', href: 'css/highlight/magula.css'},
+    {title: 'GitHub', href: 'css/highlight/github.css'},
+    {title: 'Google Code', href: 'css/highlight/googlecode.css'},
+    {title: 'Brown Paper', href: 'css/highlight/brown_paper.css'},
+    {title: 'School Book', href: 'css/highlight/school_book.css'},
+    {title: 'IR Black', href: 'css/highlight/ir_black.css'},
+    {title: 'Solarized - Dark', href: 'css/highlight/solarized_dark.css'},
+    {title: 'Solarized - Light', href: 'css/highlight/solarized_light.css'},
+    {title: 'Arta', href: 'css/highlight/arta.css'},
+    {title: 'Monokai', href: 'css/highlight/monokai.css'},
+    {title: 'Monokai Sublime', href: 'css/highlight/monokai_sublime.css'},
+    {title: 'XCode', href: 'css/highlight/xcode.css'},
+    {title: 'Pojoaque', href: 'css/highlight/pojoaque.css'},
+    {title: 'Rainbow', href: 'css/highlight/rainbow.css'},
+    {title: 'Tomorrow', href: 'css/highlight/tomorrow.css'},
+    {title: 'Tomorrow Night', href: 'css/highlight/tomorrow-night.css'},
+    {title: 'Tomorrow Night Bright', href: 'css/highlight/tomorrow-night-bright.css'},
+    {title: 'Tomorrow Night Blue', href: 'css/highlight/tomorrow-night-blue.css'},
+    {title: 'Tomorrow Night Eighties', href: 'css/highlight/tomorrow-night-eighties.css'},
+    {title: 'Railscasts', href: 'css/highlight/railscasts.css'},
+    {title: 'Obsidian', href: 'css/highlight/obsidian.css'},
+    {title: 'Docco', href: 'css/highlight/docco.css'},
+    {title: 'Mono Blue', href: 'css/highlight/mono-blue.css'},
+    {title: 'Foundation', href: 'css/highlight/foundation.css'},
+    {title: 'Atelier Dun - Dark', href: 'css/highlight/atelier-dune.dark.css'},
+    {title: 'Atelier Dun - Light', href: 'css/highlight/atelier-dune.light.css'},
+    {title: 'Atelier Forest - Dark', href: 'css/highlight/atelier-forest.dark.css'},
+    {title: 'Atelier Forest - Light', href: 'css/highlight/atelier-forest.light.css'},
+    {title: 'Atelier Heath - Dark', href: 'css/highlight/atelier-heath.dark.css'},
+    {title: 'Atelier Heath - Light', href: 'css/highlight/atelier-heath.light.css'},
+    {title: 'Atelier Lakeside - Dark', href: 'css/highlight/atelier-lakeside.dark.css'},
+    {title: 'Atelier Lakeside - Light', href: 'css/highlight/atelier-lakeside.light.css'},
+    {title: 'Atelier Seaside - Dark', href: 'css/highlight/atelier-seaside.dark.css'},
+    {title: 'Atelier Seaside - Light', href: 'css/highlight/atelier-seaside.light.css'},
+    {title: 'Paraíso - Dark', href: 'css/highlight/paraiso.dark.css'},
+    {title: 'Paraíso - Light', href: 'css/highlight/paraiso.light.css'},
+    {title: 'Colorbrewer', href: 'css/highlight/color-brewer.css'},
+    {title: 'Codepen.io Embed', href: 'css/highlight/codepen-embed.css'},
+    {title: 'Kimbie - Dark', href: 'css/highlight/kimbie.dark.css'},
+    {title: 'Kimbie - Light', href: 'css/highlight/kimbie.light.css'},
+    {title: 'Hybrid', href: 'css/highlight/hybrid.css'}
+  ];
+
   function setDefault(key, value) {
     var storage = bus.userStorage;
 
@@ -127,16 +179,13 @@ define([
 
     var active = observableToStorage(codestyleVM.active, 'codestyle.highlight.title');
 
-    $('link.highlight-style').each(function() {
-      codestyleVM.styles.push({
-        link: this,
-        title: this.getAttribute('title')
-      });
-    });
-
+    codestyleVM.styles = highlightSheets;
     codestyleVM.active.subscribe(function(newValue) {
-      $.each(codestyleVM.styles, function(i, style) {
-        style.link.disabled = style.title !== newValue;
+      $.each(highlightSheets, function(i, sheet) {
+        if(sheet.title === newValue) {
+          $('link.highlight-sheet').attr('href', sheet.href);
+          return false;
+        }
       });
     });
 
@@ -151,9 +200,13 @@ define([
   SettingsModal.prototype.constructor = SettingsModal;
 
   function apply() {
-    var stylesheets = $('link.highlight-style');
-    stylesheets.prop('disabled', true);
-    stylesheets.filter('[title="' + bus.userStorage.get('codestyle.highlight.title') + '"]').prop('disabled', false);
+    var sheetTitle = bus.userStorage.get('codestyle.highlight.title');
+    $.each(highlightSheets, function(i, sheet) {
+      if(sheet.title === sheetTitle) {
+        $('link.highlight-sheet').attr('href', sheet.href);
+        return false;
+      }
+    });
   }
 
   SettingsModal.setDefaults = function() {
