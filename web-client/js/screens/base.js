@@ -42,7 +42,7 @@ define(['../vendor/knockout', 'jquery', '../app', 'require'], function(ko, $, ap
     if (this.onReset)
       this.onReset();
 
-    var old = $(this._selector).fadeOut(function() {
+    var old = $(this._selector).addClass('fade').fadeOut(function() {
       old.remove();
     });
   };
@@ -52,9 +52,10 @@ define(['../vendor/knockout', 'jquery', '../app', 'require'], function(ko, $, ap
 
     var self = this;
     this._create(function(view) {
-      view.hide().fadeIn(function() {
+      view.hide().addClass('fade').fadeIn(function() {
         if (self.onShown)
           self.onShown();
+        view.removeClass('fade');
       });
       $("body").prepend(view);
 
