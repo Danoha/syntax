@@ -18,10 +18,14 @@
 
 'use strict';
 
-define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '../lib/storage', '../vendor/bootbox', '../vendor/uri/main', 'require', '../core/socket', '../app', '../core/bus'], function(BaseScreen, ko, api, WaitDialog, storage, bootbox, URI, require, socket, app, bus) {
+define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '../lib/storage', '../vendor/bootbox', '../vendor/uri/main', 'require', '../core/socket', '../app', '../core/bus', 'jquery'], function(BaseScreen, ko, api, WaitDialog, storage, bootbox, URI, require, socket, app, bus, $) {
   var accountScreen = new BaseScreen('.account', 'account');
 
   // Helper functions
+
+  function refreshInputValues() {
+    $('.account input').change();
+  }
 
   function activateAccount(activationCode) {
     var wait = new WaitDialog('activating account');
@@ -44,6 +48,8 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   }
 
   function createAccount() {
+    refreshInputValues();
+
     var nick = accountScreen.createAccount.nick(),
       password = accountScreen.createAccount.password(),
       email = accountScreen.createAccount.email(),
@@ -103,6 +109,8 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   }
 
   function login() {
+    refreshInputValues();
+
     var email = accountScreen.login.email(),
       password = accountScreen.login.password();
 
@@ -179,8 +187,9 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
     l.email('');
     l.password('');
     l.stayOnline(true);
-    
+
     app.resetUniqueId();
+    app.user = undefined;
     bus.userStorage = null;
   };
 
