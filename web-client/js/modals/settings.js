@@ -18,11 +18,10 @@
 
 define([
   'jquery', '../vendor/bootbox', 'require', '../vendor/knockout', './base', '../core/bus',
-  '../vendor/require.text!../templates/settings/embedding.html',
-  '../vendor/require.text!../templates/settings/preview.html',
+  '../vendor/require.text!../templates/settings/links.html',
   '../vendor/require.text!../templates/settings/codestyle.html',
   '../vendor/highlight.min'
-  ], function($, bootbox, require, ko, BaseModal, bus, embeddingHtml, previewHtml, codestyleHtml) {
+  ], function($, bootbox, require, ko, BaseModal, bus, linksHtml, codestyleHtml) {
 
   var highlightSheets = [
     {title: 'Default', href: 'css/highlight/default.css'},
@@ -106,29 +105,19 @@ define([
     this.title('options');
 
     this.viewModel.sections = [{
-        title: 'embed',
-        name: 'embedding',
-        html: htmlToContents(embeddingHtml),
+        title: 'links',
+        name: 'links',
+        html: htmlToContents(linksHtml),
         viewModel: {
-          allowSpotify: ko.observable(),
-          spotifyReplace: ko.observable(),
-
-          allowTwitch: ko.observable(),
-
-          allowYoutube: ko.observable(),
-          youtubeReplace: ko.observable(),
-        }
-      }, {
-        title: 'preview',
-        name: 'preview',
-        html: htmlToContents(previewHtml),
-        viewModel: {
-          allowImages: ko.observable(),
-
-          allowImgur: ko.observable(),
-          imgurReplace: ko.observable(),
-
-          allowYoutube: ko.observable()
+          enableImagePreview: ko.observable(),
+          enableImgurPreview: ko.observable(),
+          replaceImgurLink: ko.observable(),
+          enableSpotifyEmbed: ko.observable(),
+          replaceSpotifyLink: ko.observable(),
+          enableTwitchEmbed: ko.observable(),
+          enableYoutubePreview: ko.observable(),
+          enableYoutubeEmbed: ko.observable(),
+          replaceYoutubeLink: ko.observable()
         }
       }, {
         title: 'code style',
@@ -160,25 +149,22 @@ define([
       return ret;
     };
 
-    var embedVM = this.viewModel.sections[0].viewModel;
-    var previewVM = this.viewModel.sections[1].viewModel;
-    var codestyleVM = this.viewModel.sections[2].viewModel;
+    // bind observables to storage
+    // LINKS
+    var linksVM = this.viewModel.sections[0].viewModel;
+    observableToStorage(linksVM.enableSpotifyEmbed, 'embed.spotify.enabled');
+    observableToStorage(linksVM.replaceSpotifyLink, 'embed.spotify.replace');
+    observableToStorage(linksVM.enableTwitchEmbed, 'embed.twitch.enabled');
+    observableToStorage(linksVM.enableYoutubeEmbed, 'embed.youtube.enabled');
+    observableToStorage(linksVM.replaceYoutubeLink, 'embed.youtube.replace');
+    observableToStorage(linksVM.enableImagePreview, 'preview.images.enabled');
+    observableToStorage(linksVM.enableImgurPreview, 'preview.imgur.enabled');
+    observableToStorage(linksVM.replaceImgurLink, 'preview.imgur.replace');
+    observableToStorage(linksVM.enableYoutubePreview, 'preview.youtube.enabled');
 
-    observableToStorage(embedVM.allowSpotify, 'embed.spotify.enabled');
-    observableToStorage(embedVM.spotifyReplace, 'embed.spotify.replace');
-
-    observableToStorage(embedVM.allowTwitch, 'embed.twitch.enabled');
-
-    observableToStorage(embedVM.allowYoutube, 'embed.youtube.enabled');
-    observableToStorage(embedVM.youtubeReplace, 'embed.youtube.replace');
-
-    observableToStorage(previewVM.allowImages, 'preview.images.enabled');
-    observableToStorage(previewVM.allowImgur, 'preview.imgur.enabled');
-    observableToStorage(previewVM.imgurReplace, 'preview.imgur.replace');
-    observableToStorage(previewVM.allowYoutube, 'preview.youtube.enabled');
-
+    // CODESTYLE
+    var codestyleVM = this.viewModel.sections[1].viewModel;
     var active = observableToStorage(codestyleVM.active, 'codestyle.highlight.title');
-
     codestyleVM.styles = highlightSheets;
     codestyleVM.active.subscribe(function(newValue) {
       $.each(highlightSheets, function(i, sheet) {
