@@ -132,26 +132,26 @@ define(
     bus.userStorage.set('sound-muted', muted());
   }
 
-  function logout(force) {
+  function logout(disconnected) {
     function doLogout() {
-      var wait = new WaitDialog('logging out');
+      storage.remove('loginToken');
 
-      api.logout(function() {
-        storage.remove('loginToken');
-
-        appScreen.hide();
-        accountScreen.show();
-
-        wait.close();
-      });
+      appScreen.hide();
+      accountScreen.show();
     }
 
-    if (force === true)
+    if (disconnected === true)
       doLogout();
     else {
-      bootbox.confirm('do you really want to logout?', function(result) {
-        if (result)
-          doLogout();
+      bootbox.confirm('do you really want to logout?', function (result) {
+        if (result) {
+          var wait = new WaitDialog('logging out');
+
+          api.logout(function () {
+            wait.close();
+            doLogout();
+          });
+        }
       });
     }
   }
