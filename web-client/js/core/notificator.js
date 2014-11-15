@@ -25,8 +25,12 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
     return bus.userStorage !== null && bus.userStorage.get('notifications') ? true : false;
   }
   
-  function isMuted() {
-    return bus.userStorage !== null && bus.userStorage.get('sound-muted');
+  function getSoundVolume() {
+    var volume;
+    if(bus.userStorage === null || (volume = bus.userStorage.get('sound-volume')) === undefined)
+      volume = 100;
+
+    return volume;
   }
   
   function chatNotification(data) {
@@ -40,12 +44,9 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
   }
   
   function chatSound(data) {
-    if(isMuted())
-      return;
-    
     // TODO is data.target muted?
     
-    soundManager.play('o-ou');
+    soundManager.play('o-ou', getSoundVolume());
   }
   
   Notificator.prototype.showNotification = function(data) {

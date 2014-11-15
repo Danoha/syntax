@@ -19,28 +19,17 @@
 'use strict';
 
 define(['../vendor/howler'], function(howler) {
-  var SoundManager = function() {
-    this._initSfxs();
-  };
+  var SoundManager = function() { };
   
-  SoundManager.prototype._sfxs = ['o-ou'];
+  function createHowl(name, volume) {
+    return new howler.Howl({
+      urls: ['sfx/' + name + '.ogg', 'sfx/' + name + '.mp3'],
+      volume: volume
+    });
+  }
   
-  SoundManager.prototype._initSfxs = function() {
-    var cache = { };
-    
-    for(var k in this._sfxs) {
-      var n = this._sfxs[k];
-      
-      cache[n] = new howler.Howl({
-        urls: ['sfx/' + n + '.ogg', 'sfx/' + n + '.mp3']
-      });
-    }
-    
-    this._sfxs = cache;
-  };
-  
-  SoundManager.prototype.play = function(name) {
-    this._sfxs[name].play();
+  SoundManager.prototype.play = function(name, volume) {
+    createHowl(name, volume / 100).play();
   };
   
   return new SoundManager();

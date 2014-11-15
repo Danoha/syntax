@@ -7,8 +7,13 @@
         <li>
           <a href="#" data-bind="click: toggleNotifications"><span class="glyphicon" data-bind="css: { 'glyphicon-eye-open': areNotificationsAllowed(), 'glyphicon-eye-close': !areNotificationsAllowed() }"></span></a>
         </li>
-        <li>
-          <a href="#" data-bind="click: toggleMute"><span class="glyphicon" data-bind="css: { 'glyphicon-volume-up': !isMuted(), 'glyphicon-volume-off': isMuted }"></span></a>
+        <li class="dropdown">
+          <a href="#" id="volumeButtonDrop" data-toggle="dropdown"><span class="glyphicon" data-bind="css: { 'glyphicon-volume-up': soundVolume() > 0, 'glyphicon-volume-off': soundVolume() == 0 }"></span> <span data-bind="text: soundVolume">100</span> %</a>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="volumeButtonDrop">
+            <li role="presentation">
+              <a role="menuitem" tabindex="-1" href="#" data-bind="click: void 0"><input type="range" min="0" max="100" data-bind="value: soundVolume, valueUpdate: 'input'"></a>
+            </li>
+          </ul>
         </li>
         <li id="fat-menu" class="dropdown">
           <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: $root.user.nick"></span> <span class="caret"></span></a>
@@ -170,10 +175,14 @@
         <h3 class="panel-title">changelog</h3>
       </div>
       <div class="panel-body">
+        <h4>15/11/2014</h4>
+        <ul>
+          <li>sound volume slider added</li>
+        </ul>
         <h4>14/11/2014</h4>
         <ul>
           <li>Imgur link can be replaced with image/album title</li>
-          <li>Webm and gifv preview added</li>
+          <li>webm and gifv preview added</li>
         </ul>
         <h4 class="h4">24/9/2014</h4>
         <ul>

@@ -124,14 +124,6 @@ define(
     });
   }
 
-  function toggleMute() {
-    var muted = appScreen.panel.isMuted;
-
-    muted(!muted());
-
-    bus.userStorage.set('sound-muted', muted());
-  }
-
   function logout(disconnected) {
     function doLogout() {
       storage.remove('loginToken');
@@ -536,6 +528,11 @@ define(
     modal.show();
   }
 
+  function setVolume(value) {
+    appScreen.panel.soundVolume(value);
+    bus.userStorage.set('sound-volume', value);
+  }
+
   // Model definition
 
   appScreen.target = ko.observable(null);
@@ -545,10 +542,10 @@ define(
 
   appScreen.panel = {
     toggleNotifications: toggleNotifications,
-    toggleMute: toggleMute,
 
     areNotificationsAllowed: ko.observable(false),
-    isMuted: ko.observable(false),
+    soundVolume: ko.observable(100),
+    volumeLevels: [0, 20, 40, 60, 80, 100],
 
     menu: {
       settings: showSettings,
@@ -645,6 +642,10 @@ define(
       return 'Do you really want to exit?';
   });
 
+  appScreen.panel.soundVolume.subscribe(function(value) {
+    setVolume(value);
+  }, {throttle: 10});
+
   appScreen.target.subscribe(function(value) {
     setTimeout(function() {
       bindMessagesEvents();
@@ -666,7 +667,11 @@ define(
     
     SettingsModal.setDefaults();
 
-    appScreen.panel.isMuted(bus.userStorage.get('sound-muted') ? true : false);
+    var volume = bus.userStorage.get('sound-volume');
+    if (volume === undefined)
+      volume = 100;
+    appScreen.panel.soundVolume(volume);
+
     if ('Notification' in window && bus.userStorage.get('notifications') && Notification.permission === "granted")
       toggleNotifications();
 
@@ -679,7 +684,7 @@ define(
     appScreen.target(null);
 
     appScreen.panel.areNotificationsAllowed(false);
-    appScreen.panel.isMuted(false);
+    appScreen.panel.soundVolume(100);
 
     appScreen.friendSearch.visible(false);
     resetFriendSearch();
