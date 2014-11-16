@@ -114,6 +114,9 @@ div.app .composer textarea {
   resize: none;
   height: 60px;
 }
+div.app .composer .custom-btns-col {
+  text-align: right;
+}
 div.app .composer .send-btn-col {
   position: relative;
   height: 60px;
@@ -184,4 +187,10 @@ span.icon-spotify {
 }
 span.icon-imgur {
   background-image: url('https://www.imgur.com/favicon.ico');
+}
+.coder textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 200px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }

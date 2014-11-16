@@ -25,6 +25,7 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
     this.title = ko.observable('');
     this.isVisible = ko.observable(false);
     this.hasCloseButton = true;
+    this.buttons = {};
 
     this.content = null;
     this.viewModel = {};
@@ -32,6 +33,8 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
     this.onTemplateLoad = [];
     this.onShow = [];
     this.onShown = [];
+    this.onHide = [];
+    this.onHidden = [];
 
     var self = this;
     this.isVisible.subscribe(function(newValue) {
@@ -89,7 +92,8 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
       self._modal = bootbox.dialog({
         title: self._titleElement,
         message: self.content,
-        closeButton: self.hasCloseButton
+        closeButton: self.hasCloseButton,
+        buttons: self.buttons
       });
 
       ko.applyBindings(self.viewModel, self.content);
