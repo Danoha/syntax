@@ -93,6 +93,7 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
   }
 
   Composer.prototype.openCoder = function() {
+    // TODO: move to appScreen
     var coder = new CoderModal();
     coder.show();
 

@@ -23,13 +23,13 @@ define(
     './base', '../app', '../vendor/knockout', '../vendor/bootbox', './account', '../lib/storage',
     '../utils/waitdialog', '../lib/api', 'jquery', 'require', '../core/socket', '../lib/messagemanager',
     '../models/contactlist', '../models/target', '../core/apptitle', '../core/bus', '../core/notificator',
-    '../core/focus', '../modals/settings', '../lib/embedmanager',
+    '../core/focus', '../modals/settings', '../lib/embedmanager', '../modals/groupmembers',
     '../utils/ko.bindings'
   ],
   function(
     BaseScreen, app, ko, bootbox, accountScreen, storage, WaitDialog, api, $, require, socket,
     messageManager, contactList, BaseTarget, appTitle, bus, notificator, focus, SettingsModal,
-    embedManager
+    embedManager, GroupMembersModal
   ) {
   var appScreen = new BaseScreen('.app', 'app');
 
@@ -533,6 +533,12 @@ define(
     bus.userStorage.set('sound-volume', value);
   }
 
+  function groupShowMembers() {
+    var group = appScreen.target();
+    var modal = new GroupMembersModal(group);
+    modal.show();
+  }
+
   // Model definition
 
   appScreen.target = ko.observable(null);
@@ -586,7 +592,8 @@ define(
   };
 
   appScreen.groupMenu = {
-    leave: groupLeave
+    leave: groupLeave,
+    showMembers: groupShowMembers
   };
 
   appScreen.contactMenu = {
@@ -822,7 +829,12 @@ define(
           type: 'contact',
           id: data.user.id
         }], function(group, inviter, user) {
-          messageManager.systemMessage(group, inviter.displayName() + ' invited ' + user.displayName() + ' to this group')
+          if(data.inviterId === app.user.id)
+            inviter = app.user.nick;
+          else
+            inviter = inviter.displayName();
+
+          messageManager.systemMessage(group, inviter + ' invited ' + user.displayName() + ' to this group');
         });
       };
     }

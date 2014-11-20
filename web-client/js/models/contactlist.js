@@ -178,7 +178,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     }
 
     return item;
-  };
+  }
 
   exports.findOrCreateContact = function(id) {
     return findOrCreate('contact', id, exports.contacts, Contact);

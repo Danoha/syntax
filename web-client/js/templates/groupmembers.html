@@ -1,0 +1,20 @@
+<div class="groupmembers clearfix">
+  <div class="col-xs-6">
+    <h5>your contacts</h5>
+    <div data-bind="foreach: contactsSorted">
+      <div class="contact">
+        <span data-bind="text: displayName"></span>
+        <button class="btn btn-xs btn-success pull-right" data-bind="click: $parent.addMember"><span class="glyphicon glyphicon-plus"></span></button>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-6">
+    <h5>group members</h5>
+    <div data-bind="foreach: membersSorted">
+      <div class="contact">
+        <span data-bind="text: displayName"></span>
+        <button disabled class="btn btn-xs btn-danger pull-right" data-bind="click: $parent.removeMember"><span class="glyphicon glyphicon-minus"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
