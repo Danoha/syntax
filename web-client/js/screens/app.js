@@ -79,7 +79,7 @@ define(
     }
 
     function syncContactList() {
-      contactList.sync(app.user.contacts, app.user.groups);
+      contactList.sync(app.user.id, app.user.contacts, app.user.groups);
 
       if (!contactList.isValidTarget(appScreen.target()))
         closeTarget();
@@ -687,7 +687,7 @@ define(
     };
 
     appScreen.onReset = function () {
-      contactList.sync([], []); // clear contact list
+      contactList.sync(0, [], []); // clear contact list
 
       appScreen.target(null);
 
@@ -816,7 +816,7 @@ define(
             id: data.inviterId
           }, {
             type: 'contact',
-            id: data.user.id
+            id: data.member.id
           }], function (group, inviter, user) {
             if (data.inviterId === app.user.id)
               inviter = app.user.nick;

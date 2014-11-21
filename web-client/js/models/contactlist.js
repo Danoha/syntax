@@ -22,7 +22,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
   exports.contacts = ko.observableArray();
   exports.groups = ko.observableArray();
 
-  exports.sync = function (friendlist, grouplist) {
+  exports.sync = function (userId, friendlist, grouplist) {
     function removeInvalid(ids, obs) {
       var current = obs();
       for (var i = current.length - 1; i >= 0; i--) {
@@ -61,6 +61,9 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
       group.members([]);
 
       $.each(g.members, function (j, m) {
+        if(m.id === userId)
+          return;
+
         var c = exports.findContact(m.id);
 
         if (c === null) {

@@ -209,8 +209,6 @@ function invite(gm, userId, inviteeId, groupId, callback) {
 
       delete results[0].isOnline;
 
-      callback('OK');
-
       utils.invokeArray(gm.groupNotifiers, [[groupId], 'group.inviteEvent', {
         inviterId: userId,
         groupId: groupId,
@@ -221,6 +219,8 @@ function invite(gm, userId, inviteeId, groupId, callback) {
         inviterId: userId,
         group: results[1]
       }]);
+
+      callback('OK');
     });
   });
 }
