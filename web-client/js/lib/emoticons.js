@@ -18,12 +18,12 @@
 
 'use strict';
 
-define([], function() {
+define([], function () {
   var templateBegin = '$1<span class="text-hide emoticon emoticon-';
   var templateEnd = '" title="$2">$2</span>';
-  
+
   var all = ['angel', 'angry', 'aww', 'blushing', 'confused', 'cool', 'creepy', 'crying', 'cthulhu', 'cute', 'cute_winking', 'devil', 'frowning', 'gasping', 'greedy', 'grinning', 'happy', 'happy_smiling', 'heart', 'irritated', 'irritated_2', 'kissing', 'laughing', 'lips_sealed', 'madness', 'malicious', 'naww', 'pouting', 'shy', 'sick', 'smiling', 'speechless', 'spiteful', 'stupid', 'surprised', 'surprised_2', 'terrified', 'thumbs_down', 'thumbs_up', 'tired', 'tongue_out', 'tongue_out_laughing', 'tongue_out_left', 'tongue_out_up', 'tongue_out_up_left', 'unsure', 'unsure_2', 'winking', 'winking_grinning', 'winking_tongue_out'];
-  
+
   var mapping = {
     'cool': ['B)', '8)', 'B-)', '8-)'],
     'frowning': [':(', ':-('],
@@ -53,48 +53,48 @@ define([], function() {
     'gasping': [':O', ':-O'],
     'crying': [';(', ';-(', ':\'(']
   };
-  
-  var quote = function(str) {
+
+  var quote = function (str) {
     return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
   };
 
-  var Emoticons = function() {
-    this.emoticons = { };
+  var Emoticons = function () {
+    this.emoticons = {};
 
-    var re = function(value) {
+    var re = function (value) {
       return new RegExp('(\\s|^)(' + quote(value) + ')(?=(\\s|$))', 'gim'); // gim - global, case-insensitive, multiline
     };
 
-    for(var k in mapping) {
+    for (var k in mapping) {
       var regexps = [];
       var list = mapping[k];
-      
-      for(var i in list)
+
+      for (var i in list)
         regexps.push(re(list[i]));
-      
+
       this.emoticons[k] = regexps;
     }
-    
-    for(var i in all) {
+
+    for (var i in all) {
       var name = all[i];
       var list = this.emoticons[name] || [];
-      
+
       list.push(re('(' + name + ')'));
-      
+
       this.emoticons[name] = list;
     }
   };
-  
-  Emoticons.prototype.replace = function(text) {
-    for(var k in this.emoticons) {
+
+  Emoticons.prototype.replace = function (text) {
+    for (var k in this.emoticons) {
       var regexps = this.emoticons[k];
       var span = templateBegin + k + templateEnd;
-      for(var i in regexps)
+      for (var i in regexps)
         text = text.replace(regexps[i], span);
     }
-    
+
     return text;
   };
-  
+
   return new Emoticons();
 });

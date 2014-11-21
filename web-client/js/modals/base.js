@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], function($, bootbox, require, ko) {
+define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], function ($, bootbox, require, ko) {
   function BaseModal(templateName) {
     this._templateName = templateName;
     this._titleElement = $('<span>');
@@ -37,28 +37,28 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
     this.onHidden = [];
 
     var self = this;
-    this.isVisible.subscribe(function(newValue) {
+    this.isVisible.subscribe(function (newValue) {
       if (newValue)
         self._show();
       else
         self._hide();
     });
-    
-    this.title.subscribe(function(newValue) {
+
+    this.title.subscribe(function (newValue) {
       self._titleElement.text(newValue);
     });
 
     this._loadTemplate();
   }
 
-  BaseModal.prototype._trigger = function(event) {
+  BaseModal.prototype._trigger = function (event) {
     event = 'on' + event.charAt(0).toUpperCase() + event.slice(1);
     var listeners = this[event];
 
     if (!$.isArray(listeners))
       return;
 
-    $.each(listeners, function(i, cb) {
+    $.each(listeners, function (i, cb) {
       try {
         cb();
       }
@@ -68,9 +68,9 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
     });
   };
 
-  BaseModal.prototype._loadTemplate = function() {
+  BaseModal.prototype._loadTemplate = function () {
     var self = this;
-    require(['../vendor/require.text!../templates/' + this._templateName + '.html'], function(template) {
+    require(['../vendor/require.text!../templates/' + this._templateName + '.html'], function (template) {
       var ret = $('<div>').html(template).contents();
 
       if (ret.length !== 1)
@@ -81,7 +81,7 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
     });
   };
 
-  BaseModal.prototype._show = function() {
+  BaseModal.prototype._show = function () {
     var self = this;
 
     function done() {
@@ -97,10 +97,10 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
       });
 
       ko.applyBindings(self.viewModel, self.content);
-      
+
       self._trigger('show');
 
-      self._modal.one('shown.bs.modal', function() {
+      self._modal.one('shown.bs.modal', function () {
         self._trigger('shown');
       });
     }
@@ -111,27 +111,27 @@ define(['jquery', '../vendor/bootbox', 'require', '../vendor/knockout'], functio
       this.onTemplateLoad.push(done);
   };
 
-  BaseModal.prototype._hide = function() {
-    if(this._modal === null)
+  BaseModal.prototype._hide = function () {
+    if (this._modal === null)
       return;
-    
+
     var modal = this._modal;
     this._modal = null;
-    
+
     modal.modal('hide');
     this._trigger('hide');
-    
+
     var self = this;
-    modal.one('hidden.bs.modal', function() {
+    modal.one('hidden.bs.modal', function () {
       self._trigger('hidden');
     });
   };
-  
-  BaseModal.prototype.show = function() {
+
+  BaseModal.prototype.show = function () {
     this.isVisible(true);
   };
-  
-  BaseModal.prototype.hide = function() {
+
+  BaseModal.prototype.hide = function () {
     this.isVisible(false);
   };
 

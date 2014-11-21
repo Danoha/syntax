@@ -18,7 +18,7 @@
 
 'use strict';
 
-define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '../lib/storage', '../vendor/bootbox', '../vendor/uri/main', 'require', '../core/socket', '../app', '../core/bus', 'jquery'], function(BaseScreen, ko, api, WaitDialog, storage, bootbox, URI, require, socket, app, bus, $) {
+define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '../lib/storage', '../vendor/bootbox', '../vendor/uri/main', 'require', '../core/socket', '../app', '../core/bus', 'jquery'], function (BaseScreen, ko, api, WaitDialog, storage, bootbox, URI, require, socket, app, bus, $) {
   var accountScreen = new BaseScreen('.account', 'account');
 
   // Helper functions
@@ -30,7 +30,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   function activateAccount(activationCode) {
     var wait = new WaitDialog('activating account');
 
-    api.activateAccount(activationCode, function(result) {
+    api.activateAccount(activationCode, function (result) {
       wait.close();
 
       var message;
@@ -72,7 +72,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
     var wait = new WaitDialog('creating account');
 
-    api.createAccount(email, nick, password, function(result) {
+    api.createAccount(email, nick, password, function (result) {
       wait.close();
 
       var message;
@@ -101,7 +101,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
     accountScreen.hide();
 
-    require(['../app', './app'], function(app, appScreen) {
+    require(['../app', './app'], function (app, appScreen) {
       app.user = user;
 
       appScreen.show();
@@ -118,7 +118,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
     var wait = new WaitDialog('logging in');
 
-    api.login(email, password, function(result) {
+    api.login(email, password, function (result) {
       wait.close();
 
       var message = null;
@@ -145,7 +145,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   function restoreLogin(token) {
     var wait = new WaitDialog('logging in');
 
-    api.restoreLogin(token, function(result) {
+    api.restoreLogin(token, function (result) {
       wait.close();
 
       storage.remove('loginToken');
@@ -176,7 +176,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
   // Event bindings
 
-  accountScreen.onReset = function() {
+  accountScreen.onReset = function () {
     var ca = accountScreen.createAccount;
     ca.email('');
     ca.nick('');
@@ -194,34 +194,34 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   };
 
   var firstShow = true;
-  accountScreen.onShown = function() {
+  accountScreen.onShown = function () {
     var loginToken = storage.get('loginToken');
 
     if (loginToken) // try to restore login, if login token is present
       restoreLogin(loginToken);
-    else if(firstShow) { // is activation code present?
+    else if (firstShow) { // is activation code present?
       var search = URI(location.href).search(true);
 
       if (search && search.activate)
         activateAccount(search.activate);
     }
-    
+
     firstShow = false;
   };
 
   // Socket event bindings
-  
+
   var io = socket();
   var reconnectingDialog = null;
-  
-  io.on('reconnecting', function() {
+
+  io.on('reconnecting', function () {
     if (reconnectingDialog !== null)
       return;
 
     reconnectingDialog = new WaitDialog('connection lost, reconnecting');
   });
 
-  io.on('reconnect', function() {
+  io.on('reconnect', function () {
     reconnectingDialog.close();
     reconnectingDialog = null;
   });

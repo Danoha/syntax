@@ -42,12 +42,12 @@ function process(mm, msg, senderId, callback) {
   msg.senderId = senderId;
   msg.time = moment().unix();
 
-  var d = function(type, id) {
+  var d = function (type, id) {
     callback('OK');
 
-    if(type === 'user')
+    if (type === 'user')
       utils.invokeArray(mm.userNotifiers, [id, 'message.receivedEvent', msg]);
-    else if(type === 'group')
+    else if (type === 'group')
       utils.invokeArray(mm.groupNotifiers, [id, 'message.receivedEvent', msg])
   };
 
@@ -58,7 +58,7 @@ function process(mm, msg, senderId, callback) {
       else
         callback('ERR_INVALID_TARGET');
     });
-  } else if(typeof msg.groupId === 'number') {
+  } else if (typeof msg.groupId === 'number') {
     mm.gm.getMembershipState(senderId, msg.groupId, function (state) {
       if (state !== null && !state.isBanned && !state.doNotInviteAgain)
         d('group', [msg.groupId]);
@@ -69,7 +69,7 @@ function process(mm, msg, senderId, callback) {
     return callback('ERR_INVALID_VALUES');
 }
 
-MsgManager.prototype.process = function(msg, senderId, callback) {
+MsgManager.prototype.process = function (msg, senderId, callback) {
   process(this, msg, senderId, callback);
 };
 

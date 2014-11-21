@@ -18,56 +18,57 @@
 
 'use strict';
 
-define(['jquery'], function($) {
-  function Bus() {}
-  
+define(['jquery'], function ($) {
+  function Bus() {
+  }
+
   Bus.prototype._subscribers = {};
-  
-  Bus.prototype._hasListener = function(event) {
+
+  Bus.prototype._hasListener = function (event) {
     return (event in this._subscribers) && this._subscribers.hasOwnProperty(event);
   };
-  
-  Bus.prototype.subscribe = function(event, listener) {
-    if(!this._hasListener(event))
+
+  Bus.prototype.subscribe = function (event, listener) {
+    if (!this._hasListener(event))
       this._subscribers[event] = [];
-    
+
     this._subscribers[event].push(listener);
   };
-  
-  Bus.prototype.unsubscribe = function(event, listener) {
-    if(!this._hasListener(event))
+
+  Bus.prototype.unsubscribe = function (event, listener) {
+    if (!this._hasListener(event))
       return;
-    
-    this._subscribers[event] = $.grep(this._subscribers[event], function(e) {
+
+    this._subscribers[event] = $.grep(this._subscribers[event], function (e) {
       return e !== listener;
     });
   };
-  
+
   /**
    * @deprecated
-  */
-  Bus.prototype.post = function() {
+   */
+  Bus.prototype.post = function () {
     Bus.prototype.trigger.apply(this, arguments);
   };
-  
-  Bus.prototype.trigger = function(event, data1, data2, dataN) {
-    if(!this._hasListener(event))
+
+  Bus.prototype.trigger = function (event, data1, data2, dataN) {
+    if (!this._hasListener(event))
       return;
-      
+
     var args = Array.prototype.slice.call(arguments, 1);
-    
+
     //console.log('bus', event, args);
-    
-    $.each(this._subscribers[event], function(i, listener) {
+
+    $.each(this._subscribers[event], function (i, listener) {
       try {
         listener.apply(undefined, args);
-      } catch(e) {
+      } catch (e) {
         console.error('Bus listener error:', e);
       }
     });
   };
-  
+
   Bus.prototype.userStorage = null;
-  
+
   return new Bus();
 });

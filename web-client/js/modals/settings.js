@@ -21,7 +21,7 @@ define([
   '../vendor/require.text!../templates/settings/links.html',
   '../vendor/require.text!../templates/settings/codestyle.html',
   '../vendor/highlight.min'
-  ], function($, bootbox, require, ko, BaseModal, bus, linksHtml, codestyleHtml) {
+], function ($, bootbox, require, ko, BaseModal, bus, linksHtml, codestyleHtml) {
 
   var highlightSheets = [
     {title: 'Default', href: 'css/highlight/default.css'},
@@ -79,7 +79,7 @@ define([
     var storage = bus.userStorage;
 
     var val = storage.get(key);
-    if(val === undefined)
+    if (val === undefined)
       storage.set(key, value);
   }
 
@@ -90,7 +90,7 @@ define([
   function observableToStorage(obs, key) {
     var storage = bus.userStorage;
 
-    obs.subscribe(function(newValue) {
+    obs.subscribe(function (newValue) {
       storage.set(key, newValue);
     });
 
@@ -105,45 +105,45 @@ define([
     this.title('options');
 
     this.viewModel.sections = [{
-        title: 'links',
-        name: 'links',
-        html: htmlToContents(linksHtml),
-        viewModel: {
-          enableImagePreview: ko.observable(),
-          enableImgurPreview: ko.observable(),
-          replaceImgurLink: ko.observable(),
-          enableSpotifyEmbed: ko.observable(),
-          replaceSpotifyLink: ko.observable(),
-          enableTwitchEmbed: ko.observable(),
-          enableYoutubePreview: ko.observable(),
-          enableYoutubeEmbed: ko.observable(),
-          replaceYoutubeLink: ko.observable()
-        }
-      }, {
-        title: 'code style',
-        name: 'codestyle',
-        html: htmlToContents(codestyleHtml),
-        viewModel: {
-          styles: [],
-          active: ko.observable()
-        }
+      title: 'links',
+      name: 'links',
+      html: htmlToContents(linksHtml),
+      viewModel: {
+        enableImagePreview: ko.observable(),
+        enableImgurPreview: ko.observable(),
+        replaceImgurLink: ko.observable(),
+        enableSpotifyEmbed: ko.observable(),
+        replaceSpotifyLink: ko.observable(),
+        enableTwitchEmbed: ko.observable(),
+        enableYoutubePreview: ko.observable(),
+        enableYoutubeEmbed: ko.observable(),
+        replaceYoutubeLink: ko.observable()
       }
+    }, {
+      title: 'code style',
+      name: 'codestyle',
+      html: htmlToContents(codestyleHtml),
+      viewModel: {
+        styles: [],
+        active: ko.observable()
+      }
+    }
     ];
 
     var activeSection = ko.observable(this.viewModel.sections[0].name);
 
-    this.viewModel.isSectionActive = function(section) {
+    this.viewModel.isSectionActive = function (section) {
       var name = section.name;
-      if(!name && section.getAttribute)
+      if (!name && section.getAttribute)
         name = section.getAttribute('name');
       return name === activeSection();
     };
 
-    this.viewModel.openSection = function(section) {
+    this.viewModel.openSection = function (section) {
       activeSection(section.name);
     };
 
-    this.viewModel.getSectionClassList = function(section) {
+    this.viewModel.getSectionClassList = function (section) {
       var ret = {};
       ret[section.name] = true;
       return ret;
@@ -166,9 +166,9 @@ define([
     var codestyleVM = this.viewModel.sections[1].viewModel;
     var active = observableToStorage(codestyleVM.active, 'codestyle.highlight.title');
     codestyleVM.styles = highlightSheets;
-    codestyleVM.active.subscribe(function(newValue) {
-      $.each(highlightSheets, function(i, sheet) {
-        if(sheet.title === newValue) {
+    codestyleVM.active.subscribe(function (newValue) {
+      $.each(highlightSheets, function (i, sheet) {
+        if (sheet.title === newValue) {
           $('link.highlight-sheet').attr('href', sheet.href);
           return false;
         }
@@ -176,7 +176,7 @@ define([
     });
 
     var self = this;
-    this.onShow.push(function() {
+    this.onShow.push(function () {
       hljs.highlightBlock($(self.content).find('.highlight-preview').get(0));
       codestyleVM.active(active);
     });
@@ -187,15 +187,15 @@ define([
 
   function apply() {
     var sheetTitle = bus.userStorage.get('codestyle.highlight.title');
-    $.each(highlightSheets, function(i, sheet) {
-      if(sheet.title === sheetTitle) {
+    $.each(highlightSheets, function (i, sheet) {
+      if (sheet.title === sheetTitle) {
         $('link.highlight-sheet').attr('href', sheet.href);
         return false;
       }
     });
   }
 
-  SettingsModal.setDefaults = function() {
+  SettingsModal.setDefaults = function () {
     setDefault('embed.spotify.enabled', true);
     setDefault('embed.spotify.replace', true);
 

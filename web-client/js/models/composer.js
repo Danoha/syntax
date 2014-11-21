@@ -18,7 +18,7 @@
 
 'use strict';
 
-define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder'], function(ko, api, $, app, CoderModal) {
+define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder'], function (ko, api, $, app, CoderModal) {
 
   function getTextarea() {
     return $('.app .composer textarea');
@@ -71,7 +71,7 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
   }
 
   function setComposerSelection(start, end) {
-    if(end === undefined)
+    if (end === undefined)
       end = start;
 
     var t = getTextarea().get(0);
@@ -85,26 +85,26 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
     this.target = target;
     this.text = ko.observable('');
 
-    this.submit = function() {
+    this.submit = function () {
       return submit(self);
     };
 
     this.keyPress = keyPress;
   }
 
-  Composer.prototype.openCoder = function() {
+  Composer.prototype.openCoder = function () {
     // TODO: move to appScreen
     var coder = new CoderModal();
     coder.show();
 
     var self = this;
-    coder.onAttach.push(function() {
-      if(coder.code !== null) {
+    coder.onAttach.push(function () {
+      if (coder.code !== null) {
         var text = self.text();
         var sel = getComposerSelection();
         var insert = coder.code.trim().replace(/^/gm, "  ") + "\n";
 
-        if(sel.start !== 0)
+        if (sel.start !== 0)
           insert = "\n" + insert;
 
         text = text.slice(0, sel.start) + insert + text.slice(sel.end);

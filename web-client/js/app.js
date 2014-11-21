@@ -35,16 +35,16 @@ require.config({
   urlArgs: "bust=" + (new Date()).getTime() // remove from production
 });
 
-define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'], function(socket, $, require, focus, bootbox) {
+define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'], function (socket, $, require, focus, bootbox) {
   bootbox.setDefaults({
     closeButton: false
   });
 
-  var SyntaxApp = function() {
+  var SyntaxApp = function () {
     var self = this;
 
     // socket.io probably not initialized so provide callback
-    socket(function(err, io, clientLibrary) {
+    socket(function (err, io, clientLibrary) {
       if (err) {
         console.log('socket error', err);
         $('.loading .container').text('could not load socket.io library (' + clientLibrary + ')');
@@ -57,7 +57,7 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     });
   };
 
-  SyntaxApp.prototype.init = function() {
+  SyntaxApp.prototype.init = function () {
     focus.bind();
 
     // TODO: use Deferred or Promise, maybe?
@@ -65,11 +65,11 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     var initCounter = 2;
     var accountScreen = null;
 
-    var showAccountScreen = function() {
+    var showAccountScreen = function () {
       if (--initCounter > 0)
         return;
 
-      $('.loading').fadeOut(function() {
+      $('.loading').fadeOut(function () {
         $('.loading').remove();
       });
 
@@ -77,7 +77,7 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     };
 
     // load account screen logic
-    require(['./screens/account'], function(as) {
+    require(['./screens/account'], function (as) {
       accountScreen = as;
 
       showAccountScreen();
@@ -87,7 +87,7 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     if (socket.connected)
       showAccountScreen();
     else {
-      socket.on('connect', function() {
+      socket.on('connect', function () {
         socket.removeAllListeners('connect');
 
         showAccountScreen();
@@ -96,7 +96,7 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
   };
 
   var _uniqueId = null;
-  SyntaxApp.prototype.getUniqueId = function() {
+  SyntaxApp.prototype.getUniqueId = function () {
     if (_uniqueId === null) {
       var charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_/=+-%';
       _uniqueId = '';
@@ -108,7 +108,7 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     return _uniqueId;
   }
 
-  SyntaxApp.prototype.resetUniqueId = function() {
+  SyntaxApp.prototype.resetUniqueId = function () {
     _uniqueId = null;
   }
 

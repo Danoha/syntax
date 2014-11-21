@@ -18,42 +18,43 @@
 
 'use strict';
 
-define(['jquery'], function($) {
-  function EmbedManager() { }
-  
+define(['jquery'], function ($) {
+  function EmbedManager() {
+  }
+
   function formatSpotify(a) {
     return {
       title: 'Spotify',
       html: '<iframe src="https://embed.spotify.com/?uri=' + a.attr('href') + '" width="100%" height="80" frameborder="0" allowtransparency="true"></iframe>'
     };
   }
-  
+
   function formatYoutube(a) {
     return {
       title: 'YouTube',
       html: '<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + a.data('id') + '?autoplay=1" frameborder="0" allowfullscreen></iframe>'
     };
   }
-  
+
   function formatTwitch(a) {
     return {
       title: 'Twitch',
       html: '<object bgcolor="#000000" data="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" height="100%" type="application/x-shockwave-flash" width="100%"><param name="movie" value="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" /><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="flashvars" value="auto_play=true&amp;start_volume=25&amp;chapter_id=5069854" /></object>'
     };
   }
-  
-  EmbedManager.prototype.format = function(attachment) {
+
+  EmbedManager.prototype.format = function (attachment) {
     var a = $(attachment);
-    
-    if(a.is('.spotify'))
+
+    if (a.is('.spotify'))
       return formatSpotify(a);
-    else if(a.is('.youtube'))
+    else if (a.is('.youtube'))
       return formatYoutube(a);
-    else if(a.is('.twitch'))
+    else if (a.is('.twitch'))
       return formatTwitch(a);
-    
+
     return null;
   };
-  
+
   return new EmbedManager();
 });

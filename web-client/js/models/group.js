@@ -18,12 +18,12 @@
 
 'use strict';
 
-define(['./target', '../vendor/knockout', '../core/bus'], function(BaseTarget, ko, bus) {
+define(['./target', '../vendor/knockout', '../core/bus'], function (BaseTarget, ko, bus) {
   function Group(id) {
     BaseTarget.call(this, id);
-    
+
     var self = this;
-    
+
     this.type = 'group';
 
     this.members = ko.observableArray();
@@ -31,19 +31,19 @@ define(['./target', '../vendor/knockout', '../core/bus'], function(BaseTarget, k
 
     this.alias(bus.userStorage.get('contact.' + id + '.alias'));
 
-    this.displayName = ko.pureComputed(function() {
+    this.displayName = ko.pureComputed(function () {
       var alias = self.alias();
-      
+
       return alias ? alias : 'group';
     });
-    
-    this.alias.subscribe(function(newValue) {
+
+    this.alias.subscribe(function (newValue) {
       bus.userStorage.set('contact.' + id + '.alias', newValue);
     });
   }
-  
+
   Group.prototype = new BaseTarget();
   Group.prototype.constructor = Group;
-  
+
   return Group;
 });

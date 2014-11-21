@@ -18,8 +18,8 @@
 
 'use strict';
 
-define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../core/bus'], function(ko, $, bootbox, Composer, bus) {
-  var BaseTarget = function(id) {
+define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../core/bus'], function (ko, $, bootbox, Composer, bus) {
+  var BaseTarget = function (id) {
     var self = this;
 
     this.id = id;
@@ -30,19 +30,19 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
     this.lastReadMessage = ko.observable(0);
     this.totalMessages = ko.observable(0);
 
-    this.totalMessages.subscribe(function() {
+    this.totalMessages.subscribe(function () {
       var children = $(self.messages).children();
       if (children.last().hasClass('own'))
         self.lastReadMessage(self.totalMessages());
     });
 
-    this.unreadMessages = ko.computed(function() {
+    this.unreadMessages = ko.computed(function () {
       return self.totalMessages() - self.lastReadMessage();
     });
 
     this.isFavorite = ko.observable(false);
 
-    this.unreadMessages.subscribe(function() {
+    this.unreadMessages.subscribe(function () {
       var children = $(self.messages).children();
       var i = self.lastReadMessage();
       children.slice(0, i).removeClass('unread');
@@ -51,11 +51,11 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
       bus.post('apptitle.update');
     });
 
-    this.rename = function() {
+    this.rename = function () {
       // TODO: move to appScreen
 
-      bootbox.prompt('enter new alias (leave empty for default name)', function(result) {
-        if(result !== null)
+      bootbox.prompt('enter new alias (leave empty for default name)', function (result) {
+        if (result !== null)
           self.alias(result);
       });
     };
@@ -66,10 +66,10 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
 
   BaseTarget.prototype.displayName = null;
 
-  BaseTarget.prototype.putMessage = function(msg, isOwn) {
-    if(isOwn)
+  BaseTarget.prototype.putMessage = function (msg, isOwn) {
+    if (isOwn)
       msg.addClass('own');
-    
+
     $(this.messages).append(msg);
 
     this.totalMessages(this.totalMessages() + 1);

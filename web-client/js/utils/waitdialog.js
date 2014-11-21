@@ -18,9 +18,9 @@
 
 'use strict';
 
-define(['../vendor/bootbox'], function(bootbox) {
+define(['../vendor/bootbox'], function (bootbox) {
 
-  var WaitDialog = function(title) {
+  var WaitDialog = function (title) {
     this._dialog = bootbox.dialog({
       message: 'please wait',
       title: title,
@@ -30,7 +30,7 @@ define(['../vendor/bootbox'], function(bootbox) {
 
   WaitDialog.prototype._dialog = null;
 
-  WaitDialog.prototype.close = function() {
+  WaitDialog.prototype.close = function () {
     this._dialog.modal('hide');
   };
 

@@ -18,7 +18,7 @@
 
 define([
   'jquery', '../vendor/bootbox', './base'
-], function($, bootbox, BaseModal) {
+], function ($, bootbox, BaseModal) {
 
   function CoderModal() {
     BaseModal.call(this, 'coder');
@@ -28,7 +28,7 @@ define([
     this.onAttach = [];
 
     var self = this;
-    var getTextarea = function() {
+    var getTextarea = function () {
       return $(self.content).find('textarea');
     };
 
@@ -40,14 +40,14 @@ define([
       attach: {
         label: 'attach',
         className: 'btn-success',
-        callback: function() {
+        callback: function () {
           self.code = getTextarea().val();
           self._trigger('attach');
         }
       }
     };
 
-    this.onShown.push(function() {
+    this.onShown.push(function () {
       getTextarea().focus();
     });
   }

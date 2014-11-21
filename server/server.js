@@ -30,14 +30,14 @@ var Dns = require('./lib/dns.js');
 
 //
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
   console.error('unhandled exception: ' + err.stack);
 });
 
 var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
 var connMan = new ConnManager(config.database);
 
-connMan.ready(function() {
+connMan.ready(function () {
   new Dns().getHostname(function (hostname) {
     console.log('DNS lookup done (hostname seems to be ' + hostname + ')');
 
@@ -47,7 +47,7 @@ connMan.ready(function() {
 
     accMan.setGroupManager(grpMan);
 
-    accMan.resetOnlineCounters(function() {
+    accMan.resetOnlineCounters(function () {
       var server = new Server(config.credentials);
 
       new Api(accMan, grpMan, msgMan, server);

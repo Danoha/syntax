@@ -18,44 +18,46 @@
 
 'use strict';
 
-define(function() {
-  var TitleManager = function() {
+define(function () {
+  var TitleManager = function () {
     this._nextTitle();
   };
-  
+
   TitleManager.prototype._position = -1;
-  
+
   TitleManager.prototype._handlers = {
-    title: function() {return 'syntax.im'; },
-    unread: function() {
-      if(!this.unread)
+    title: function () {
+      return 'syntax.im';
+    },
+    unread: function () {
+      if (!this.unread)
         return false;
-      
+
       return this.unread + ' unread message' + (this.unread > 1 ? 's' : '');
     }
   };
-  
+
   TitleManager.prototype._order = ['title', 'unread'];
-  
+
   TitleManager.prototype.data = {
     unread: 0
   };
-  
-  TitleManager.prototype._nextTitle = function() {
+
+  TitleManager.prototype._nextTitle = function () {
     this._position = (this._position + 1) % this._order.length;
     var key = this._order[this._position];
     var value = this._handlers[key].call(this.data);
-    
-    if(!value)
+
+    if (!value)
       return this._nextTitle();
-    
+
     document.title = value;
-    
+
     var self = this;
-    setTimeout(function() {
+    setTimeout(function () {
       self._nextTitle();
     }, 1000);
   };
-  
+
   return new TitleManager();
 });

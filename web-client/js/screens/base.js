@@ -18,8 +18,8 @@
 
 'use strict';
 
-define(['../vendor/knockout', 'jquery', '../app', 'require'], function(ko, $, app, require) {
-  var BaseScreen = function(selector, templateName) {
+define(['../vendor/knockout', 'jquery', '../app', 'require'], function (ko, $, app, require) {
+  var BaseScreen = function (selector, templateName) {
     this._selector = 'body > ' + selector;
     this._templateName = templateName;
   };
@@ -27,8 +27,8 @@ define(['../vendor/knockout', 'jquery', '../app', 'require'], function(ko, $, ap
   BaseScreen.prototype._selector = '';
   BaseScreen.prototype._templateName = '';
 
-  BaseScreen.prototype._create = function(callback) {
-    require(['../vendor/require.text!../templates/' + this._templateName + '.html'], function(template) {
+  BaseScreen.prototype._create = function (callback) {
+    require(['../vendor/require.text!../templates/' + this._templateName + '.html'], function (template) {
       var ret = $('<div>').html(template).contents();
 
       if (ret.length !== 1)
@@ -38,21 +38,21 @@ define(['../vendor/knockout', 'jquery', '../app', 'require'], function(ko, $, ap
     });
   };
 
-  BaseScreen.prototype.hide = function() {
+  BaseScreen.prototype.hide = function () {
     if (this.onReset)
       this.onReset();
 
-    var old = $(this._selector).addClass('fade').fadeOut(function() {
+    var old = $(this._selector).addClass('fade').fadeOut(function () {
       old.remove();
     });
   };
 
-  BaseScreen.prototype.show = function() {
+  BaseScreen.prototype.show = function () {
     this.hide();
 
     var self = this;
-    this._create(function(view) {
-      view.hide().addClass('fade').fadeIn(function() {
+    this._create(function (view) {
+      view.hide().addClass('fade').fadeIn(function () {
         if (self.onShown)
           self.onShown();
         view.removeClass('fade');

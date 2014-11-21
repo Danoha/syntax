@@ -26,849 +26,838 @@ define(
     '../core/focus', '../modals/settings', '../lib/embedmanager', '../modals/groupmembers',
     '../utils/ko.bindings'
   ],
-  function(
-    BaseScreen, app, ko, bootbox, accountScreen, storage, WaitDialog, api, $, require, socket,
-    messageManager, contactList, BaseTarget, appTitle, bus, notificator, focus, SettingsModal,
-    embedManager, GroupMembersModal
-  ) {
-  var appScreen = new BaseScreen('.app', 'app');
+  function (BaseScreen, app, ko, bootbox, accountScreen, storage, WaitDialog, api, $, require, socket,
+            messageManager, contactList, BaseTarget, appTitle, bus, notificator, focus, SettingsModal,
+            embedManager, GroupMembersModal) {
+    var appScreen = new BaseScreen('.app', 'app');
 
-  // Helper functions
+    // Helper functions
 
-  function initUser(user) {
-    app.user = appScreen.user = user;
-    bus.userStorage = storage.prefix('user-' + app.user.id);
-  }
-
-  function updateTitle() {
-    var sum = 0;
-
-    $.each(appScreen.contactList.all(), function(i, c) {
-      sum += c.unreadMessages();
-    });
-
-    appTitle.data.unread = sum;
-  }
-
-  function closeTarget() {
-    var target = appScreen.target();
-
-    if (target !== null) {
-      var e = $('.messages > .panel-body');
-
-      target.scroll = {
-        top: e.scrollTop(),
-        left: e.scrollLeft()
-      };
-
-      appScreen.target(null);
-    }
-  }
-
-  function openTarget(target) {
-    closeTarget();
-
-    appScreen.target(target);
-
-    if (target.scroll !== null) {
-      var e = $('.messages > .panel-body');
-      e.scrollTop(target.scroll.top).scrollLeft(target.scroll.left);
-    }
-  }
-
-  function isTargetActive(target) {
-    return appScreen.target() === target;
-  }
-
-  function syncContactList() {
-    contactList.sync(app.user.contacts, app.user.groups);
-
-    if (!contactList.isValidTarget(appScreen.target()))
-      closeTarget();
-  }
-
-  function toggleNotifications() {
-    if (!('Notification' in window)) {
-      bootbox.alert('this browser does not support desktop notifications');
-      return;
+    function initUser(user) {
+      app.user = appScreen.user = user;
+      bus.userStorage = storage.prefix('user-' + app.user.id);
     }
 
-    var n = window.Notification;
+    function updateTitle() {
+      var sum = 0;
 
-    var f = appScreen.panel.areNotificationsAllowed;
-    var set = function(val) {
-      f(val);
-
-      bus.userStorage.set('notifications', val);
-    };
-
-    if (f()) {
-      set(false);
-      return;
-    }
-
-    if (n.permission === 'granted') {
-      set(true);
-      return;
-    }
-
-    var wait = new WaitDialog('waiting for notification permission');
-    n.requestPermission(function(permission) {
-      wait.close();
-
-      if (!('permission' in n))
-        n.permission = permission;
-
-      if (permission === 'granted')
-        set(true);
-    });
-  }
-
-  function logout(disconnected) {
-    function doLogout() {
-      storage.remove('loginToken');
-
-      appScreen.hide();
-      accountScreen.show();
-    }
-
-    if (disconnected === true)
-      doLogout();
-    else {
-      bootbox.confirm('do you really want to logout?', function (result) {
-        if (result) {
-          var wait = new WaitDialog('logging out');
-
-          api.logout(function () {
-            wait.close();
-            doLogout();
-          });
-        }
-      });
-    }
-  }
-
-  function toggleFriendSearch() {
-    var visible = appScreen.friendSearch.visible;
-
-    visible(!visible());
-
-    if (visible()) {
-      $('.panel.friend-search input[type=text]').focus();
-      resetFriendSearch();
-    }
-  }
-
-  function doFriendSearch() {
-    var query = appScreen.friendSearch.query();
-    var wait = new WaitDialog('searching');
-
-    api.searchAccounts(query, function(results) {
-      wait.close();
-
-      results = $.grep(results, function(user) {
-        return app.user.id !== user.id && contactList.findContact(user.id) === null;
+      $.each(appScreen.contactList.all(), function (i, c) {
+        sum += c.unreadMessages();
       });
 
-      appScreen.friendSearch.results(results);
-    });
-  }
+      appTitle.data.unread = sum;
+    }
 
-  function contactsCreateGroup() {
-    var wait = new WaitDialog('creating group');
+    function closeTarget() {
+      var target = appScreen.target();
 
-    api.createGroup(function(result) {
-      wait.close();
+      if (target !== null) {
+        var e = $('.messages > .panel-body');
 
-      var g = {
-        id: result.groupId,
-        role: 'admin',
-        members: []
-      };
+        target.scroll = {
+          top: e.scrollTop(),
+          left: e.scrollLeft()
+        };
 
-      app.user.groups.push(g);
-
-      syncContactList();
-
-      var group = contactList.findGroup(g.id);
-      openTarget(group);
-
-      messageManager.systemMessage(group, 'group created');
-    });
-  }
-
-  function contactListEnum() {
-    var contacts = appScreen.contactList.contacts();
-    var groups = appScreen.contactList.groups();
-
-    var alphaSort = function(a, b) {
-      a = a.displayName();
-      b = b.displayName();
-
-      return a == b ? 0 : +(a > b) || -1;
-    };
-
-    groups.sort(alphaSort);
-    contacts.sort(alphaSort);
-
-    return groups.concat(contacts);
-  }
-
-  function closeEmbed() {
-    appScreen.embed.title(null);
-    appScreen.embed.html(null);
-  }
-
-  function resetFriendSearch() {
-    appScreen.friendSearch.results([]);
-    appScreen.friendSearch.query('');
-  }
-
-  function sendFriendRequest(user) {
-    var wait = new WaitDialog('sending friend request');
-    api.setFriendshipState(user.id, 'accepted', false, function(result) {
-      wait.close();
-
-      bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
-
-      if (result === 'OK') {
-        appScreen.friendSearch.results.remove(user);
-
-        var f = null;
-        $.each(app.user.contacts, function(i, c) {
-          if(c.id === user.id) {
-            c.state.left = 'accepted';
-            f = c;
-          }
-        });
-
-        if(f === null) {
-          f = {
-            id: user.id,
-            nick: user.nick,
-            state: {
-              left: 'accepted',
-              right: 'waiting'
-            }
-          };
-
-          app.user.contacts.push(f);
-        }
-
-        syncContactList();
+        appScreen.target(null);
       }
-    });
-  }
-
-  function friendResponse(target, state) {
-    var wait = new WaitDialog('sending response');
-
-    api.setFriendshipState(target.id, state, target.isFavorite(), function(result) {
-      wait.close();
-
-      if (result === 'OK')
-        setFriendshipState(target.id, state);
-      else
-        bootbox.alert('something went wrong');
-    });
-  }
-
-  function friendResponseAccepted() {
-    friendResponse(appScreen.target(), 'accepted');
-  }
-
-  function friendResponseNotNow() {
-    friendResponse(appScreen.target(), 'none');
-  }
-
-  function friendResponseDenied() {
-    friendResponse(appScreen.target(), 'denied');
-  }
-
-  function setFriendshipState(id, lstate, rstate) {
-    if(lstate !== 'none') {
-      $.each(app.user.contacts, function (i, c) {
-        if (c.id === id) {
-          if (lstate)
-            c.state.left = lstate;
-          if (rstate)
-            c.state.right = rstate;
-        }
-      });
-    } else {
-      app.user.contacts = $.grep(app.user.contacts, function(c) {
-        return c.id !== id;
-      });
     }
 
-    syncContactList();
-  }
+    function openTarget(target) {
+      closeTarget();
 
-  function setFriendOnline(id, online) {
-    $.each(app.user.contacts, function(i, f) {
-      if (f.id === id)
-        f.isOnline = online;
-    });
+      appScreen.target(target);
 
-    // do not use syncContactList() because it's overkill
-    $.each(appScreen.contactList.contacts(), function(i, f) {
-      if (f.id === id)
-        f.isOnline(online);
-    });
-  }
+      if (target.scroll !== null) {
+        var e = $('.messages > .panel-body');
+        e.scrollTop(target.scroll.top).scrollLeft(target.scroll.left);
+      }
+    }
 
-  function groupLeave() {
-    var cb = function(notAgain) {
-      var wait = new WaitDialog('leaving group');
-      var group = appScreen.target();
+    function isTargetActive(target) {
+      return appScreen.target() === target;
+    }
 
-      api.leaveGroup(group.id, notAgain, function(result) {
+    function syncContactList() {
+      contactList.sync(app.user.contacts, app.user.groups);
+
+      if (!contactList.isValidTarget(appScreen.target()))
+        closeTarget();
+    }
+
+    function toggleNotifications() {
+      if (!('Notification' in window)) {
+        bootbox.alert('this browser does not support desktop notifications');
+        return;
+      }
+
+      var n = window.Notification;
+
+      var f = appScreen.panel.areNotificationsAllowed;
+      var set = function (val) {
+        f(val);
+
+        bus.userStorage.set('notifications', val);
+      };
+
+      if (f()) {
+        set(false);
+        return;
+      }
+
+      if (n.permission === 'granted') {
+        set(true);
+        return;
+      }
+
+      var wait = new WaitDialog('waiting for notification permission');
+      n.requestPermission(function (permission) {
         wait.close();
 
-        if (result !== 'OK') {
-          bootbox.alert('something went wrong');
-          return;
-        }
+        if (!('permission' in n))
+          n.permission = permission;
 
-        var fun;
-        if (notAgain) {
-          fun = function(g) {
-            if (g.id === group.id)
-              g.doNotInviteAgain = true;
-
-            return true;
-          };
-        }
-        else {
-          fun = function(g) {
-            return g.id !== group.id;
-          };
-        }
-
-        app.user.groups = $.grep(app.user.groups, fun);
-        syncContactList();
+        if (permission === 'granted')
+          set(true);
       });
-    };
-
-    bootbox.dialog({
-      message: 'do you really want to leave this group?',
-      buttons: {
-        cancel: {
-          label: 'no',
-          className: 'btn-default'
-        },
-        yes: {
-          label: 'yes',
-          className: 'btn-warning',
-          callback: function() {
-            cb(false);
-          }
-        },
-        dnia: {
-          label: 'do not invite me again',
-          className: 'btn-danger',
-          callback: function() {
-            cb(true);
-          }
-        }
-      }
-    });
-  }
-
-  // TODO: test and optimize
-  function processMessageScroll() {
-    var target = appScreen.target();
-
-    if (target === null)
-      return;
-
-    var el = $('.messages > .panel-body');
-    var bottom = el.height();
-    var skip = target.lastReadMessage();
-
-    //console.log('bottom:', bottom, 'skip:', skip);
-
-    $(target.messages).children().slice(skip).each(function(i) {
-      var msg = $(this);
-      var b = msg.position().top + msg.outerHeight() - 75;
-
-      if (bottom >= b) {
-        target.lastReadMessage(skip + i + 1);
-        //console.log('bottom of message:', b);
-      }
-      else
-        return false;
-    });
-  }
-
-  var isAutoScrollDisabledByScrolling = false;
-
-  function updateAutoScroll() {
-    var el = $('.messages > .panel-body');
-    
-    if(el.length === 0)
-      return;
-    
-    //var prev = isAutoScrollDisabledByScrolling;
-    
-    var maxScrollTop = el.prop('scrollHeight') - el.outerHeight();
-    isAutoScrollDisabledByScrolling = Math.abs(el.scrollTop() - maxScrollTop) > 1;
-    
-    //console.log('autoscroll prev:', !prev, 'scrollTop:', el.scrollTop(), 'maxScrollTop:', maxScrollTop, 'new:', !isAutoScrollDisabledByScrolling);
-  }
-
-  var isNextScrollEventIgnored = false;
-
-  function messagesScrollHandler() {
-    if (isNextScrollEventIgnored) {
-      isNextScrollEventIgnored = false;
-      return;
     }
 
-    processMessageScroll();
-    updateAutoScroll();
-  }
+    function logout(disconnected) {
+      function doLogout() {
+        storage.remove('loginToken');
 
-  function scrollMessagesDown() {
-    var el = $('.messages > .panel-body');
-    el.scrollTop(el.prop('scrollHeight') - el.outerHeight());
-  }
+        appScreen.hide();
+        accountScreen.show();
+      }
 
-  function bindMessagesEvents() {
-    $('.messages > .panel-body')
-      .off('scroll', messagesScrollHandler)
-      .on('scroll', messagesScrollHandler);
-
-    $('.messages .composer textarea')
-      .off('focus', processMessageScroll)
-      .on('focus', processMessageScroll);
-      
-    $('.messages > .panel-body').tooltip({
-      selector: '[data-imagepreview],[data-tooltiptext]',
-      html: true,
-      title: function() {
-        var el = $(this);
-        var html = '';
-        
-        if(el.is('[data-imagepreview]')) {
-          var url = el.attr('data-imagepreview');
-          var ext = url.split('.').pop();
-
-          if(ext === 'webm' || ext === 'gifv') {
-            html += '<div class="imagepreview"><video autoplay loop src="' + url + '" alt="video preview"></video></div>';
-          } else
-            html += '<div class="imagepreview"><img src="' + url + '" alt="image preview"></div>';
-        }
-        
-        if(el.is('[data-tooltiptext]'))
-          html += '<div class="tooltiptext">' + el.attr('data-tooltiptext') + '</div>';
-        
-        return html;
-      },
-      container: '.messages .panel-body',
-      placement: 'auto right'
-    });
-  }
-
-  function isComposerFocused() {
-    return $('.composer textarea').is(':focus');
-  }
-
-  function scrollMessagesHideRead() {
-    var target = appScreen.target();
-
-    if (target === null)
-      return;
-
-    var firstUnreadIndex = target.lastReadMessage();
-
-    if (firstUnreadIndex >= target.totalMessages())
-      return;
-
-    var el = $('.messages > .panel-body');
-    var firstUnread = $(target.messages).children().eq(firstUnreadIndex);
-    var top = firstUnread.position().top;
-    var scrollTop = el.scrollTop();
-
-    isNextScrollEventIgnored = true;
-    el.scrollTop(scrollTop + top - 100);
-  }
-
-  function processUnread(target, isOwn) {
-    if (isTargetActive(target)) {
-      var focused = isComposerFocused();
-
-      if (isOwn)
-        scrollMessagesDown();
+      if (disconnected === true)
+        doLogout();
       else {
+        bootbox.confirm('do you really want to logout?', function (result) {
+          if (result) {
+            var wait = new WaitDialog('logging out');
 
-        if (focused && !isAutoScrollDisabledByScrolling)
-          scrollMessagesDown();
-
-        if (focused)
-          processMessageScroll();
-
-        if (!isAutoScrollDisabledByScrolling)
-          scrollMessagesHideRead();
+            api.logout(function () {
+              wait.close();
+              doLogout();
+            });
+          }
+        });
       }
     }
 
-    if (!focus.value) {
-      notificator.showNotification({
-        type: 'chat',
-        count: appTitle.data.unread
-      });
-    }
+    function toggleFriendSearch() {
+      var visible = appScreen.friendSearch.visible;
 
-    if (!focus.value || !isTargetActive(target)) {
-      notificator.playSound({
-        target: target,
-        type: 'chat'
-      });
-    }
-  }
-  
-  function showSettings() {
-    var modal = new SettingsModal();
-    modal.show();
-  }
+      visible(!visible());
 
-  function setVolume(value) {
-    appScreen.panel.soundVolume(value);
-    bus.userStorage.set('sound-volume', value);
-  }
-
-  function groupShowMembers() {
-    var group = appScreen.target();
-    var modal = new GroupMembersModal(group);
-    modal.show();
-  }
-
-  // Model definition
-
-  appScreen.target = ko.observable(null);
-  appScreen.closeTarget = closeTarget;
-  appScreen.openTarget = openTarget;
-  appScreen.isTargetActive = isTargetActive;
-
-  appScreen.panel = {
-    toggleNotifications: toggleNotifications,
-
-    areNotificationsAllowed: ko.observable(false),
-    soundVolume: ko.observable(100),
-    volumeLevels: [0, 20, 40, 60, 80, 100],
-
-    menu: {
-      settings: showSettings,
-      logout: logout
-    }
-  };
-
-  appScreen.friendSearch = {
-    results: ko.observableArray(),
-    query: ko.observable(''),
-    visible: ko.observable(false),
-
-    toggle: toggleFriendSearch,
-    submit: doFriendSearch,
-    sendRequest: sendFriendRequest
-  };
-
-  appScreen.contactList = {
-    contacts: contactList.contacts,
-    groups: contactList.groups,
-
-    createGroup: contactsCreateGroup
-  };
-
-  appScreen.contactList.all = ko.computed(contactListEnum);
-
-  appScreen.embed = {
-    title: ko.observable(null),
-    html: ko.observable(null),
-
-    close: closeEmbed
-  };
-
-  appScreen.friendResponses = {
-    sendAccepted: friendResponseAccepted,
-    sendNotNow: friendResponseNotNow,
-    sendDenied: friendResponseDenied
-  };
-
-  appScreen.groupMenu = {
-    leave: groupLeave,
-    showMembers: groupShowMembers
-  };
-
-  appScreen.contactMenu = {
-
-  };
-
-  appScreen.isStorageAvailable = storage.isAvailable;
-
-  // Bus bindings
-
-  bus.subscribe('apptitle.update', function() {
-    updateTitle();
-  });
-
-  bus.subscribe('app.focus', function(focus) {
-    if (focus)
-      processMessageScroll();
-  });
-
-  bus.subscribe('messages.processUnread', function(target) {
-    processUnread(target);
-  });
-  
-  bus.subscribe('messages.updateAutoScroll', function() {
-    updateAutoScroll();
-  });
-
-  // Event bindings
-
-  $(document).on('click', 'a.embed', function() {
-    var embed = embedManager.format(this);
-    
-    if(embed === null)
-      return;
-
-    appScreen.embed.title(embed.title);
-    appScreen.embed.html(embed.html);
-    return false;
-  });
-
-  var ignoreNextUnload = false;
-  $(document).on('click', 'a.ignore-unload', function() {
-    ignoreNextUnload = true;
-  });
-
-  $(window).on('beforeunload', function() {
-    if (ignoreNextUnload) {
-      ignoreNextUnload = false;
-      return;
-    }
-
-    if (app.user !== undefined)
-      return 'Do you really want to exit?';
-  });
-
-  appScreen.panel.soundVolume.subscribe(function(value) {
-    setVolume(value);
-  }, {throttle: 10});
-
-  appScreen.target.subscribe(function(value) {
-    setTimeout(function() {
-      bindMessagesEvents();
-
-      if (value !== null) {
-        scrollMessagesHideRead();
-
-        processMessageScroll();
+      if (visible()) {
+        $('.panel.friend-search input[type=text]').focus();
+        resetFriendSearch();
       }
-    }, 10);
-  });
-
-  appScreen.contactList.all.subscribe(function() {
-    updateTitle();
-  });
-
-  appScreen.onInit = function() {
-    initUser(app.user);
-    
-    SettingsModal.setDefaults();
-
-    var volume = bus.userStorage.get('sound-volume');
-    if (volume === undefined)
-      volume = 100;
-    appScreen.panel.soundVolume(volume);
-
-    if ('Notification' in window && bus.userStorage.get('notifications') && Notification.permission === "granted")
-      toggleNotifications();
-
-    syncContactList();
-  };
-
-  appScreen.onReset = function() {
-    contactList.sync([], []); // clear contact list
-
-    appScreen.target(null);
-
-    appScreen.panel.areNotificationsAllowed(false);
-    appScreen.panel.soundVolume(100);
-
-    appScreen.friendSearch.visible(false);
-    resetFriendSearch();
-
-    appScreen.embed.title(null);
-    appScreen.embed.html(null);
-
-    appScreen.user = undefined;
-  };
-
-  // API bindings
-
-  api.on('message.receivedEvent', function(msg) {
-    messageManager.processMessage(msg);
-
-    updateTitle();
-  });
-
-  api.on('contact.offlineEvent', function(data) {
-    if (typeof data !== 'object')
-      return;
-
-    setFriendOnline(data.contactId, false);
-  });
-
-  api.on('contact.onlineEvent', function(data) {
-    if (typeof data !== 'object')
-      return;
-
-    setFriendOnline(data.contactId, data.isOnline);
-  });
-
-  api.on('contact.friendshipStateEvent', function(data) {
-    var localContact = null;
-    $.each(app.user.contacts, function(i, c) {
-      if(c.id === data.contact.id) {
-        localContact = c;
-        return false;
-      }
-    });
-
-    if(localContact !== null) {
-      localContact.state = data.state;
-      localContact.isOnline = data.contact.isOnline;
-    } else if(data.state.left !== 'denied') {
-      localContact = data.contact;
-      localContact.state = data.state;
-      app.user.contacts.push(localContact);
     }
 
-    syncContactList();
-  });
+    function doFriendSearch() {
+      var query = appScreen.friendSearch.query();
+      var wait = new WaitDialog('searching');
 
-  api.on('group.memberLeftEvent', function(data) {
-    if (typeof data !== 'object')
-      return;
+      api.searchAccounts(query, function (results) {
+        wait.close();
 
-    $.each(app.user.groups, function(i, g) {
-      if (g.id !== data.groupId)
-        return;
+        results = $.grep(results, function (user) {
+          return app.user.id !== user.id && contactList.findContact(user.id) === null;
+        });
 
-      g.members = $.grep(g.members, function(m) {
-        return m.id !== data.memberId;
+        appScreen.friendSearch.results(results);
       });
-    });
+    }
 
-    var m = contactList.query({
-      type: 'contact',
-      id: data.memberId
-    });
+    function contactsCreateGroup() {
+      var wait = new WaitDialog('creating group');
 
-    syncContactList();
+      api.createGroup(function (result) {
+        wait.close();
 
-    var g = contactList.findGroup(data.groupId);
+        var g = {
+          id: result.groupId,
+          role: 'admin',
+          members: []
+        };
 
-    if (g === null || m === null)
-      return;
+        app.user.groups.push(g);
 
-    messageManager.systemMessage(g, m.displayName() + ' left this group');
-  });
+        syncContactList();
 
-  api.on('group.destroyEvent', function(data) {
-    if (typeof data !== 'object')
-      return;
+        var group = contactList.findGroup(g.id);
+        openTarget(group);
 
-    app.user.groups = $.grep(app.user.groups, function(g) {
-      return g.id !== data.groupId;
-    });
+        messageManager.systemMessage(group, 'group created');
+      });
+    }
 
-    syncContactList();
-  });
+    function contactListEnum() {
+      var contacts = appScreen.contactList.contacts();
+      var groups = appScreen.contactList.groups();
 
-  api.on('group.inviteEvent', function(data) {
-    if (typeof data !== 'object')
-      return;
+      var alphaSort = function (a, b) {
+        a = a.displayName();
+        b = b.displayName();
 
-    var afterSync;
+        return a == b ? 0 : +(a > b) || -1;
+      };
 
-    if (!data.member) { // current user is invited to group
-      app.user.groups.push(data.group);
+      groups.sort(alphaSort);
+      contacts.sort(alphaSort);
 
-      afterSync = function() {
-        contactList.query([{
-          type: 'group',
-          id: data.group.id
-        }, {
-          type: 'contact',
-          id: data.inviterId
-        }], function(group, inviter) {
-          messageManager.systemMessage(group, inviter.displayName() + ' invited you to this group');
+      return groups.concat(contacts);
+    }
+
+    function closeEmbed() {
+      appScreen.embed.title(null);
+      appScreen.embed.html(null);
+    }
+
+    function resetFriendSearch() {
+      appScreen.friendSearch.results([]);
+      appScreen.friendSearch.query('');
+    }
+
+    function sendFriendRequest(user) {
+      var wait = new WaitDialog('sending friend request');
+      api.setFriendshipState(user.id, 'accepted', false, function (result) {
+        wait.close();
+
+        bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
+
+        if (result === 'OK') {
+          appScreen.friendSearch.results.remove(user);
+
+          var f = null;
+          $.each(app.user.contacts, function (i, c) {
+            if (c.id === user.id) {
+              c.state.left = 'accepted';
+              f = c;
+            }
+          });
+
+          if (f === null) {
+            f = {
+              id: user.id,
+              nick: user.nick,
+              state: {
+                left: 'accepted',
+                right: 'waiting'
+              }
+            };
+
+            app.user.contacts.push(f);
+          }
+
+          syncContactList();
+        }
+      });
+    }
+
+    function friendResponse(target, state) {
+      var wait = new WaitDialog('sending response');
+
+      api.setFriendshipState(target.id, state, target.isFavorite(), function (result) {
+        wait.close();
+
+        if (result === 'OK')
+          setFriendshipState(target.id, state);
+        else
+          bootbox.alert('something went wrong');
+      });
+    }
+
+    function friendResponseAccepted() {
+      friendResponse(appScreen.target(), 'accepted');
+    }
+
+    function friendResponseNotNow() {
+      friendResponse(appScreen.target(), 'none');
+    }
+
+    function friendResponseDenied() {
+      friendResponse(appScreen.target(), 'denied');
+    }
+
+    function setFriendshipState(id, lstate, rstate) {
+      if (lstate !== 'none') {
+        $.each(app.user.contacts, function (i, c) {
+          if (c.id === id) {
+            if (lstate)
+              c.state.left = lstate;
+            if (rstate)
+              c.state.right = rstate;
+          }
+        });
+      } else {
+        app.user.contacts = $.grep(app.user.contacts, function (c) {
+          return c.id !== id;
+        });
+      }
+
+      syncContactList();
+    }
+
+    function setFriendOnline(id, online) {
+      $.each(app.user.contacts, function (i, f) {
+        if (f.id === id)
+          f.isOnline = online;
+      });
+
+      // do not use syncContactList() because it's overkill
+      $.each(appScreen.contactList.contacts(), function (i, f) {
+        if (f.id === id)
+          f.isOnline(online);
+      });
+    }
+
+    function groupLeave() {
+      var cb = function (notAgain) {
+        var wait = new WaitDialog('leaving group');
+        var group = appScreen.target();
+
+        api.leaveGroup(group.id, notAgain, function (result) {
+          wait.close();
+
+          if (result !== 'OK') {
+            bootbox.alert('something went wrong');
+            return;
+          }
+
+          var fun;
+          if (notAgain) {
+            fun = function (g) {
+              if (g.id === group.id)
+                g.doNotInviteAgain = true;
+
+              return true;
+            };
+          }
+          else {
+            fun = function (g) {
+              return g.id !== group.id;
+            };
+          }
+
+          app.user.groups = $.grep(app.user.groups, fun);
+          syncContactList();
         });
       };
+
+      bootbox.dialog({
+        message: 'do you really want to leave this group?',
+        buttons: {
+          cancel: {
+            label: 'no',
+            className: 'btn-default'
+          },
+          yes: {
+            label: 'yes',
+            className: 'btn-warning',
+            callback: function () {
+              cb(false);
+            }
+          },
+          dnia: {
+            label: 'do not invite me again',
+            className: 'btn-danger',
+            callback: function () {
+              cb(true);
+            }
+          }
+        }
+      });
     }
-    else { // someone invited someone in group where current user already is
-      $.each(app.user.groups, function(i, g) {
+
+    // TODO: test and optimize
+    function processMessageScroll() {
+      var target = appScreen.target();
+
+      if (target === null)
+        return;
+
+      var el = $('.messages > .panel-body');
+      var bottom = el.height();
+      var skip = target.lastReadMessage();
+
+      //console.log('bottom:', bottom, 'skip:', skip);
+
+      $(target.messages).children().slice(skip).each(function (i) {
+        var msg = $(this);
+        var b = msg.position().top + msg.outerHeight() - 75;
+
+        if (bottom >= b) {
+          target.lastReadMessage(skip + i + 1);
+          //console.log('bottom of message:', b);
+        }
+        else
+          return false;
+      });
+    }
+
+    var isAutoScrollDisabledByScrolling = false;
+
+    function updateAutoScroll() {
+      var el = $('.messages > .panel-body');
+
+      if (el.length === 0)
+        return;
+
+      //var prev = isAutoScrollDisabledByScrolling;
+
+      var maxScrollTop = el.prop('scrollHeight') - el.outerHeight();
+      isAutoScrollDisabledByScrolling = Math.abs(el.scrollTop() - maxScrollTop) > 1;
+
+      //console.log('autoscroll prev:', !prev, 'scrollTop:', el.scrollTop(), 'maxScrollTop:', maxScrollTop, 'new:', !isAutoScrollDisabledByScrolling);
+    }
+
+    var isNextScrollEventIgnored = false;
+
+    function messagesScrollHandler() {
+      if (isNextScrollEventIgnored) {
+        isNextScrollEventIgnored = false;
+        return;
+      }
+
+      processMessageScroll();
+      updateAutoScroll();
+    }
+
+    function scrollMessagesDown() {
+      var el = $('.messages > .panel-body');
+      el.scrollTop(el.prop('scrollHeight') - el.outerHeight());
+    }
+
+    function bindMessagesEvents() {
+      $('.messages > .panel-body')
+        .off('scroll', messagesScrollHandler)
+        .on('scroll', messagesScrollHandler);
+
+      $('.messages .composer textarea')
+        .off('focus', processMessageScroll)
+        .on('focus', processMessageScroll);
+
+      $('.messages > .panel-body').tooltip({
+        selector: '[data-imagepreview],[data-tooltiptext]',
+        html: true,
+        title: function () {
+          var el = $(this);
+          var html = '';
+
+          if (el.is('[data-imagepreview]')) {
+            var url = el.attr('data-imagepreview');
+            var ext = url.split('.').pop();
+
+            if (ext === 'webm' || ext === 'gifv') {
+              html += '<div class="imagepreview"><video autoplay loop src="' + url + '" alt="video preview"></video></div>';
+            } else
+              html += '<div class="imagepreview"><img src="' + url + '" alt="image preview"></div>';
+          }
+
+          if (el.is('[data-tooltiptext]'))
+            html += '<div class="tooltiptext">' + el.attr('data-tooltiptext') + '</div>';
+
+          return html;
+        },
+        container: '.messages .panel-body',
+        placement: 'auto right'
+      });
+    }
+
+    function isComposerFocused() {
+      return $('.composer textarea').is(':focus');
+    }
+
+    function scrollMessagesHideRead() {
+      var target = appScreen.target();
+
+      if (target === null)
+        return;
+
+      var firstUnreadIndex = target.lastReadMessage();
+
+      if (firstUnreadIndex >= target.totalMessages())
+        return;
+
+      var el = $('.messages > .panel-body');
+      var firstUnread = $(target.messages).children().eq(firstUnreadIndex);
+      var top = firstUnread.position().top;
+      var scrollTop = el.scrollTop();
+
+      isNextScrollEventIgnored = true;
+      el.scrollTop(scrollTop + top - 100);
+    }
+
+    function processUnread(target, isOwn) {
+      if (isTargetActive(target)) {
+        var focused = isComposerFocused();
+
+        if (isOwn)
+          scrollMessagesDown();
+        else {
+
+          if (focused && !isAutoScrollDisabledByScrolling)
+            scrollMessagesDown();
+
+          if (focused)
+            processMessageScroll();
+
+          if (!isAutoScrollDisabledByScrolling)
+            scrollMessagesHideRead();
+        }
+      }
+
+      if (!focus.value) {
+        notificator.showNotification({
+          type: 'chat',
+          count: appTitle.data.unread
+        });
+      }
+
+      if (!focus.value || !isTargetActive(target)) {
+        notificator.playSound({
+          target: target,
+          type: 'chat'
+        });
+      }
+    }
+
+    function showSettings() {
+      var modal = new SettingsModal();
+      modal.show();
+    }
+
+    function setVolume(value) {
+      appScreen.panel.soundVolume(value);
+      bus.userStorage.set('sound-volume', value);
+    }
+
+    function groupShowMembers() {
+      var group = appScreen.target();
+      var modal = new GroupMembersModal(group);
+      modal.show();
+    }
+
+    // Model definition
+
+    appScreen.target = ko.observable(null);
+    appScreen.closeTarget = closeTarget;
+    appScreen.openTarget = openTarget;
+    appScreen.isTargetActive = isTargetActive;
+
+    appScreen.panel = {
+      toggleNotifications: toggleNotifications,
+
+      areNotificationsAllowed: ko.observable(false),
+      soundVolume: ko.observable(100),
+      volumeLevels: [0, 20, 40, 60, 80, 100],
+
+      menu: {
+        settings: showSettings,
+        logout: logout
+      }
+    };
+
+    appScreen.friendSearch = {
+      results: ko.observableArray(),
+      query: ko.observable(''),
+      visible: ko.observable(false),
+
+      toggle: toggleFriendSearch,
+      submit: doFriendSearch,
+      sendRequest: sendFriendRequest
+    };
+
+    appScreen.contactList = {
+      contacts: contactList.contacts,
+      groups: contactList.groups,
+
+      createGroup: contactsCreateGroup
+    };
+
+    appScreen.contactList.all = ko.computed(contactListEnum);
+
+    appScreen.embed = {
+      title: ko.observable(null),
+      html: ko.observable(null),
+
+      close: closeEmbed
+    };
+
+    appScreen.friendResponses = {
+      sendAccepted: friendResponseAccepted,
+      sendNotNow: friendResponseNotNow,
+      sendDenied: friendResponseDenied
+    };
+
+    appScreen.groupMenu = {
+      leave: groupLeave,
+      showMembers: groupShowMembers
+    };
+
+    appScreen.contactMenu = {};
+
+    appScreen.isStorageAvailable = storage.isAvailable;
+
+    // Bus bindings
+
+    bus.subscribe('apptitle.update', function () {
+      updateTitle();
+    });
+
+    bus.subscribe('app.focus', function (focus) {
+      if (focus)
+        processMessageScroll();
+    });
+
+    bus.subscribe('messages.processUnread', function (target) {
+      processUnread(target);
+    });
+
+    bus.subscribe('messages.updateAutoScroll', function () {
+      updateAutoScroll();
+    });
+
+    // Event bindings
+
+    $(document).on('click', 'a.embed', function () {
+      var embed = embedManager.format(this);
+
+      if (embed === null)
+        return;
+
+      appScreen.embed.title(embed.title);
+      appScreen.embed.html(embed.html);
+      return false;
+    });
+
+    var ignoreNextUnload = false;
+    $(document).on('click', 'a.ignore-unload', function () {
+      ignoreNextUnload = true;
+    });
+
+    $(window).on('beforeunload', function () {
+      if (ignoreNextUnload) {
+        ignoreNextUnload = false;
+        return;
+      }
+
+      if (app.user !== undefined)
+        return 'Do you really want to exit?';
+    });
+
+    appScreen.panel.soundVolume.subscribe(function (value) {
+      setVolume(value);
+    }, {throttle: 10});
+
+    appScreen.target.subscribe(function (value) {
+      setTimeout(function () {
+        bindMessagesEvents();
+
+        if (value !== null) {
+          scrollMessagesHideRead();
+
+          processMessageScroll();
+        }
+      }, 10);
+    });
+
+    appScreen.contactList.all.subscribe(function () {
+      updateTitle();
+    });
+
+    appScreen.onInit = function () {
+      initUser(app.user);
+
+      SettingsModal.setDefaults();
+
+      var volume = bus.userStorage.get('sound-volume');
+      if (volume === undefined)
+        volume = 100;
+      appScreen.panel.soundVolume(volume);
+
+      if ('Notification' in window && bus.userStorage.get('notifications') && Notification.permission === "granted")
+        toggleNotifications();
+
+      syncContactList();
+    };
+
+    appScreen.onReset = function () {
+      contactList.sync([], []); // clear contact list
+
+      appScreen.target(null);
+
+      appScreen.panel.areNotificationsAllowed(false);
+      appScreen.panel.soundVolume(100);
+
+      appScreen.friendSearch.visible(false);
+      resetFriendSearch();
+
+      appScreen.embed.title(null);
+      appScreen.embed.html(null);
+
+      appScreen.user = undefined;
+    };
+
+    // API bindings
+
+    api.on('message.receivedEvent', function (msg) {
+      messageManager.processMessage(msg);
+
+      updateTitle();
+    });
+
+    api.on('contact.onlineEvent', function (data) {
+      if (typeof data !== 'object')
+        return;
+
+      setFriendOnline(data.contactId, data.isOnline);
+    });
+
+    api.on('contact.friendshipStateEvent', function (data) {
+      var localContact = null;
+      $.each(app.user.contacts, function (i, c) {
+        if (c.id === data.contact.id) {
+          localContact = c;
+          return false;
+        }
+      });
+
+      if (localContact !== null) {
+        localContact.state = data.state;
+        localContact.isOnline = data.contact.isOnline;
+      } else if (data.state.left !== 'denied') {
+        localContact = data.contact;
+        localContact.state = data.state;
+        app.user.contacts.push(localContact);
+      }
+
+      syncContactList();
+    });
+
+    api.on('group.memberLeftEvent', function (data) {
+      if (typeof data !== 'object')
+        return;
+
+      $.each(app.user.groups, function (i, g) {
         if (g.id !== data.groupId)
           return;
 
-        g.members.push(data.member);
+        g.members = $.grep(g.members, function (m) {
+          return m.id !== data.memberId;
+        });
       });
 
-      afterSync = function() {
-        contactList.query([{
-          type: 'group',
-          id: data.groupId
-        }, {
-          type: 'contact',
-          id: data.inviterId
-        }, {
-          type: 'contact',
-          id: data.user.id
-        }], function(group, inviter, user) {
-          if(data.inviterId === app.user.id)
-            inviter = app.user.nick;
-          else
-            inviter = inviter.displayName();
+      var m = contactList.query({
+        type: 'contact',
+        id: data.memberId
+      });
 
-          messageManager.systemMessage(group, inviter + ' invited ' + user.displayName() + ' to this group');
-        });
-      };
-    }
+      syncContactList();
 
-    syncContactList();
-    afterSync();
-  });
+      var g = contactList.findGroup(data.groupId);
 
-  // Socket event bindings
+      if (g === null || m === null)
+        return;
 
-  var io = socket();
-
-  io.on('reconnect', function() {
-    if (app.user === undefined) // user not logged in
-      return;
-
-    var wait = new WaitDialog('restoring login');
-    api.restoreLogin(app.user.loginToken, function(result) {
-      wait.close();
-
-      if (result === 'ERR_INVALID') {
-        logout(true);
-        bootbox.alert('could not restore your login');
-      }
-      else {
-        initUser(result);
-
-        if (storage.get('loginToken'))
-          storage.set('loginToken', app.user.loginToken);
-
-        syncContactList();
-      }
+      messageManager.systemMessage(g, m.displayName() + ' left this group');
     });
-  });
 
-  return appScreen;
-});
+    api.on('group.destroyEvent', function (data) {
+      if (typeof data !== 'object')
+        return;
+
+      app.user.groups = $.grep(app.user.groups, function (g) {
+        return g.id !== data.groupId;
+      });
+
+      syncContactList();
+    });
+
+    api.on('group.inviteEvent', function (data) {
+      if (typeof data !== 'object')
+        return;
+
+      var afterSync;
+
+      if (!data.member) { // current user is invited to group
+        app.user.groups.push(data.group);
+
+        afterSync = function () {
+          contactList.query([{
+            type: 'group',
+            id: data.group.id
+          }, {
+            type: 'contact',
+            id: data.inviterId
+          }], function (group, inviter) {
+            messageManager.systemMessage(group, inviter.displayName() + ' invited you to this group');
+          });
+        };
+      }
+      else { // someone invited someone in group where current user already is
+        $.each(app.user.groups, function (i, g) {
+          if (g.id !== data.groupId)
+            return;
+
+          g.members.push(data.member);
+        });
+
+        afterSync = function () {
+          contactList.query([{
+            type: 'group',
+            id: data.groupId
+          }, {
+            type: 'contact',
+            id: data.inviterId
+          }, {
+            type: 'contact',
+            id: data.user.id
+          }], function (group, inviter, user) {
+            if (data.inviterId === app.user.id)
+              inviter = app.user.nick;
+            else
+              inviter = inviter.displayName();
+
+            messageManager.systemMessage(group, inviter + ' invited ' + user.displayName() + ' to this group');
+          });
+        };
+      }
+
+      syncContactList();
+      afterSync();
+    });
+
+    // Socket event bindings
+
+    var io = socket();
+
+    io.on('reconnect', function () {
+      if (app.user === undefined) // user not logged in
+        return;
+
+      var wait = new WaitDialog('restoring login');
+      api.restoreLogin(app.user.loginToken, function (result) {
+        wait.close();
+
+        if (result === 'ERR_INVALID') {
+          logout(true);
+          bootbox.alert('could not restore your login');
+        }
+        else {
+          initUser(result);
+
+          if (storage.get('loginToken'))
+            storage.set('loginToken', app.user.loginToken);
+
+          syncContactList();
+        }
+      });
+    });
+
+    return appScreen;
+  });

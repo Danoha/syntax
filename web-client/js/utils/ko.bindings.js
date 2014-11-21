@@ -18,20 +18,20 @@
 
 'use strict';
 
-define(['../vendor/knockout', 'jquery'], function(ko, $) {
+define(['../vendor/knockout', 'jquery'], function (ko, $) {
   ko.bindingHandlers.slideVisible = {
-    init: function(element, valueAccessor) {
+    init: function (element, valueAccessor) {
       var value = valueAccessor();
       $(element).toggle(ko.unwrap(value));
     },
-    update: function(element, valueAccessor) {
+    update: function (element, valueAccessor) {
       var value = valueAccessor();
       ko.unwrap(value) ? $(element).slideDown() : $(element).slideUp();
     }
   };
-  
+
   ko.bindingHandlers.contents = {
-    update: function(element, valueAccessor) {
+    update: function (element, valueAccessor) {
       var value = ko.unwrap(valueAccessor());
       $(element).empty().append(value);
     }

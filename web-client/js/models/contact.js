@@ -18,12 +18,12 @@
 
 'use strict';
 
-define(['./target', '../vendor/knockout', 'require', '../core/bus'], function(BaseTarget, ko, require, bus) {
+define(['./target', '../vendor/knockout', 'require', '../core/bus'], function (BaseTarget, ko, require, bus) {
   function Contact(id) {
     BaseTarget.call(this, id);
-    
+
     var self = this;
-    
+
     this.type = 'contact';
 
     this.nick = ko.observable();
@@ -35,20 +35,20 @@ define(['./target', '../vendor/knockout', 'require', '../core/bus'], function(Ba
 
     this.alias(bus.userStorage.get('contact.' + id + '.alias'));
 
-    this.displayName = ko.pureComputed(function() {
+    this.displayName = ko.pureComputed(function () {
       var alias = self.alias();
-      
+
       return alias ? alias : self.nick();
     });
-    
-    this.alias.subscribe(function(newValue) {
+
+    this.alias.subscribe(function (newValue) {
       bus.userStorage.set('contact.' + id + '.alias', newValue);
     });
   }
 
   Contact.prototype = new BaseTarget();
   Contact.prototype.constructor = Contact;
-  
+
   Contact.prototype.invokerId = null;
 
   return Contact;

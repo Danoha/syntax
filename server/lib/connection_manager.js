@@ -22,7 +22,7 @@ var MySQL = require('mysql');
 
 //
 
-var ConnManager = function(credentials) {
+var ConnManager = function (credentials) {
   this._credentials = credentials;
   this._onready = [];
 
@@ -38,8 +38,8 @@ function ready(cm) {
   cm.connected = true;
   cm._onready = [];
 
-  process.nextTick(function() {
-    callbacks.forEach(function(cb) {
+  process.nextTick(function () {
+    callbacks.forEach(function (cb) {
       cb();
     });
   });
@@ -49,7 +49,7 @@ function init(cm) {
   cm.connected = false;
   cm.connection = MySQL.createConnection(cm._credentials);
 
-  cm.connection.on('error', function(err) {
+  cm.connection.on('error', function (err) {
     if (!err.fatal)
       return;
 
@@ -61,10 +61,10 @@ function init(cm) {
   });
 
   process.stdout.write('connecting to database... ');
-  cm.connection.query('SET NAMES UTF8', function(err) {
-    if(err) {
+  cm.connection.query('SET NAMES UTF8', function (err) {
+    if (err) {
       console.error('FAILED', err);
-      setTimeout(function() {
+      setTimeout(function () {
         init(cm);
       }, 1000);
       return;
@@ -75,24 +75,24 @@ function init(cm) {
   });
 }
 
-ConnManager.prototype.ready = function(callback) {
-  if(this.connected)
+ConnManager.prototype.ready = function (callback) {
+  if (this.connected)
     process.nextTick(callback);
   else
     this._onready.push(callback);
 };
 
-ConnManager.prototype.query = function() {
+ConnManager.prototype.query = function () {
   var args = arguments;
   var cm = this;
 
-  this.ready(function() {
+  this.ready(function () {
     cm.connection.query.apply(cm.connection, args);
   });
 };
 
-ConnManager.prototype.handleError = function(err) {
-  if(err) {
+ConnManager.prototype.handleError = function (err) {
+  if (err) {
     console.error('database error', err, new Error().stack);
     return err.fatal ? true : false;
   } else

@@ -23,7 +23,7 @@ var crypto = require('crypto');
 //
 
 function invokeArray(arr, args) {
-  arr.forEach(function(i) {
+  arr.forEach(function (i) {
     i.apply(undefined, args);
   });
 }

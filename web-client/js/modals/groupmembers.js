@@ -18,10 +18,10 @@
 
 define([
   'jquery', '../vendor/bootbox', './base', '../models/contactlist', '../vendor/knockout', '../lib/api'
-], function($, bootbox, BaseModal, contactList, ko, api) {
+], function ($, bootbox, BaseModal, contactList, ko, api) {
 
   function sortByDisplayName(arr) {
-    arr.sort(function(a, b) {
+    arr.sort(function (a, b) {
       return a.displayName().localeCompare(b.displayName());
     });
   }
@@ -29,14 +29,19 @@ define([
   function apply(group, members) {
     var start = group.members();
     var end = members;
-    var nop = function() {};
+    var nop = function () {
+    };
 
-    var add = $.grep(end, function(m) {return start.indexOf(m) < 0});
-    var remove = $.grep(start, function(m) {return end.indexOf(m) < 0 });
+    var add = $.grep(end, function (m) {
+      return start.indexOf(m) < 0
+    });
+    var remove = $.grep(start, function (m) {
+      return end.indexOf(m) < 0
+    });
 
     // TODO: remove
 
-    $.each(add, function(i, m) {
+    $.each(add, function (i, m) {
       api.groupInvite(group.id, m.id, nop);
     });
   }
@@ -48,28 +53,28 @@ define([
     var self = this;
     this.viewModel.members = ko.observableArray(group.members.slice(0));
 
-    this.viewModel.contacts = ko.computed(function() {
+    this.viewModel.contacts = ko.computed(function () {
       var ms = self.viewModel.members();
-      return $.grep(contactList.contacts(), function(m) {
+      return $.grep(contactList.contacts(), function (m) {
         return $.inArray(m, ms) < 0;
       });
     });
 
-    this.viewModel.removeMember = function(m) {
+    this.viewModel.removeMember = function (m) {
       self.viewModel.members.remove(m);
     };
 
-    this.viewModel.addMember = function(m) {
+    this.viewModel.addMember = function (m) {
       self.viewModel.members.push(m);
     };
 
-    this.viewModel.membersSorted = ko.computed(function() {
+    this.viewModel.membersSorted = ko.computed(function () {
       var ms = self.viewModel.members();
       sortByDisplayName(ms);
       return ms;
     });
 
-    this.viewModel.contactsSorted = ko.computed(function() {
+    this.viewModel.contactsSorted = ko.computed(function () {
       var cs = self.viewModel.contacts();
       sortByDisplayName(cs);
       return cs;
@@ -83,7 +88,7 @@ define([
     this.buttons.apply = {
       label: 'OK',
       className: 'btn-primary',
-      callback: function() {
+      callback: function () {
         apply(group, self.viewModel.members());
       }
     };

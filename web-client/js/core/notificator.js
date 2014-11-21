@@ -18,42 +18,43 @@
 
 'use strict';
 
-define(['../lib/storage', './sound', './bus'], function(storage, soundManager, bus) {
-  function Notificator() { }
-  
+define(['../lib/storage', './sound', './bus'], function (storage, soundManager, bus) {
+  function Notificator() {
+  }
+
   function areNotificationsAllowed() {
     return bus.userStorage !== null && bus.userStorage.get('notifications') ? true : false;
   }
-  
+
   function getSoundVolume() {
     var volume;
-    if(bus.userStorage === null || (volume = bus.userStorage.get('sound-volume')) === undefined)
+    if (bus.userStorage === null || (volume = bus.userStorage.get('sound-volume')) === undefined)
       volume = 100;
 
     return volume;
   }
-  
+
   function chatNotification(data) {
     var count = data.count;
-    
+
     new Notification('syntax', {
       body: 'you have ' + count + ' unread message' + (count > 1 ? 's' : ''),
       tag: 'syntax_chat_unread',
       icon: 'img/syntax_64.png'
     });
   }
-  
+
   function chatSound(data) {
     // TODO is data.target muted?
-    
+
     soundManager.play('o-ou', getSoundVolume());
   }
-  
-  Notificator.prototype.showNotification = function(data) {
-    if(!areNotificationsAllowed())
+
+  Notificator.prototype.showNotification = function (data) {
+    if (!areNotificationsAllowed())
       return;
-    
-    switch(data.type) {
+
+    switch (data.type) {
       case 'chat':
         chatNotification(data);
         break;
@@ -61,9 +62,9 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
         throw new Error('Unknown notification type.');
     }
   };
-  
-  Notificator.prototype.playSound = function(data) {
-    switch(data.type) {
+
+  Notificator.prototype.playSound = function (data) {
+    switch (data.type) {
       case 'chat':
         chatSound(data);
         break;
@@ -71,6 +72,6 @@ define(['../lib/storage', './sound', './bus'], function(storage, soundManager, b
         throw new Error('Unknown sound type.');
     }
   };
-  
+
   return new Notificator();
 });

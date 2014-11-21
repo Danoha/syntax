@@ -18,23 +18,23 @@
 
 'use strict';
 
-define(['jquery', 'exports', './bus'], function($, exports, bus) {
+define(['jquery', 'exports', './bus'], function ($, exports, bus) {
 
   function isFocused(value) {
     exports.value = value;
-    
+
     bus.post('app.focus', value);
   }
 
   exports.value = true;
 
-  exports.bind = function() {
-    $(window).on('focus', function() {
+  exports.bind = function () {
+    $(window).on('focus', function () {
       isFocused(true);
-    }).on('blur', function() {
+    }).on('blur', function () {
       isFocused(false);
     });
-    
+
     isFocused(document.hasFocus());
   };
 });

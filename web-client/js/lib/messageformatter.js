@@ -18,8 +18,9 @@
 
 'use strict';
 
-define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vendor/uri/main', '../core/bus', '../vendor/highlight.min'], function($, app, moment, emoticons, messageParser, URI, bus) {
-  var MessageFormatter = function() {};
+define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vendor/uri/main', '../core/bus', '../vendor/highlight.min'], function ($, app, moment, emoticons, messageParser, URI, bus) {
+  var MessageFormatter = function () {
+  };
 
   var spotifyRegEx = /(?:[^\w]|^)(spotify:[a-zA-Z0-9:\.=&%+;\-_\?]+)(?:[^\w]|$)/gm;
   var magnetRegEx = /(?:[^\w]|^)(magnet:\?[a-zA-Z0-9:\.=&%+;\-_\?]+)(?:[^\w]|$)/gm;
@@ -60,17 +61,17 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
     var hours = Math.floor(duration.asHours());
     var minutes = duration.minutes();
     var seconds = duration.seconds();
-    if(hours > 0 && minutes <= 9)
+    if (hours > 0 && minutes <= 9)
       minutes = '0' + minutes;
     return (hours > 0 ? hours + ':' : '') + minutes + ':' + (seconds > 9 ? seconds : '0' + seconds);
   }
 
   function formatCode(node) {
-    node.find('code').each(function() {
+    node.find('code').each(function () {
       $(this).wrap('<pre>').contents().unwrap();
     });
 
-    node.find('pre').each(function(i, block) {
+    node.find('pre').each(function (i, block) {
       hljs.highlightBlock(block);
     });
   }
@@ -80,7 +81,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   }
 
   function formatEmoticons(node) {
-    node.contents().each(function(i) {
+    node.contents().each(function (i) {
       if (this.nodeType !== 3)
         return;
 
@@ -93,7 +94,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
   var newLineRegEx = /(?:\r\n|\r|\n)/g;
 
   function formatNewLines(node) {
-    node.contents().each(function(i) {
+    node.contents().each(function (i) {
       if (this.nodeType !== 3)
         return;
 
@@ -109,7 +110,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
     for (var again = true; again;) {
       again = false;
 
-      node.contents().each(function(i) {
+      node.contents().each(function (i) {
         if (this.nodeType !== 3)
           return;
 
@@ -119,37 +120,37 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
 
         function replace(urls, classes) {
           var replaced = false;
-          $.each(urls, function(i, url) {
+          $.each(urls, function (i, url) {
             var htmlUrl = escapeHtml(url);
             html = html.replace(htmlUrl, '<a class="' + classes + '">' + url + '</a>');
             replaced = true;
           });
           return replaced;
         }
-        
+
         function matchAndReplace(regex, classes) {
           var item;
           var urls = [];
           while (item = regex.exec(text))
             urls.push(item[1]);
-    
+
           return replace(urls, classes);
         }
-        
-        if(matchAndReplace(spotifyRegEx, 'ignore-unload spotify')) {
+
+        if (matchAndReplace(spotifyRegEx, 'ignore-unload spotify')) {
           again = true;
           t.replaceWith(html);
           return false;
         }
 
-        if(matchAndReplace(magnetRegEx, 'ignore-unload magnet')) {
+        if (matchAndReplace(magnetRegEx, 'ignore-unload magnet')) {
           again = true;
           t.replaceWith(html);
           return false;
         }
 
         var urls = [];
-        URI.withinString(text, function(url) {
+        URI.withinString(text, function (url) {
           urls.push(url);
           return false;
         });
@@ -162,13 +163,13 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       });
     }
 
-    node.find('a').each(function() {
+    node.find('a').each(function () {
       var t = $(this);
       var href = t.text();
 
-      if(t.is('.link')) {
+      if (t.is('.link')) {
         t.attr('target', '_blank');
-        
+
         var uri = URI(href);
 
         if (!uri.scheme()) {
@@ -176,11 +177,11 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           href = uri.toString();
         }
       }
-      
+
       t.attr({
         href: href
       });
-    }).each(function() {
+    }).each(function () {
       var a = $(this);
       var url = a.attr('href');
       var uri = new URI(url);
@@ -197,11 +198,11 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       if (a.is('.spotify')) {
         var trackId = parseSpotifyTrackId(url);
 
-        if(trackId !== null) {
-          $.getJSON('https://api.spotify.com/v1/tracks/' + trackId).done(function(data) {
+        if (trackId !== null) {
+          $.getJSON('https://api.spotify.com/v1/tracks/' + trackId).done(function (data) {
             var name = data.name;
             var artists = [];
-            $.each(data.artists, function(j, artist) {
+            $.each(data.artists, function (j, artist) {
               artists.push(artist.name);
             });
 
@@ -216,7 +217,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
 
             var title = name + ' [' + length + ']';
 
-            if(bus.userStorage.get('embed.spotify.replace')) {
+            if (bus.userStorage.get('embed.spotify.replace')) {
               a.text(title);
               a.prepend('<span class="icon icon-spotify"></span>');
             } else
@@ -226,19 +227,19 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           });
         }
 
-        if(bus.userStorage.get('embed.spotify.enabled')) {
+        if (bus.userStorage.get('embed.spotify.enabled')) {
           $('<a>').html('<span class="glyphicon glyphicon-music"></span>')
             .addClass('embed spotify link-attachment')
             .attr('href', url).insertAfter(a);
         }
       }
       else if ((yId = parseYoutubeId(url))) {
-        if(bus.userStorage.get('preview.youtube.enabled'))
+        if (bus.userStorage.get('preview.youtube.enabled'))
           setImagePreview('https://img.youtube.com/vi/' + yId + '/default.jpg');
 
-        $.getJSON('https://gdata.youtube.com/feeds/api/videos/' + yId + '?v=2&alt=json').done(function(data) {
+        $.getJSON('https://gdata.youtube.com/feeds/api/videos/' + yId + '?v=2&alt=json').done(function (data) {
           var title = data.entry.title.$t, length;
-          if('media$content' in data.entry.media$group)
+          if ('media$content' in data.entry.media$group)
             length = data.entry.media$group.media$content[0].duration;
           else
             length = data.entry.media$group.yt$duration.seconds;
@@ -286,23 +287,23 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
       else if ((bus.userStorage.get('preview.imgur.enabled') || bus.userStorage.get('preview.imgur.replace')) && uri.domain() === 'imgur.com') {
         var type = null, id = null;
 
-        if(uri.directory() === '/a') {
+        if (uri.directory() === '/a') {
           type = 'album';
           id = uri.filename();
-        } else if(uri.directory() === '/gallery') {
+        } else if (uri.directory() === '/gallery') {
           type = 'gallery';
           id = uri.filename();
-        } else if(uri.subdomain() === 'i') {
+        } else if (uri.subdomain() === 'i') {
           type = 'image';
           id = uri.filename().replace('.' + uri.suffix(), '');
-        } else if(uri.subdomain() == '') {
+        } else if (uri.subdomain() == '') {
           type = 'image';
           id = uri.filename();
         }
 
         $.ajax('https://api.imgur.com/3/' + type + '/' + id, {
           headers: {'Authorization': 'Client-ID 5a9a4cd939646f6'}
-        }).done(function(response) {
+        }).done(function (response) {
           var data = response.data;
           var title = data.title || url;
           var imagesCount = data.images_count;
@@ -310,17 +311,17 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
           var isNsfw = data.nsfw;
           var replace = bus.userStorage.get('preview.imgur.replace');
 
-          if(!isAlbum && bus.userStorage.get('preview.imgur.enabled'))
+          if (!isAlbum && bus.userStorage.get('preview.imgur.enabled'))
             setImagePreview(data.link);
 
-          if(replace) {
+          if (replace) {
             a.text(title);
             a.prepend('<span class="icon icon-imgur"></span>');
 
-            if(isAlbum)
+            if (isAlbum)
               a.append(' <span class="glyphicon glyphicon-film"></span>');
 
-            if(isNsfw)
+            if (isNsfw)
               a.append(' <span class="glyphicon glyphicon-flag"></span>');
           } else
             setTooltipText(title + (isNsfw ? ' [NSFW]' : ''));
@@ -349,7 +350,7 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
     return $('<div>').addClass('message row').append(
       $('<div>').addClass('col-xs-10 col-sm-1 sender')
     ).append(
-        $('<div>').addClass('col-xs-2 col-sm-1 pull-right time')
+      $('<div>').addClass('col-xs-2 col-sm-1 pull-right time')
     ).append(
       $('<div>').addClass('col-xs-12 col-sm-9 text')
     );
@@ -389,10 +390,10 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
     return systemMessage(sender + ' ' + text);
   }
 
-  MessageFormatter.prototype.format = function(msg, flow) {
+  MessageFormatter.prototype.format = function (msg, flow) {
     if (typeof msg === 'string')
       return systemMessage(msg);
-    else if(msg.text.lastIndexOf('/me ', 0) === 0)
+    else if (msg.text.lastIndexOf('/me ', 0) === 0)
       return stateMessage(msg, flow);
     else
       return chatMessage(msg, flow);

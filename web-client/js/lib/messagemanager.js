@@ -18,8 +18,9 @@
 
 'use strict';
 
-define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 'require', '../models/group', '../core/bus', '../core/focus'], function(messageFormatter, contactList, app, $, require, Group, bus, focus) {
-  var MessageManager = function() {};
+define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 'require', '../models/group', '../core/bus', '../core/focus'], function (messageFormatter, contactList, app, $, require, Group, bus, focus) {
+  var MessageManager = function () {
+  };
 
   function findContact(id) {
     if (id === app.user.id)
@@ -45,7 +46,7 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
       var group = contactList.findGroup(msg.groupId);
 
       if (group !== null) {
-        $.each(group.members(), function(i, m) {
+        $.each(group.members(), function (i, m) {
           if (m.id !== msg.senderId)
             return;
 
@@ -65,18 +66,18 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
 
   function putMessage(target, msg, isOwn) {
     bus.post('messages.updateAutoScroll');
-    
+
     target.putMessage(msg, isOwn);
-    
+
     bus.post('messages.processUnread', target, isOwn);
   }
 
-  MessageManager.prototype.processMessage = function(msg) {
+  MessageManager.prototype.processMessage = function (msg) {
     var flow = findMessageFlow(msg);
 
     if (flow === null)
       return; // unknown sender or recipient
-    
+
     var row = messageFormatter.format(msg, flow);
 
     var target;
@@ -86,13 +87,13 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
       target = flow.sender;
 
     var isOwn = false;
-    if(msg.instanceId === app.getUniqueId())
+    if (msg.instanceId === app.getUniqueId())
       isOwn = true;
 
     putMessage(target, row, isOwn);
   };
 
-  MessageManager.prototype.systemMessage = function(target, text) {
+  MessageManager.prototype.systemMessage = function (target, text) {
     var row = messageFormatter.format(text);
 
     putMessage(target, row, true);

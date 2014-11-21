@@ -18,11 +18,11 @@
 
 'use strict';
 
-define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], function(exports, ko, Contact, Group, $) {
+define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], function (exports, ko, Contact, Group, $) {
   exports.contacts = ko.observableArray();
   exports.groups = ko.observableArray();
 
-  exports.sync = function(friendlist, grouplist) {
+  exports.sync = function (friendlist, grouplist) {
     function removeInvalid(ids, obs) {
       var current = obs();
       for (var i = current.length - 1; i >= 0; i--) {
@@ -34,7 +34,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     }
 
     var validIds = [];
-    $.each(friendlist, function(i, f) {
+    $.each(friendlist, function (i, f) {
       if ($.inArray(f.state.left, ['waiting', 'accepted']) === -1 || $.inArray(f.state.right, ['waiting', 'accepted']) === -1 || (f.state.left === 'waiting' && f.state.right === 'waiting'))
         return;
 
@@ -52,7 +52,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     removeInvalid(validIds, exports.contacts);
 
     validIds = [];
-    $.each(grouplist, function(i, g) {
+    $.each(grouplist, function (i, g) {
       if (g.doNotInviteAgain || g.isBanned)
         return;
 
@@ -60,7 +60,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
       group.role(g.role);
       group.members([]);
 
-      $.each(g.members, function(j, m) {
+      $.each(g.members, function (j, m) {
         var c = exports.findContact(m.id);
 
         if (c === null) {
@@ -77,16 +77,16 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     removeInvalid(validIds, exports.groups);
   };
 
-  exports.query = function(query, callback) {
+  exports.query = function (query, callback) {
     var err = new Error('Invalid contactListQuery() call.');
 
     function invalid() {
       throw err;
     }
-    
+
     function lookupContact(array, id) {
       var item = null;
-      $.each(array, function(i, c) {
+      $.each(array, function (i, c) {
         if (c.id !== id)
           return;
 
@@ -108,17 +108,17 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
           item = lookupContact(exports.contacts(), q.id);
 
           if (item === null) { // traverse groups to find contact which is not in user's contact list
-            $.each(exports.groups(), function(i, g) {
+            $.each(exports.groups(), function (i, g) {
               item = lookupContact(g.members(), q.id);
-              
-              if(item !== null)
+
+              if (item !== null)
                 return false;
             });
           }
 
           break;
         case 'group':
-          $.each(exports.groups(), function(i, g) {
+          $.each(exports.groups(), function (i, g) {
             if (g.id !== q.id)
               return;
 
@@ -135,7 +135,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     }
 
     if ($.isArray(query)) {
-      $.each(query, function(i, q) {
+      $.each(query, function (i, q) {
         process(q);
       });
     }
@@ -158,11 +158,11 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     });
   }
 
-  exports.findContact = function(id) {
+  exports.findContact = function (id) {
     return find('contact', id);
   };
 
-  exports.findGroup = function(id) {
+  exports.findGroup = function (id) {
     return find('group', id);
   };
 
@@ -177,15 +177,15 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     return item;
   }
 
-  exports.findOrCreateContact = function(id) {
+  exports.findOrCreateContact = function (id) {
     return findOrCreate('contact', id, exports.contacts, Contact);
   };
 
-  exports.findOrCreateGroup = function(id) {
+  exports.findOrCreateGroup = function (id) {
     return findOrCreate('group', id, exports.groups, Group);
   };
 
-  exports.isValidTarget = function(item) {
+  exports.isValidTarget = function (item) {
     return exports.contacts.indexOf(item) >= 0 || exports.groups.indexOf(item) >= 0;
   };
 });

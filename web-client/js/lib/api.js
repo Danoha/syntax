@@ -18,12 +18,13 @@
 
 'use strict';
 
-define(['../core/socket', '../vendor/sha256.min'], function(socket) {
+define(['../core/socket', '../vendor/sha256.min'], function (socket) {
   var io = socket();
 
-  function Api() {}
+  function Api() {
+  }
 
-  var tryCallback = function() {
+  var tryCallback = function () {
     var args = Array.prototype.slice.call(arguments);
     var cb = args.splice(0, 1)[0];
 
@@ -35,13 +36,13 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     }
   };
 
-  var bind = function(name, event, params, listen) {
-    Api.prototype[name] = function() {
+  var bind = function (name, event, params, listen) {
+    Api.prototype[name] = function () {
 
       if (listen !== false) {
         var callback = Array.prototype.slice.call(arguments, -1)[0];
 
-        io.on(event, function(result) {
+        io.on(event, function (result) {
           io.removeAllListeners(event);
 
           tryCallback(callback, result);
@@ -51,7 +52,7 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
       var data;
       if (params) {
         var args;
-        if(listen !== false)
+        if (listen !== false)
           args = Array.prototype.slice.call(arguments, 0, -1);
         else
           args = Array.prototype.slice.call(arguments);
@@ -62,11 +63,11 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   };
 
-  bind('chatMessage', 'message.send', function(data) {
+  bind('chatMessage', 'message.send', function (data) {
     return data;
   }, false);
 
-  bind('login', 'account.login', function(email, password) {
+  bind('login', 'account.login', function (email, password) {
     return {
       email: email,
       hash: CryptoJS.SHA256(password).toString()
@@ -75,13 +76,13 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
 
   bind('logout', 'account.logout');
 
-  bind('activateAccount', 'account.activate', function(code) {
+  bind('activateAccount', 'account.activate', function (code) {
     return {
       code: code
     };
   });
 
-  bind('createAccount', 'account.create', function(email, nick, password) {
+  bind('createAccount', 'account.create', function (email, nick, password) {
     return {
       email: email,
       nick: nick,
@@ -89,13 +90,13 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   });
 
-  bind('restoreLogin', 'account.restoreLogin', function(loginToken) {
+  bind('restoreLogin', 'account.restoreLogin', function (loginToken) {
     return {
       loginToken: loginToken
     };
   });
 
-  bind('searchAccounts', 'contact.lookup', function(search) {
+  bind('searchAccounts', 'contact.lookup', function (search) {
     return {
       query: search
     };
@@ -103,21 +104,21 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
 
   bind('createGroup', 'group.create');
 
-  bind('leaveGroup', 'group.leave', function(groupId, doNotInviteAgain) {
+  bind('leaveGroup', 'group.leave', function (groupId, doNotInviteAgain) {
     return {
       groupId: groupId,
       doNotInviteAgain: doNotInviteAgain
     };
   });
 
-  bind('groupInvite', 'group.invite', function(groupId, friendId) {
+  bind('groupInvite', 'group.invite', function (groupId, friendId) {
     return {
       userId: friendId,
       groupId: groupId
     };
   });
 
-  bind('setFriendshipState', 'contact.setFriendshipState', function(targetId, state, isFavorite) {
+  bind('setFriendshipState', 'contact.setFriendshipState', function (targetId, state, isFavorite) {
     return {
       targetId: targetId,
       state: state,
@@ -125,11 +126,11 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   });
 
-  Api.prototype.on = function(event, listener) {
-    io.on(event, function() {
+  Api.prototype.on = function (event, listener) {
+    io.on(event, function () {
       var args = Array.prototype.slice.call(arguments);
       args.unshift(listener);
-      
+
       tryCallback.apply(this, args);
     });
   };

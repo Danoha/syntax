@@ -18,35 +18,35 @@
 
 'use strict';
 
-(function() {
+(function () {
   var port = 2013;
   var localhost = window && window.location && window.location.search.indexOf('localhost') >= 0;
   var ioServer = 'https://' + (localhost ? '127.0.0.1' : 'syntax-im.tk') + ':' + port;
   var clientLibrary = ioServer + '/socket.io/socket.io.js';
 
-  define(['module'], function(module) {
+  define(['module'], function (module) {
     var _done = undefined;
-    var done = function(err, io, url) {
+    var done = function (err, io, url) {
       _done = arguments;
     };
 
-    require([clientLibrary], function(io) {
+    require([clientLibrary], function (io) {
       done(null, io(ioServer), clientLibrary);
-    }, function() {
+    }, function () {
       done(new Error('Cannot continue without socket.io connection.'), null, clientLibrary);
     });
 
-    return function(callback) {
-      if(callback === undefined) {
-        if(_done !== undefined)
+    return function (callback) {
+      if (callback === undefined) {
+        if (_done !== undefined)
           return _done[1];
-        
+
         throw new Error('Invalid socket() call.');
       }
-      
+
       if (_done === undefined) {
         var old = done;
-        done = function() {
+        done = function () {
           old.apply(undefined, arguments);
           callback.apply(undefined, arguments);
         };

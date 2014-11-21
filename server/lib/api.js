@@ -22,7 +22,7 @@ var moment = require('moment');
 
 //
 
-var Api = function(accMan, grpMan, msgMan, server) {
+var Api = function (accMan, grpMan, msgMan, server) {
   this.accMan = accMan;
   this.grpMan = grpMan;
   this.msgMan = msgMan;
@@ -72,7 +72,7 @@ function init(api) {
 
 function addUserToGroup(api, userId, groupId) {
   var clients = api.server.io.sockets.adapter.rooms['user-' + userId];
-  var group = api.server.io.sockets.adapter.rooms['group-' + groupId] || { };
+  var group = api.server.io.sockets.adapter.rooms['group-' + groupId] || {};
 
   for (var id in clients) {
     if (!clients.hasOwnProperty(id))
@@ -86,7 +86,7 @@ function addUserToGroup(api, userId, groupId) {
 
 function removeUserFromGroup(api, userId, groupId) {
   var clients = api.server.io.sockets.adapter.rooms['user-' + userId];
-  var group = api.server.io.sockets.adapter.rooms['group-' + groupId] || { };
+  var group = api.server.io.sockets.adapter.rooms['group-' + groupId] || {};
 
   for (var id in clients) {
     if (!clients.hasOwnProperty(id))
@@ -99,9 +99,9 @@ function removeUserFromGroup(api, userId, groupId) {
 }
 
 function bind(api, sock, name, callback, types, auth) {
-  if(auth) {
+  if (auth) {
     var _callback = callback;
-    callback = function(a, s, d, n) {
+    callback = function (a, s, d, n) {
       if (!s.userId)
         s.emit(n, 'ERR_UNAUTHORIZED');
       else
@@ -109,8 +109,8 @@ function bind(api, sock, name, callback, types, auth) {
     };
   }
 
-  sock.on(name, function(data) {
-    if(typeof types !== 'undefined') {
+  sock.on(name, function (data) {
+    if (typeof types !== 'undefined') {
       for (var prop in types) {
         if (!types.hasOwnProperty(prop))
           continue;
@@ -124,7 +124,7 @@ function bind(api, sock, name, callback, types, auth) {
 
     try {
       callback(api, sock, data, name);
-    } catch(e) {
+    } catch (e) {
       console.error('api handler error name=' + name, e);
     }
   });
@@ -153,7 +153,11 @@ function session_start(api, sock) {
   b('account.logout', account_logout);
 
   b('contact.lookup', contact_lookup, {query: 'string'}, true);
-  b('contact.setFriendshipState', contact_setFriendshipState, {targetId: 'number', state: 'string', isFavorite: 'boolean'}, true);
+  b('contact.setFriendshipState', contact_setFriendshipState, {
+    targetId: 'number',
+    state: 'string',
+    isFavorite: 'boolean'
+  }, true);
 
   b('group.create', group_create, undefined, true);
   b('group.invite', group_invite, {userId: 'number', groupId: 'number'}, true);
@@ -167,20 +171,20 @@ function session_end(api, sock) {
 }
 
 function account_create(api, sock, data, name) {
-  api.accMan.create(data.email, data.nick, data.hash, function(result) {
+  api.accMan.create(data.email, data.nick, data.hash, function (result) {
     sock.emit(name, result);
   });
 }
 
 function account_activate(api, sock, data, name) {
-  api.accMan.activate(data.code, function(result) {
+  api.accMan.activate(data.code, function (result) {
     sock.emit(name, result);
   });
 }
 
 function account_login(api, sock, data, name) {
-  api.accMan.login(data.email, data.hash, function(result) {
-    if(typeof result === 'object' && result.id)
+  api.accMan.login(data.email, data.hash, function (result) {
+    if (typeof result === 'object' && result.id)
       loginValid(api, sock, result);
 
     sock.emit(name, result);
@@ -188,8 +192,8 @@ function account_login(api, sock, data, name) {
 }
 
 function account_restoreLogin(api, sock, data, name) {
-  api.accMan.restoreLogin(data.loginToken, function(result) {
-    if(typeof result === 'object' && result.id)
+  api.accMan.restoreLogin(data.loginToken, function (result) {
+    if (typeof result === 'object' && result.id)
       loginValid(api, sock, result);
 
     sock.emit(name, result);
@@ -197,18 +201,18 @@ function account_restoreLogin(api, sock, data, name) {
 }
 
 function account_logout(api, sock, data, name) {
-  var done = function() {
-    if(typeof name !== 'undefined')
+  var done = function () {
+    if (typeof name !== 'undefined')
       sock.emit(name, 'OK');
   };
 
-  if(sock.userId) {
+  if (sock.userId) {
     api.accMan.logout(sock.userId, done);
     sock.leave('user-' + sock.userId);
     sock.userId = undefined;
 
     sock.rooms.forEach(function (room) {
-      if(/^group\-/.test(room))
+      if (/^group\-/.test(room))
         sock.leave(room);
     });
   } else
@@ -216,25 +220,25 @@ function account_logout(api, sock, data, name) {
 }
 
 function contact_lookup(api, sock, data, name) {
-  api.accMan.lookup(data.query, function(results) {
+  api.accMan.lookup(data.query, function (results) {
     sock.emit(name, results);
   });
 }
 
 function contact_setFriendshipState(api, sock, data, name) {
-  api.accMan.setFriendshipState(sock.userId, data.targetId, data.state, data.isFavorite, function(result) {
+  api.accMan.setFriendshipState(sock.userId, data.targetId, data.state, data.isFavorite, function (result) {
     sock.emit(name, result);
   });
 }
 
 function group_create(api, sock, data, name) {
-  api.grpMan.create(sock.userId, function(result) {
+  api.grpMan.create(sock.userId, function (result) {
     sock.emit(name, result);
   });
 }
 
 function group_invite(api, sock, data, name) {
-  api.grpMan.invite(sock.userId, data.userId, data.groupId, function(result) {
+  api.grpMan.invite(sock.userId, data.userId, data.groupId, function (result) {
     sock.emit(name, result);
 
     if (result === 'OK')
@@ -243,7 +247,7 @@ function group_invite(api, sock, data, name) {
 }
 
 function group_leave(api, sock, data, name) {
-  api.grpMan.leave(sock.userId, data.groupId, data.doNotInviteAgain, function(result) {
+  api.grpMan.leave(sock.userId, data.groupId, data.doNotInviteAgain, function (result) {
     sock.emit(name, result);
 
     if (result === 'OK')
@@ -252,7 +256,7 @@ function group_leave(api, sock, data, name) {
 }
 
 function message_send(api, sock, data, name) {
-  api.msgMan.process(data, sock.userId, function(result) {
+  api.msgMan.process(data, sock.userId, function (result) {
     sock.emit(name, result);
   });
 }

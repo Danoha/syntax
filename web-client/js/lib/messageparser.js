@@ -18,8 +18,9 @@
 
 'use strict';
 
-define(['jquery', '../models/contactlist'], function($, contactList) {
-  var MessageParser = function() {};
+define(['jquery', '../models/contactlist'], function ($, contactList) {
+  var MessageParser = function () {
+  };
 
   function escapeHtml(html) {
     var element = $('<div>');
@@ -30,15 +31,15 @@ define(['jquery', '../models/contactlist'], function($, contactList) {
 
   var newLine = ["\r\n", "\n"];
   var codeRegEx = /^[ ]{2}(.*)/mg;
-  
+
   function replace(text, i, len, replacement) {
     return text.substring(0, i) + replacement + text.substr(i + len);
   }
-  
+
   function parseCode(text) {
     var match,
       tmp = [];
-    while((match = codeRegEx.exec(text)) !== null) {
+    while ((match = codeRegEx.exec(text)) !== null) {
       tmp.push({
         value: match[1],
         originalValue: match[0],
@@ -46,53 +47,53 @@ define(['jquery', '../models/contactlist'], function($, contactList) {
         end: match.index + match[0].length
       });
     }
-    
-    for(var i = 0; i < tmp.length - 1; i++) {
+
+    for (var i = 0; i < tmp.length - 1; i++) {
       var a = tmp[i + 0];
       var b = tmp[i + 1];
       var join = false,
         separator = null;
-      $.each(newLine, function(j, nl) {
-        if(a.end + nl.length !== b.start)
+      $.each(newLine, function (j, nl) {
+        if (a.end + nl.length !== b.start)
           return;
-        
+
         var substr = text.substring(a.start, b.end);
-        if(substr !== a.originalValue + nl + b.originalValue)
+        if (substr !== a.originalValue + nl + b.originalValue)
           return;
-        
+
         join = true;
         separator = nl;
         return false;
       });
-      
-      if(!join)
+
+      if (!join)
         continue;
-      
+
       var c = {
         value: a.value + separator + b.value,
         originalValue: a.originalValue + separator + b.originalValue,
         start: a.start,
         end: b.end
       };
-      
+
       tmp.splice(i, 2, c);
       i--;
     }
-    
+
     var en = 0;
-    $.each(tmp, function(i, item) {
+    $.each(tmp, function (i, item) {
       text = replace(text, item.start + en, item.end - item.start, '<pre>' + item.value + '</pre>');
       en += 13 - (item.originalValue.length - item.value.length);
     });
-    
+
     return text;
   }
 
-    function parse(text) {
+  function parse(text) {
     text = escapeHtml(text);
-    
+
     text = parseCode(text);
-  
+
     return text;
   }
 

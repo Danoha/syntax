@@ -23,7 +23,7 @@ var utils = require('./utils.js');
 
 //
 
-var GrpManager = function(connMan, accMan) {
+var GrpManager = function (connMan, accMan) {
   this.cm = connMan;
   this.am = accMan;
 
@@ -40,7 +40,7 @@ var GrpManager = function(connMan, accMan) {
 
 function getMembershipState(gm, userId, groupId, callback) {
   gm.cm.query('SELECT isBanned, doNotInviteAgain FROM groupUsers WHERE userId = ? AND groupId = ?', [userId, groupId], function (err, rows) {
-    if(gm.cm.handleError(err) || !rows || rows.length !== 1)
+    if (gm.cm.handleError(err) || !rows || rows.length !== 1)
       return callback(null);
 
     callback(rows[0]);
@@ -65,13 +65,13 @@ function getGroup(gm, groupId, callback) {
     // get group members
     function (cb) {
       gm.cm.query('SELECT isBanned, doNotInviteAgain, role, u.id AS id, u.nick AS nick FROM groupUsers JOIN users AS u ON u.id = groupUsers.userId WHERE groupId = ?', [groupId], function (err, rows) {
-        if(gm.cm.handleError(err) || !rows)
+        if (gm.cm.handleError(err) || !rows)
           cb(true);
 
         cb(null, rows);
       });
     }
-  ], function(err, results) {
+  ], function (err, results) {
     if (err)
       return callback(null);
 
@@ -110,7 +110,7 @@ GrpManager.prototype.getGroups = function (userId, callback) {
 
 function collapseEmptyGroup(gm, groupId) {
   gm.cm.query('SELECT userId, isBanned, doNotInviteAgain FROM groupUsers WHERE groupId = ?', groupId, function (err, rows) {
-    if(gm.cm.handleError(err) || !rows)
+    if (gm.cm.handleError(err) || !rows)
       return;
 
     var zombies = [];
@@ -191,20 +191,20 @@ function invite(gm, userId, inviteeId, groupId, callback) {
     },
     // check if user can be invited
     function (cb) {
-      getMembershipState(gm, inviteeId, groupId, function(state) {
+      getMembershipState(gm, inviteeId, groupId, function (state) {
         cb((state === null || (!state.isBanned && !state.doNotInviteAgain)) ? null : 'ERR_CANNOT_INVITE');
       });
     }
-  ], function(err, results) {
-    if(err)
+  ], function (err, results) {
+    if (err)
       return callback(err);
 
     gm.cm.query('INSERT INTO groupUsers SET ?', {
       userId: inviteeId,
       groupId: groupId,
       role: 'member'
-    }, function(err) {
-      if(gm.cm.handleError(err) || err)
+    }, function (err) {
+      if (gm.cm.handleError(err) || err)
         return callback('ERR');
 
       delete results[0].isOnline;
@@ -225,13 +225,13 @@ function invite(gm, userId, inviteeId, groupId, callback) {
   });
 }
 
-GrpManager.prototype.invite = function(userId, inviteeId, groupId, callback) {
+GrpManager.prototype.invite = function (userId, inviteeId, groupId, callback) {
   invite(this, userId, inviteeId, groupId, callback);
 };
 
 function leave(gm, userId, groupId, doNotInviteAgain, callback) {
-  var cb = function(err) {
-    if(gm.cm.handleError(err))
+  var cb = function (err) {
+    if (gm.cm.handleError(err))
       return callback('ERR');
 
     collapseEmptyGroup(gm, groupId);
@@ -250,7 +250,7 @@ function leave(gm, userId, groupId, doNotInviteAgain, callback) {
     gm.cm.query('DELETE FROM groupUsers WHERE userId = ? AND groupId = ?', [userId, groupId], cb);
 }
 
-GrpManager.prototype.leave = function(userId, groupId, doNotInviteAgain, callback) {
+GrpManager.prototype.leave = function (userId, groupId, doNotInviteAgain, callback) {
   leave(this, userId, groupId, doNotInviteAgain, callback);
 };
 

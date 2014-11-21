@@ -24,7 +24,7 @@ var utils = require('./utils.js');
 
 //
 
-var AccManager = function(connMan, hostname, mailer) {
+var AccManager = function (connMan, hostname, mailer) {
   this.cm = connMan;
   this.hostname = hostname;
   this.mailer = mailer;
@@ -44,10 +44,10 @@ AccManager.prototype.mailTemplates = {
 };
 
 function getFriendshipState(am, userId, contactId, callback) {
-  var c = function(a, b) {
-    return function(cb) {
-      am.cm.query('SELECT state FROM contacts WHERE leftId = ? AND rightId = ?', [a, b], function(err, rows) {
-        if(am.cm.handleError(err) || !rows || rows.length !== 1)
+  var c = function (a, b) {
+    return function (cb) {
+      am.cm.query('SELECT state FROM contacts WHERE leftId = ? AND rightId = ?', [a, b], function (err, rows) {
+        if (am.cm.handleError(err) || !rows || rows.length !== 1)
           cb(null, 'none');
         else
           cb(null, rows[0].state);
@@ -58,7 +58,7 @@ function getFriendshipState(am, userId, contactId, callback) {
   async.parallel([
     c(userId, contactId),
     c(contactId, userId)
-  ], function(err, results) {
+  ], function (err, results) {
     callback({
       left: results[0],
       right: results[1]
@@ -66,34 +66,34 @@ function getFriendshipState(am, userId, contactId, callback) {
   });
 }
 
-AccManager.prototype.getFriendshipState = function(userId, contactId, callback) {
+AccManager.prototype.getFriendshipState = function (userId, contactId, callback) {
   getFriendshipState(this, userId, contactId, callback);
 };
 
 function getContact(am, userId, callback) {
-  am.cm.query('SELECT id, (onlineCounter > 0) AS isOnline, nick FROM users WHERE id = ?', [userId], function(err, rows) {
-    if(am.cm.handleError(err) || !rows)
+  am.cm.query('SELECT id, (onlineCounter > 0) AS isOnline, nick FROM users WHERE id = ?', [userId], function (err, rows) {
+    if (am.cm.handleError(err) || !rows)
       return;
 
-    if(rows.length === 0)
+    if (rows.length === 0)
       callback(null);
     else
       callback(rows[0]);
   });
 }
 
-AccManager.prototype.getContact = function(userId, callback) {
+AccManager.prototype.getContact = function (userId, callback) {
   getContact(this, userId, callback);
 };
 
 function listContacts(am, userId, callback) {
-  am.cm.query('SELECT rightId, state, isFavorite FROM contacts WHERE leftId = ?', [userId], function(err, rows) {
-    if(am.cm.handleError(err) || !rows)
+  am.cm.query('SELECT rightId, state, isFavorite FROM contacts WHERE leftId = ?', [userId], function (err, rows) {
+    if (am.cm.handleError(err) || !rows)
       return callback([]);
 
     var ret = [];
 
-    rows.forEach(function(row) {
+    rows.forEach(function (row) {
       ret.push({
         contactId: row.rightId,
         state: {
@@ -104,13 +104,13 @@ function listContacts(am, userId, callback) {
       });
     });
 
-    am.cm.query('SELECT leftId, state FROM contacts WHERE rightId = ?', [userId], function(err, rows) {
-      if(am.cm.handleError(err) || !rows)
+    am.cm.query('SELECT leftId, state FROM contacts WHERE rightId = ?', [userId], function (err, rows) {
+      if (am.cm.handleError(err) || !rows)
         return callback([]);
 
-      rows.forEach(function(r) {
-        for(var i in ret) {
-          if(!ret.hasOwnProperty(i) || ret[i].contactId !== r.leftId)
+      rows.forEach(function (r) {
+        for (var i in ret) {
+          if (!ret.hasOwnProperty(i) || ret[i].contactId !== r.leftId)
             continue;
 
           ret[i].state.right = r.state;
@@ -123,13 +123,13 @@ function listContacts(am, userId, callback) {
 }
 
 function getContacts(am, userId, callback) {
-  listContacts(am, userId, function(rows) {
+  listContacts(am, userId, function (rows) {
     var tasks = [];
 
-    rows.forEach(function(row) {
-      tasks.push(function(cb) {
-        am.cm.query('SELECT id, nick, onlineCounter FROM users WHERE id = ?', [row.contactId], function(err, rows) {
-          if(am.cm.handleError(err) || !rows || rows.length !== 1)
+    rows.forEach(function (row) {
+      tasks.push(function (cb) {
+        am.cm.query('SELECT id, nick, onlineCounter FROM users WHERE id = ?', [row.contactId], function (err, rows) {
+          if (am.cm.handleError(err) || !rows || rows.length !== 1)
             return cb(err, null);
 
           var r = rows[0];
@@ -145,8 +145,8 @@ function getContacts(am, userId, callback) {
       });
     });
 
-    async.parallel(tasks, function(err, results) {
-      if(err)
+    async.parallel(tasks, function (err, results) {
+      if (err)
         return callback([]);
 
       callback(results);
@@ -160,10 +160,10 @@ function notifyUser(am, userId, name, data) {
 
 function notifyFriendshipState(am, leftId, rightId) {
   function n(userId, contactId, state) {
-    if(state.right !== 'accepted')
+    if (state.right !== 'accepted')
       state.right = 'waiting';
 
-    getContact(am, contactId, function(contact) {
+    getContact(am, contactId, function (contact) {
       notifyUser(am, userId, 'contact.friendshipStateEvent', {
         contact: contact,
         state: state
@@ -171,7 +171,7 @@ function notifyFriendshipState(am, leftId, rightId) {
     });
   }
 
-  getFriendshipState(am, leftId, rightId, function(state) {
+  getFriendshipState(am, leftId, rightId, function (state) {
     n(leftId, rightId, state);
     n(rightId, leftId, {
       left: state.right,
@@ -181,28 +181,28 @@ function notifyFriendshipState(am, leftId, rightId) {
 }
 
 function notifyContacts(am, userId, name, data) {
-  listContacts(am, userId, function(contacts) {
-    contacts.forEach(function(row) {
+  listContacts(am, userId, function (contacts) {
+    contacts.forEach(function (row) {
       notifyUser(am, row.contactId, name, data);
     });
   });
 }
 
 function resetOnlineCounters(am, callback) {
-  am.cm.query('UPDATE users SET onlineCounter = 0', undefined, function(err) {
-    if(am.cm.handleError(err))
+  am.cm.query('UPDATE users SET onlineCounter = 0', undefined, function (err) {
+    if (am.cm.handleError(err))
       return;
 
     callback();
   });
 }
 
-AccManager.prototype.resetOnlineCounters = function(callback) {
+AccManager.prototype.resetOnlineCounters = function (callback) {
   resetOnlineCounters(this, callback);
 };
 
 function create(am, email, nick, hash, callback) {
-  if(email.length < 5 || nick.length < 3 || hash.length !== 64)
+  if (email.length < 5 || nick.length < 3 || hash.length !== 64)
     return callback('ERR_INVALID_VALUES');
 
   var values = {
@@ -212,11 +212,11 @@ function create(am, email, nick, hash, callback) {
     activationCode: utils.randomString(24)
   };
 
-  am.cm.query('INSERT INTO users SET ?', values, function(err, result) {
-    if(am.cm.handleError(err))
+  am.cm.query('INSERT INTO users SET ?', values, function (err, result) {
+    if (am.cm.handleError(err))
       return callback('ERR');
 
-    if(!result || result.insertId <= 0)
+    if (!result || result.insertId <= 0)
       return callback('ERR_ALREADY_USED');
 
     // TODO: move to mail manager
@@ -229,8 +229,8 @@ function create(am, email, nick, hash, callback) {
       html: am.mailTemplates.activation.replace(/%link%/gi, link)
     };
 
-    am.mailer.sendMail(mailOptions, function(err) {
-      if(err)
+    am.mailer.sendMail(mailOptions, function (err) {
+      if (err)
         callback('ERR_COULDNT_SEND_MAIL');
       else
         callback('OK');
@@ -238,20 +238,20 @@ function create(am, email, nick, hash, callback) {
   });
 }
 
-AccManager.prototype.create = function(email, nick, hash, callback) {
+AccManager.prototype.create = function (email, nick, hash, callback) {
   create(this, email, nick, hash, callback);
 };
 
 function activate(am, code, callback) {
-  am.cm.query('UPDATE users SET activationCode = NULL WHERE activationCode = ?', code, function(err, result) {
-    if(am.cm.handleError(err))
+  am.cm.query('UPDATE users SET activationCode = NULL WHERE activationCode = ?', code, function (err, result) {
+    if (am.cm.handleError(err))
       return callback('ERR');
 
     callback(result && result.affectedRows > 0 ? 'OK' : 'ERR_CODE_INVALID');
   });
 }
 
-AccManager.prototype.activate = function(code, callback) {
+AccManager.prototype.activate = function (code, callback) {
   activate(this, code, callback);
 };
 
@@ -270,7 +270,7 @@ function loginValid(am, row, callback) {
     function (cb) {
       getContacts(am, user.id, function (contacts) {
         contacts.forEach(function (c) {
-          if(c.state.right !== 'accepted')
+          if (c.state.right !== 'accepted')
             c.state.right = 'waiting';
         });
 
@@ -305,15 +305,15 @@ function loginValid(am, row, callback) {
 
 function login(am, email, hash, callback) {
   am.cm.query('SELECT * FROM users WHERE email = ?', email, function (err, result) {
-    if(am.cm.handleError(err))
+    if (am.cm.handleError(err))
       return callback('ERR');
 
-    if(!result || result.length !== 1 || result[0].hash !== hash)
+    if (!result || result.length !== 1 || result[0].hash !== hash)
       return callback('ERR_INVALID_CREDENTIALS');
 
     var row = result[0];
 
-    if(row.activationCode !== null)
+    if (row.activationCode !== null)
       return callback('ERR_NOT_ACTIVATED');
 
     loginValid(am, row, callback);
@@ -325,31 +325,31 @@ AccManager.prototype.login = function (email, hash, callback) {
 };
 
 function restoreLogin(am, loginToken, callback) {
-  am.cm.query('SELECT * FROM users WHERE loginToken = ?', loginToken, function(err, result) {
-    if(am.cm.handleError(err))
+  am.cm.query('SELECT * FROM users WHERE loginToken = ?', loginToken, function (err, result) {
+    if (am.cm.handleError(err))
       return callback('ERR');
 
-    if(!result || result.length !== 1)
+    if (!result || result.length !== 1)
       return callback('ERR_TOKEN_INVALID');
 
     loginValid(am, result[0], callback);
   });
 }
 
-AccManager.prototype.restoreLogin = function(loginToken, callback) {
+AccManager.prototype.restoreLogin = function (loginToken, callback) {
   restoreLogin(this, loginToken, callback);
 };
 
 function logout(am, userId, callback) {
-  am.cm.query('UPDATE users SET onlineCounter = onlineCounter - 1 WHERE id = ?', [userId], function(err) {
-    if(am.cm.handleError(err))
+  am.cm.query('UPDATE users SET onlineCounter = onlineCounter - 1 WHERE id = ?', [userId], function (err) {
+    if (am.cm.handleError(err))
       return callback();
 
-    am.cm.query('SELECT onlineCounter FROM users WHERE id = ?', [userId], function(err, rows) {
-      if(am.cm.handleError(err) || !rows || rows.length !== 1)
+    am.cm.query('SELECT onlineCounter FROM users WHERE id = ?', [userId], function (err, rows) {
+      if (am.cm.handleError(err) || !rows || rows.length !== 1)
         return callback();
 
-      if(rows[0].onlineCounter === 0) {
+      if (rows[0].onlineCounter === 0) {
         notifyContacts(am, userId, 'contact.onlineEvent', {
           contactId: userId,
           isOnline: false
@@ -361,29 +361,29 @@ function logout(am, userId, callback) {
   });
 }
 
-AccManager.prototype.logout = function(userId, callback) {
+AccManager.prototype.logout = function (userId, callback) {
   logout(this, userId, callback);
 };
 
 function lookup(am, query, callback) {
-  if(query.length < 4)
+  if (query.length < 4)
     return callback([]);
 
-  am.cm.query('SELECT id, nick FROM users WHERE nick LIKE ?', ['%' + query + '%'], function(err, rows) {
-    if(am.cm.handleError(err) || !rows)
+  am.cm.query('SELECT id, nick FROM users WHERE nick LIKE ?', ['%' + query + '%'], function (err, rows) {
+    if (am.cm.handleError(err) || !rows)
       return callback([]);
 
     callback(rows);
   });
 }
 
-AccManager.prototype.lookup = function(query, callback) {
+AccManager.prototype.lookup = function (query, callback) {
   lookup(this, query, callback);
 };
 
 function setFriendshipState(am, userId, targetId, state, isFavorite, callback) {
-  var cb = function(err) {
-    if(am.cm.handleError(err))
+  var cb = function (err) {
+    if (am.cm.handleError(err))
       return callback('ERR');
 
     callback('OK');
@@ -391,21 +391,17 @@ function setFriendshipState(am, userId, targetId, state, isFavorite, callback) {
     notifyFriendshipState(am, userId, targetId);
   };
 
-  if(state !== 'none')
+  if (state !== 'none')
     am.cm.query('REPLACE INTO contacts SET leftId = ?, rightId = ?, state = ?, isFavorite = ?', [userId, targetId, state, isFavorite], cb);
   else
     am.cm.query('DELETE FROM contacts WHERE leftId = ? AND rightId = ?', [userId, targetId], cb);
 }
 
-AccManager.prototype.setFriendshipState = function(userId, targetId, state, isFavorite, callback) {
+AccManager.prototype.setFriendshipState = function (userId, targetId, state, isFavorite, callback) {
   setFriendshipState(this, userId, targetId, state, isFavorite, callback);
 };
 
 module.exports = AccManager;
-
-
-
-
 
 
 //AccManager.prototype.listeners = { };
