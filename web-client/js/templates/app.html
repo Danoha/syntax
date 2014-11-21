@@ -133,7 +133,7 @@
         </div>
         <div class="panel-footer clearfix">
           <div class="composer" data-bind="with: target">
-            <!-- ko if: type === 'group' || state() === 'accepted' -->
+            <!-- ko if: type === 'group' || (type === 'contact' && state.left() === 'accepted' && state.right() === 'accepted') -->
             <div data-bind="with: composer">
               <form data-bind="submit: submit">
                 <div class="col-sm-2 custom-btns-col">
@@ -148,19 +148,23 @@
               </form>
             </div>
             <!-- /ko -->
-            <!-- ko if: type === 'contact' && state() === 'waiting' -->
-            <div data-bind="if: invokerId === $root.user.id" class="no-result">
-              waiting for response
-            </div>
-            <div data-bind="if: invokerId !== $root.user.id">
-              respond to friendship request:&nbsp;
-              <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
-                  <button class="btn btn-success" data-bind="click: sendYes">accept</button>
-                  <button class="btn btn-warning" data-bind="click: sendNo">not now</button>
-                  <button class="btn btn-danger" data-bind="click: sendNever">ignore user</button>
+            <!-- ko if: type === 'contact' -->
+              <!-- ko if: state.right() === 'waiting' -->
+              <div class="no-result">
+                waiting for response
+              </div>
+              <!-- /ko -->
+              <!-- ko if: state.left() === 'waiting' -->
+              <div>
+                respond to friendship request:&nbsp;
+                <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
+                  <button class="btn btn-success" data-bind="click: sendAccepted">accept</button>
+                  <button class="btn btn-warning" data-bind="click: sendNotNow">not now</button>
+                  <button class="btn btn-danger" data-bind="click: sendDenied">deny</button>
                 </span>
-            </div>
-            <!-- /ko -->
+              </div>
+              <!-- /ko -->
+            <!-- /ko-->
           </div>
         </div>
       </div>

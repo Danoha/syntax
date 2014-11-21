@@ -19,7 +19,9 @@
 'use strict';
 
 (function() {
-  var ioServer = 'https://syntax-im.tk:2013';
+  var port = 2013;
+  var localhost = window && window.location && window.location.search.indexOf('localhost') >= 0;
+  var ioServer = 'https://' + (localhost ? '127.0.0.1' : 'syntax-im.tk') + ':' + port;
   var clientLibrary = ioServer + '/socket.io/socket.io.js';
 
   define(['module'], function(module) {

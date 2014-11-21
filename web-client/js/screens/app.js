@@ -81,7 +81,7 @@ define(
   }
 
   function syncContactList() {
-    contactList.sync(app.user.friendlist, app.user.grouplist);
+    contactList.sync(app.user.contacts, app.user.groups);
 
     if (!contactList.isValidTarget(appScreen.target()))
       closeTarget();
@@ -166,6 +166,10 @@ define(
     api.searchAccounts(query, function(results) {
       wait.close();
 
+      results = $.grep(results, function(user) {
+        return app.user.id !== user.id && contactList.findContact(user.id) === null;
+      });
+
       appScreen.friendSearch.results(results);
     });
   }
@@ -222,7 +226,7 @@ define(
 
   function sendFriendRequest(user) {
     var wait = new WaitDialog('sending friend request');
-    api.friendRequest(user.id, function(result) {
+    api.setFriendshipState(user.id, 'accepted', false, function(result) {
       wait.close();
 
       bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
@@ -230,77 +234,78 @@ define(
       if (result === 'OK') {
         appScreen.friendSearch.results.remove(user);
 
-        var f = {
-          id: user.id,
-          nick: user.nick,
-          state: null,
-          invokerId: app.user.id
-        };
+        var f = null;
+        $.each(app.user.contacts, function(i, c) {
+          if(c.id === user.id) {
+            c.state.left = 'accepted';
+            f = c;
+          }
+        });
 
-        app.user.friendlist.push(f);
+        if(f === null) {
+          f = {
+            id: user.id,
+            nick: user.nick,
+            state: {
+              left: 'accepted',
+              right: 'waiting'
+            }
+          };
+
+          app.user.contacts.push(f);
+        }
+
         syncContactList();
       }
     });
   }
 
-  function sendFriendResponse(targetId, decision) {
+  function friendResponse(target, state) {
     var wait = new WaitDialog('sending response');
 
-    api.friendResponse(targetId, decision, function(result) {
+    api.setFriendshipState(target.id, state, target.isFavorite(), function(result) {
       wait.close();
 
       if (result === 'OK')
-        setFriendState(targetId, decision);
+        setFriendshipState(target.id, state);
       else
         bootbox.alert('something went wrong');
     });
   }
 
-  function friendResponseYes() {
-    sendFriendResponse(appScreen.target().id, 'accepted');
+  function friendResponseAccepted() {
+    friendResponse(appScreen.target(), 'accepted');
   }
 
-  function friendResponseNo() {
-    sendFriendResponse(appScreen.target().id, 'denied');
+  function friendResponseNotNow() {
+    friendResponse(appScreen.target(), 'none');
   }
 
-  function friendResponseNever() {
-    bootbox.confirm('do you really want to ignore this user?', function(result) {
-      if (!result)
-        return;
-
-      sendFriendResponse(appScreen.target().id, 'accepted');
-    });
+  function friendResponseDenied() {
+    friendResponse(appScreen.target(), 'denied');
   }
 
-  function setFriendState(id, state) {
-    var fun;
-    if (state === 'accepted') {
-      fun = function(f) {
-        if (f.id === id)
-          f.state = state;
-
-        return true;
-      };
-    }
-    else {
-      fun = function(f) {
-        return f.id !== id;
-      };
+  function setFriendshipState(id, lstate, rstate) {
+    if(lstate !== 'none') {
+      $.each(app.user.contacts, function (i, c) {
+        if (c.id === id) {
+          if (lstate)
+            c.state.left = lstate;
+          if (rstate)
+            c.state.right = rstate;
+        }
+      });
+    } else {
+      app.user.contacts = $.grep(app.user.contacts, function(c) {
+        return c.id !== id;
+      });
     }
 
-    app.user.friendlist = $.grep(app.user.friendlist, fun);
     syncContactList();
-
-    var contact = contactList.findContact(id);
-    if (contact === null || contact.invokerId === id)
-      return;
-
-    messageManager.systemMessage(contact.displayName() + ' added you to his/hers contact list');
   }
 
   function setFriendOnline(id, online) {
-    $.each(app.user.friendlist, function(i, f) {
+    $.each(app.user.contacts, function(i, f) {
       if (f.id === id)
         f.isOnline = online;
     });
@@ -586,9 +591,9 @@ define(
   };
 
   appScreen.friendResponses = {
-    sendYes: friendResponseYes,
-    sendNo: friendResponseNo,
-    sendNever: friendResponseNever
+    sendAccepted: friendResponseAccepted,
+    sendNotNow: friendResponseNotNow,
+    sendDenied: friendResponseDenied
   };
 
   appScreen.groupMenu = {
@@ -704,50 +709,45 @@ define(
 
   // API bindings
 
-  api.on('chat message', function(msg) {
+  api.on('message.receivedEvent', function(msg) {
     messageManager.processMessage(msg);
 
     updateTitle();
   });
 
-  api.on('friend offline', function(data) {
+  api.on('contact.offlineEvent', function(data) {
     if (typeof data !== 'object')
       return;
 
-    setFriendOnline(data.friendId, false);
+    setFriendOnline(data.contactId, false);
   });
 
-  api.on('friend online', function(data) {
+  api.on('contact.onlineEvent', function(data) {
     if (typeof data !== 'object')
       return;
 
-    setFriendOnline(data.friendId, true);
+    setFriendOnline(data.contactId, data.isOnline);
   });
 
-  api.on('friend request', function(data) {
-    if (typeof data !== 'object')
-      return;
+  api.on('contact.friendshipStateEvent', function(data) {
+    var localContact = null;
+    $.each(app.user.contacts, function(i, c) {
+      if(c.id === data.contact.id) {
+        localContact = c;
+        return false;
+      }
+    });
 
-    var f = {
-      id: data.invoker.id,
-      nick: data.invoker.nick,
-      invokerId: data.invoker.id,
-      isOnline: false,
-      state: 'waiting'
-    };
+    if(localContact !== null) {
+      localContact.state = data.state;
+      localContact.isOnline = data.contact.isOnline;
+    } else if(data.state.left !== 'denied') {
+      localContact = data.contact;
+      localContact.state = data.state;
+      app.user.contacts.push(localContact);
+    }
 
-    app.user.friendlist.push(f);
     syncContactList();
-
-    var contact = contactList.findContact(f.id);
-    messageManager.systemMessage(contact, contact.displayName() + ' wants to be in your contact list');
-  });
-
-  api.on('friend response', function(data) {
-    if (typeof data !== 'object')
-      return;
-
-    setFriendState(data.targetId, data.decision);
   });
 
   api.on('group member leave', function(data) {

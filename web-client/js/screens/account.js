@@ -38,7 +38,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
         case 'OK':
           message = 'your account has been activated';
           break;
-        case 'ERR_NOT_FOUND':
+        case 'ERR_CODE_INVALID':
           message = 'error, your code is invalid';
           break;
       }
@@ -150,7 +150,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
       storage.remove('loginToken');
 
-      if (result === 'ERR_INVALID')
+      if (result === 'ERR_TOKEN_INVALID')
         bootbox.alert('could not restore your login');
       else
         loginValid(result, true);

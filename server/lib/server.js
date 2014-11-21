@@ -29,7 +29,7 @@ var https = require('https');
  * @param {Api} api
  * @returns {Server}
  */
-var Server = function(credentials, api) {
+var Server = function(credentials) {
   var opts = {
     key: fs.readFileSync(credentials.privateKey).toString(),
     cert: fs.readFileSync(credentials.certificate).toString(),
@@ -45,12 +45,6 @@ var Server = function(credentials, api) {
 
   this.https = https.createServer(opts);
   this.io = SocketIO.listen(this.https);
-  
-  this.io.on('connection', function(socket) {
-    api.initSession(socket);
-  });
-  
-  api.setIO(this.io);
 };
 
 /**

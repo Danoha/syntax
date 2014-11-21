@@ -40,6 +40,8 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
       return self.totalMessages() - self.lastReadMessage();
     });
 
+    this.isFavorite = ko.observable(false);
+
     this.unreadMessages.subscribe(function() {
       var children = $(self.messages).children();
       var i = self.lastReadMessage();

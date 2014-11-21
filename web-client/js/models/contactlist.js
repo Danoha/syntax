@@ -35,7 +35,7 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
 
     var validIds = [];
     $.each(friendlist, function(i, f) {
-      if ($.inArray(f.state, ['waiting', null, 'accepted']) === -1)
+      if ($.inArray(f.state.left, ['waiting', 'accepted']) === -1 || $.inArray(f.state.right, ['waiting', 'accepted']) === -1 || (f.state.left === 'waiting' && f.state.right === 'waiting'))
         return;
 
       var contact = exports.findOrCreateContact(f.id);
@@ -43,11 +43,8 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
       contact.isOnline(f.isOnline);
       contact.invokerId = f.invokerId;
 
-      var state = f.state;
-      if (state === null)
-        state = 'waiting';
-
-      contact.state(state);
+      contact.state.left(f.state.left);
+      contact.state.right(f.state.right);
 
       validIds.push(f.id);
     });

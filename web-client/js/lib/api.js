@@ -62,26 +62,26 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   };
 
-  bind('chatMessage', 'chat message', function(data) {
+  bind('chatMessage', 'message.send', function(data) {
     return data;
   }, false);
 
-  bind('login', 'login', function(email, password) {
+  bind('login', 'account.login', function(email, password) {
     return {
       email: email,
       hash: CryptoJS.SHA256(password).toString()
     };
   });
 
-  bind('logout', 'logout');
+  bind('logout', 'account.logout');
 
-  bind('activateAccount', 'activate account', function(code) {
+  bind('activateAccount', 'account.activate', function(code) {
     return {
       code: code
     };
   });
 
-  bind('createAccount', 'create account', function(email, nick, password) {
+  bind('createAccount', 'account.create', function(email, nick, password) {
     return {
       email: email,
       nick: nick,
@@ -89,15 +89,15 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   });
 
-  bind('restoreLogin', 'restore login', function(loginToken) {
+  bind('restoreLogin', 'account.restoreLogin', function(loginToken) {
     return {
       loginToken: loginToken
     };
   });
 
-  bind('searchAccounts', 'search accounts', function(search) {
+  bind('searchAccounts', 'contact.lookup', function(search) {
     return {
-      search: search
+      query: search
     };
   });
 
@@ -110,23 +110,18 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   });
 
-  bind('friendRequest', 'friend request', function(targetId) {
-    return {
-      targetId: targetId
-    };
-  });
-
-  bind('friendResponse', 'friend response', function(invokerId, decision) {
-    return {
-      invokerId: invokerId,
-      decision: decision
-    };
-  });
-
   bind('groupInvite', 'group invite', function(groupId, friendId) {
     return {
       groupId: groupId,
       friendId: friendId
+    };
+  });
+
+  bind('setFriendshipState', 'contact.setFriendshipState', function(targetId, state, isFavorite) {
+    return {
+      targetId: targetId,
+      state: state,
+      isFavorite: isFavorite ? true : false
     };
   });
 

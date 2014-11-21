@@ -28,7 +28,10 @@ define(['./target', '../vendor/knockout', 'require', '../core/bus'], function(Ba
 
     this.nick = ko.observable();
     this.isOnline = ko.observable(false);
-    this.state = ko.observable(null); // 'accepted', 'waiting'
+    this.state = {
+      left: ko.observable('waiting'),
+      right: ko.observable('waiting')
+    };
 
     this.alias(bus.userStorage.get('contact.' + id + '.alias'));
 

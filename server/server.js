@@ -19,10 +19,14 @@
 'use strict';
 
 var config = require('./config.json');
+var ConnManager = require('./lib/connection_manager.js');
 var AccManager = require('./lib/account_manager.js');
+var GrpManager = require('./lib/group_manager.js');
+var MsgManager = require('./lib/message_manager.js');
 var Server = require('./lib/server.js');
 var Api = require('./lib/api.js');
 var nodemailer = require('nodemailer');
+var Dns = require('./lib/dns.js');
 
 //
 
@@ -30,13 +34,23 @@ process.on('uncaughtException', function(err) {
   console.error('unhandled exception: ' + err.stack);
 });
 
-var accMan = new AccManager(config.database);
-accMan.connect(function() {
-  accMan.resetOnlineCounters(function() {
-    var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
-    var api = new Api(accMan, mailer);
+var mailer = nodemailer.createTransport(config.mailer.method, config.mailer.opts);
+var connMan = new ConnManager(config.database);
 
-    var server = new Server(config.credentials, api);
-    server.listen(config.port);
+connMan.ready(function() {
+  new Dns().getHostname(function (hostname) {
+    console.log('DNS lookup done (hostname seems to be ' + hostname + ')');
+
+    var accMan = new AccManager(connMan, hostname, mailer);
+    var grpMan = new GrpManager(connMan);
+    var msgMan = new MsgManager(accMan, grpMan);
+
+    accMan.resetOnlineCounters(function() {
+      var server = new Server(config.credentials);
+
+      new Api(accMan, grpMan, msgMan, server);
+
+      server.listen(config.port);
+    });
   });
 });
