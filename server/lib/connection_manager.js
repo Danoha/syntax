@@ -93,7 +93,7 @@ ConnManager.prototype.query = function() {
 
 ConnManager.prototype.handleError = function(err) {
   if(err) {
-    console.error('database error', err, err.stack);
+    console.error('database error', err, new Error().stack);
     return err.fatal ? true : false;
   } else
     return false;

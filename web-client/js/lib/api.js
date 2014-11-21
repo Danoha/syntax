@@ -101,19 +101,19 @@ define(['../core/socket', '../vendor/sha256.min'], function(socket) {
     };
   });
 
-  bind('createGroup', 'group create');
+  bind('createGroup', 'group.create');
 
-  bind('leaveGroup', 'group leave', function(groupId, doNotInviteAgain) {
+  bind('leaveGroup', 'group.leave', function(groupId, doNotInviteAgain) {
     return {
       groupId: groupId,
       doNotInviteAgain: doNotInviteAgain
     };
   });
 
-  bind('groupInvite', 'group invite', function(groupId, friendId) {
+  bind('groupInvite', 'group.invite', function(groupId, friendId) {
     return {
-      groupId: groupId,
-      friendId: friendId
+      userId: friendId,
+      groupId: groupId
     };
   });
 

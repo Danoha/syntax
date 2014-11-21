@@ -19,6 +19,7 @@
 'use strict';
 
 var moment = require('moment');
+var utils = require('./utils.js');
 
 //
 
@@ -26,13 +27,15 @@ function MsgManager(accMan, grpMan) {
   this.am = accMan;
   this.gm = grpMan;
 
-  this.messageNotifiers = [];
-}
+  /**
+   * @type {Function[]}
+   */
+  this.userNotifiers = [];
 
-function invokeArray(arr, args) {
-  arr.forEach(function(i) {
-    i.apply(undefined, args);
-  });
+  /**
+   * @type {Function[]}
+   */
+  this.groupNotifiers = [];
 }
 
 function process(mm, msg, senderId, callback) {
@@ -41,13 +44,24 @@ function process(mm, msg, senderId, callback) {
 
   var d = function(type, id) {
     callback('OK');
-    invokeArray(mm.messageNotifiers, [type, id, msg]);
+
+    if(type === 'user')
+      utils.invokeArray(mm.userNotifiers, [id, 'message.receivedEvent', msg]);
+    else if(type === 'group')
+      utils.invokeArray(mm.groupNotifiers, [id, 'message.receivedEvent', msg])
   };
 
-  if(typeof msg.recipientId === 'number') {
-    mm.am.getFriendshipState(senderId, msg.recipientId, function(state) {
-      if(state.left === 'accepted' && state.right === 'accepted')
-        d('c2c', [msg.recipientId, senderId]);
+  if (typeof msg.recipientId === 'number') {
+    mm.am.getFriendshipState(senderId, msg.recipientId, function (state) {
+      if (state.left === 'accepted' && state.right === 'accepted')
+        d('user', [msg.recipientId, senderId]);
+      else
+        callback('ERR_INVALID_TARGET');
+    });
+  } else if(typeof msg.groupId === 'number') {
+    mm.gm.getMembershipState(senderId, msg.groupId, function (state) {
+      if (state !== null && !state.isBanned && !state.doNotInviteAgain)
+        d('group', [msg.groupId]);
       else
         callback('ERR_INVALID_TARGET');
     });

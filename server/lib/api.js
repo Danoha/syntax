@@ -31,28 +31,43 @@ var Api = function(accMan, grpMan, msgMan, server) {
   init(this);
 };
 
-function notify(api, userId, name, data) {
-  api.server.io.to('user-' + userId).emit(name, data);
+function _notify(api, roomId, name, data) {
+  api.server.io.to(roomId).emit(name, data);
 
-  console.log('notify', 'user-' + userId, name, require('util').inspect(data, false, null));
+  console.log('notify', roomId, name, require('util').inspect(data, false, null));
+}
+
+function notifyUser(api, userId, name, data) {
+  _notify(api, 'user-' + userId, name, data);
+}
+
+function notifyGroup(api, groupId, name, data) {
+  _notify(api, 'group-' + groupId, name, data);
 }
 
 function init(api) {
-  api.server.io.on('connection', function(sock) {
+  api.server.io.on('connection', function (sock) {
     session_start(api, sock);
   });
 
-  api.accMan.userNotifiers.push(function(userId, name, data) {
-    notify(api, userId, name, data);
-  });
+  var userNotifier = function (userIds, name, data) {
+    userIds.forEach(function (id) {
+      notifyUser(api, id, name, data);
+    });
+  };
 
-  api.msgMan.messageNotifiers.push(function(type, id, msg) {
-    if(type === 'c2c') { // contact to contact
-      id.forEach(function(i) {
-        notify(api, i, 'message.receivedEvent', msg);
-      });
-    }
-  });
+  var groupNotifier = function (groupIds, name, data) {
+    groupIds.forEach(function (id) {
+      notifyGroup(api, id, name, data);
+    });
+  };
+
+  api.accMan.userNotifiers.push(userNotifier);
+  api.grpMan.userNotifiers.push(userNotifier);
+  api.msgMan.userNotifiers.push(userNotifier);
+
+  api.grpMan.groupNotifiers.push(groupNotifier);
+  api.msgMan.groupNotifiers.push(groupNotifier);
 }
 
 function addUserToGroup(api, userId, groupId) {
@@ -115,12 +130,22 @@ function bind(api, sock, name, callback, types, auth) {
   });
 }
 
+function loginValid(api, sock, user) {
+  sock.userId = user.id;
+  sock.join('user-' + user.id);
+
+  user.groups.forEach(function (g) {
+    sock.join('group-' + g.id);
+  });
+}
+
 function session_start(api, sock) {
   function b(name, callback, types, auth) {
     bind(api, sock, name, callback, types, auth);
   }
 
   b('disconnect', session_end);
+
   b('account.create', account_create, {email: 'string', nick: 'string', hash: 'string'});
   b('account.activate', account_activate, {code: 'string'});
   b('account.login', account_login, {email: 'string', hash: 'string'});
@@ -129,6 +154,10 @@ function session_start(api, sock) {
 
   b('contact.lookup', contact_lookup, {query: 'string'}, true);
   b('contact.setFriendshipState', contact_setFriendshipState, {targetId: 'number', state: 'string', isFavorite: 'boolean'}, true);
+
+  b('group.create', group_create, undefined, true);
+  b('group.invite', group_invite, {userId: 'number', groupId: 'number'}, true);
+  b('group.leave', group_leave, {groupId: 'number', doNotInviteAgain: 'boolean'}, true);
 
   b('message.send', message_send, undefined, true);
 }
@@ -151,10 +180,8 @@ function account_activate(api, sock, data, name) {
 
 function account_login(api, sock, data, name) {
   api.accMan.login(data.email, data.hash, function(result) {
-    if(typeof result === 'object' && result.id) {
-      sock.userId = result.id;
-      sock.join('user-' + result.id);
-    }
+    if(typeof result === 'object' && result.id)
+      loginValid(api, sock, result);
 
     sock.emit(name, result);
   });
@@ -162,12 +189,9 @@ function account_login(api, sock, data, name) {
 
 function account_restoreLogin(api, sock, data, name) {
   api.accMan.restoreLogin(data.loginToken, function(result) {
-    if(typeof result === 'object' && result.id) {
-      sock.userId = result.id;
-      sock.join('user-' + result.id);
-    }
+    if(typeof result === 'object' && result.id)
+      loginValid(api, sock, result);
 
-    //console.log('result', name, require('util').inspect(result, false, null));
     sock.emit(name, result);
   });
 }
@@ -182,6 +206,11 @@ function account_logout(api, sock, data, name) {
     api.accMan.logout(sock.userId, done);
     sock.leave('user-' + sock.userId);
     sock.userId = undefined;
+
+    sock.rooms.forEach(function (room) {
+      if(/^group\-/.test(room))
+        sock.leave(room);
+    });
   } else
     done();
 }
@@ -195,6 +224,30 @@ function contact_lookup(api, sock, data, name) {
 function contact_setFriendshipState(api, sock, data, name) {
   api.accMan.setFriendshipState(sock.userId, data.targetId, data.state, data.isFavorite, function(result) {
     sock.emit(name, result);
+  });
+}
+
+function group_create(api, sock, data, name) {
+  api.grpMan.create(sock.userId, function(result) {
+    sock.emit(name, result);
+  });
+}
+
+function group_invite(api, sock, data, name) {
+  api.grpMan.invite(sock.userId, data.userId, data.groupId, function(result) {
+    sock.emit(name, result);
+
+    if (result === 'OK')
+      addUserToGroup(api, data.userId, data.groupId);
+  });
+}
+
+function group_leave(api, sock, data, name) {
+  api.grpMan.leave(sock.userId, data.groupId, data.doNotInviteAgain, function(result) {
+    sock.emit(name, result);
+
+    if (result === 'OK')
+      removeUserFromGroup(api, sock.userId, data.groupId);
   });
 }
 

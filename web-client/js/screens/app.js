@@ -186,7 +186,7 @@ define(
         members: []
       };
 
-      app.user.grouplist.push(g);
+      app.user.groups.push(g);
 
       syncContactList();
 
@@ -345,7 +345,7 @@ define(
           };
         }
 
-        app.user.grouplist = $.grep(app.user.grouplist, fun);
+        app.user.groups = $.grep(app.user.groups, fun);
         syncContactList();
       });
     };
@@ -750,11 +750,11 @@ define(
     syncContactList();
   });
 
-  api.on('group member leave', function(data) {
+  api.on('group.memberLeftEvent', function(data) {
     if (typeof data !== 'object')
       return;
 
-    $.each(app.user.grouplist, function(i, g) {
+    $.each(app.user.groups, function(i, g) {
       if (g.id !== data.groupId)
         return;
 
@@ -778,25 +778,25 @@ define(
     messageManager.systemMessage(g, m.displayName() + ' left this group');
   });
 
-  api.on('group remove', function(data) {
+  api.on('group.destroyEvent', function(data) {
     if (typeof data !== 'object')
       return;
 
-    app.user.grouplist = $.grep(app.user.grouplist, function(g) {
+    app.user.groups = $.grep(app.user.groups, function(g) {
       return g.id !== data.groupId;
     });
 
     syncContactList();
   });
 
-  api.on('group invitation', function(data) {
+  api.on('group.inviteEvent', function(data) {
     if (typeof data !== 'object')
       return;
 
     var afterSync;
 
-    if (!data.user) { // current user is invited to group
-      app.user.grouplist.push(data.group);
+    if (!data.member) { // current user is invited to group
+      app.user.groups.push(data.group);
 
       afterSync = function() {
         contactList.query([{
@@ -811,11 +811,11 @@ define(
       };
     }
     else { // someone invited someone in group where current user already is
-      $.each(app.user.grouplist, function(i, g) {
+      $.each(app.user.groups, function(i, g) {
         if (g.id !== data.groupId)
           return;
 
-        g.members.push(data.user);
+        g.members.push(data.member);
       });
 
       afterSync = function() {

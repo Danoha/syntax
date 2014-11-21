@@ -18,9 +18,9 @@
 
 'use strict';
 
-var crypto = require('crypto');
 var fs = require('fs');
 var async = require('async');
+var utils = require('./utils.js');
 
 //
 
@@ -33,6 +33,10 @@ var AccManager = function(connMan, hostname, mailer) {
    * @type {Function[]}
    */
   this.userNotifiers = [];
+};
+
+AccManager.prototype.setGroupManager = function (grpMan) {
+  this.gm = grpMan;
 };
 
 AccManager.prototype.mailTemplates = {
@@ -77,6 +81,10 @@ function getContact(am, userId, callback) {
       callback(rows[0]);
   });
 }
+
+AccManager.prototype.getContact = function(userId, callback) {
+  getContact(this, userId, callback);
+};
 
 function listContacts(am, userId, callback) {
   am.cm.query('SELECT rightId, state, isFavorite FROM contacts WHERE leftId = ?', [userId], function(err, rows) {
@@ -146,18 +154,8 @@ function getContacts(am, userId, callback) {
   });
 }
 
-function invokeArray(arr, args) {
-  arr.forEach(function(i) {
-    i.apply(undefined, args);
-  });
-}
-
-function randomString(length) {
-  return crypto.randomBytes(Math.floor(length / 4 * 3) + 1).toString('base64').replace(/(\/|\+|=)/g, '0').substr(0, length);
-}
-
 function notifyUser(am, userId, name, data) {
-  invokeArray(am.userNotifiers, [userId, name, data]);
+  utils.invokeArray(am.userNotifiers, [[userId], name, data]);
 }
 
 function notifyFriendshipState(am, leftId, rightId) {
@@ -211,7 +209,7 @@ function create(am, email, nick, hash, callback) {
     email: email,
     nick: nick,
     hash: hash,
-    activationCode: randomString(24)
+    activationCode: utils.randomString(24)
   };
 
   am.cm.query('INSERT INTO users SET ?', values, function(err, result) {
@@ -221,6 +219,7 @@ function create(am, email, nick, hash, callback) {
     if(!result || result.insertId <= 0)
       return callback('ERR_ALREADY_USED');
 
+    // TODO: move to mail manager
     var link = 'https://' + am.hostname + '/?activate=' + values.activationCode;
 
     var mailOptions = {
@@ -257,40 +256,44 @@ AccManager.prototype.activate = function(code, callback) {
 };
 
 function loginValid(am, row, callback) {
-  var loginToken = randomString(48);
+  var loginToken = utils.randomString(48);
 
   var user = {
     id: row.id,
     nick: row.nick,
     email: row.email,
-    loginToken: loginToken,
-    contacts: [],
-    groups: []
+    loginToken: loginToken
   };
 
-                                                                                                                        // TODO: retrieve groups
   async.parallel([
     // retrieve contacts
-    function(cb) {
-      getContacts(am, user.id, function(contacts) {
-        user.contacts = contacts;
-
-        contacts.forEach(function(c) {
+    function (cb) {
+      getContacts(am, user.id, function (contacts) {
+        contacts.forEach(function (c) {
           if(c.state.right !== 'accepted')
             c.state.right = 'waiting';
         });
 
-        cb();
+        cb(null, contacts);
+      });
+    },
+    // retrieve groups
+    function (cb) {
+      am.gm.getGroups(user.id, function (groups) {
+        cb(null, groups);
       });
     },
     // increase onlineCounter
-    function(cb) {
-      am.cm.query('UPDATE users SET loginToken = ?, onlineCounter = onlineCounter + 1 WHERE id = ?', [loginToken, user.id], function(err) {
+    function (cb) {
+      am.cm.query('UPDATE users SET loginToken = ?, onlineCounter = onlineCounter + 1 WHERE id = ?', [loginToken, user.id], function (err) {
         am.cm.handleError(err);
         cb();
       });
     }
-  ], function() {
+  ], function (err, results) {
+    user.contacts = results[0];
+    user.groups = results[1];
+
     callback(user);
 
     notifyContacts(am, user.id, 'contact.onlineEvent', {
@@ -301,7 +304,7 @@ function loginValid(am, row, callback) {
 }
 
 function login(am, email, hash, callback) {
-  am.cm.query('SELECT * FROM users WHERE email = ?', email, function(err, result) {
+  am.cm.query('SELECT * FROM users WHERE email = ?', email, function (err, result) {
     if(am.cm.handleError(err))
       return callback('ERR');
 
@@ -317,7 +320,7 @@ function login(am, email, hash, callback) {
   });
 }
 
-AccManager.prototype.login = function(email, hash, callback) {
+AccManager.prototype.login = function (email, hash, callback) {
   login(this, email, hash, callback);
 };
 

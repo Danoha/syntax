@@ -42,8 +42,10 @@ connMan.ready(function() {
     console.log('DNS lookup done (hostname seems to be ' + hostname + ')');
 
     var accMan = new AccManager(connMan, hostname, mailer);
-    var grpMan = new GrpManager(connMan);
+    var grpMan = new GrpManager(connMan, accMan);
     var msgMan = new MsgManager(accMan, grpMan);
+
+    accMan.setGroupManager(grpMan);
 
     accMan.resetOnlineCounters(function() {
       var server = new Server(config.credentials);
