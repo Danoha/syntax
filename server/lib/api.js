@@ -34,7 +34,7 @@ var Api = function (accMan, grpMan, msgMan, server) {
 function _notify(api, roomId, name, data) {
   api.server.io.to(roomId).emit(name, data);
 
-  console.log('notify', roomId, name, require('util').inspect(data, false, null));
+  //console.log('notify', roomId, name, require('util').inspect(data, false, null));
 }
 
 function notifyUser(api, userId, name, data) {
