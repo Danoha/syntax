@@ -553,8 +553,7 @@ define(
       toggleNotifications: toggleNotifications,
 
       areNotificationsAllowed: ko.observable(false),
-      soundVolume: ko.observable(100),
-      volumeLevels: [0, 20, 40, 60, 80, 100],
+      soundVolume: ko.observable(50),
 
       menu: {
         settings: showSettings,
@@ -677,7 +676,7 @@ define(
 
       var volume = bus.userStorage.get('sound-volume');
       if (volume === undefined)
-        volume = 100;
+        volume = 50;
       appScreen.panel.soundVolume(volume);
 
       if ('Notification' in window && bus.userStorage.get('notifications') && Notification.permission === "granted")
@@ -692,7 +691,7 @@ define(
       appScreen.target(null);
 
       appScreen.panel.areNotificationsAllowed(false);
-      appScreen.panel.soundVolume(100);
+      appScreen.panel.soundVolume(50);
 
       appScreen.friendSearch.visible(false);
       resetFriendSearch();

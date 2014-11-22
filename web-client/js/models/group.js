@@ -29,7 +29,7 @@ define(['./target', '../vendor/knockout', '../core/bus'], function (BaseTarget, 
     this.members = ko.observableArray();
     this.role = ko.observable();
 
-    this.alias(bus.userStorage.get('contact.' + id + '.alias'));
+    this.alias(bus.userStorage.get('group.' + id + '.alias'));
 
     this.displayName = ko.pureComputed(function () {
       var alias = self.alias();
