@@ -47,7 +47,7 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
         throw new Error('Target type not supported');
     }
 
-    api.chatMessage(msg);
+    api.message.send(msg); // TODO: enqueue unsent messages
 
     getTextarea().focus();
   }

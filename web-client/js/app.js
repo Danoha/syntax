@@ -106,11 +106,11 @@ define(['./core/socket', 'jquery', 'require', './core/focus', './vendor/bootbox'
     }
 
     return _uniqueId;
-  }
+  };
 
   SyntaxApp.prototype.resetUniqueId = function () {
     _uniqueId = null;
-  }
+  };
 
   return new SyntaxApp();
 });

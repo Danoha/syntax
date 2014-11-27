@@ -18,7 +18,7 @@
 
 'use strict';
 
-define(['../core/socket', '../vendor/sha256.min'], function (socket) {
+define(['../core/socket', 'jquery', '../vendor/sha256.min'], function (socket, $) {
   var io = socket();
 
   function Api() {
@@ -36,6 +36,135 @@ define(['../core/socket', '../vendor/sha256.min'], function (socket) {
     }
   };
 
+  function createEvent(name) {
+    var listeners = [];
+
+    io.on(name, function (data) {
+      $.each(listeners, function (i, listener) {
+        tryCallback(listener, data);
+      });
+    });
+
+    return listeners;
+  }
+
+  function emit(method, data, callback) {
+    if (callback) {
+      io.on(method, function (result) {
+        io.removeAllListeners(method);
+
+        tryCallback(callback, result);
+      });
+    }
+
+    io.emit(method, data);
+  }
+
+  Api.prototype.account = {
+    create: function (email, nick, password, callback) {
+      emit('account.create', {
+        email: email,
+        nick: nick,
+        hash: CryptoJS.SHA256(password).toString()
+      }, callback);
+    },
+
+    activate: function (code, callback) {
+      emit('account.activate', {
+        code: code
+      }, callback);
+    },
+
+    login: function (email, password, callback) {
+      emit('account.login', {
+        email: email,
+        hash: CryptoJS.SHA256(password).toString()
+      }, callback);
+    },
+
+    restoreLogin: function (loginToken, callback) {
+      emit('account.restoreLogin', {
+        loginToken: loginToken
+      }, callback);
+    },
+
+    logout: function (callback) {
+      emit('account.logout', undefined, callback);
+    }
+  };
+
+  Api.prototype.contact = {
+    lookup: function (query, callback) {
+      emit('contact.lookup', {
+        query: query
+      }, callback);
+    },
+
+    setFriendshipState: function (targetId, state, isFavorite, callback) {
+      emit('contact.setFriendshipState', {
+        targetId: targetId,
+        state: state,
+        isFavorite: isFavorite
+      }, callback);
+    },
+
+    friendshipStateEvent: createEvent('contact.friendshipStateEvent'),
+    onlineEvent: createEvent('contact.onlineEvent')
+  };
+
+  Api.prototype.group = {
+    create: function (callback) {
+      emit('group.create', undefined, callback);
+    },
+
+    invite: function (userId, groupId, callback) {
+      emit('group.invite', {
+        userId: userId,
+        groupId: groupId
+      }, callback);
+    },
+
+    leave: function (groupId, doNotInviteAgain, callback) {
+      emit('group.leave', {
+        groupId: groupId,
+        doNotInviteAgain: doNotInviteAgain
+      }, callback);
+    },
+
+    inviteEvent: createEvent('group.inviteEvent'),
+    memberLeftEvent: createEvent('group.memberLeftEvent'),
+    destroyEvent: createEvent('group.destroyEvent')
+  };
+
+  Api.prototype.message = {
+    send: function (msg, callback) {
+      emit('message.send', msg, callback);
+    },
+
+    receivedEvent: createEvent('message.receivedEvent')
+  };
+
+  Api.prototype.reset = function () {
+    var suffix = 'Event';
+
+    for (var section in this) {
+      if (typeof this[section] !== 'object')
+        continue;
+
+      section = this[section];
+      for (var property in section) {
+        if (property.indexOf(suffix, property.length - suffix.length) < 0)
+          continue;
+
+        section[property].length = 0;
+      }
+    }
+  };
+
+  /**
+   * @deprecated
+   * @todo remove
+   */
   var bind = function (name, event, params, listen) {
     Api.prototype[name] = function () {
 
@@ -126,6 +255,10 @@ define(['../core/socket', '../vendor/sha256.min'], function (socket) {
     };
   });
 
+  /**
+   * @deprecated
+   * @todo remove
+   */
   Api.prototype.on = function (event, listener) {
     io.on(event, function () {
       var args = Array.prototype.slice.call(arguments);

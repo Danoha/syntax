@@ -283,7 +283,7 @@ function loginValid(am, row, callback) {
         cb(null, groups);
       });
     },
-    // increase onlineCounter
+    // increase onlineCounter and update loginToken
     function (cb) {
       am.cm.query('UPDATE users SET loginToken = ?, onlineCounter = onlineCounter + 1 WHERE id = ?', [loginToken, user.id], function (err) {
         am.cm.handleError(err);

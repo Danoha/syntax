@@ -137,7 +137,7 @@ define(
           if (result) {
             var wait = new WaitDialog('logging out');
 
-            api.logout(function () {
+            api.account.logout(function () {
               wait.close();
               doLogout();
             });
@@ -161,7 +161,7 @@ define(
       var query = appScreen.friendSearch.query();
       var wait = new WaitDialog('searching');
 
-      api.searchAccounts(query, function (results) {
+      api.contact.lookup(query, function (results) {
         wait.close();
 
         results = $.grep(results, function (user) {
@@ -175,7 +175,7 @@ define(
     function contactsCreateGroup() {
       var wait = new WaitDialog('creating group');
 
-      api.createGroup(function (result) {
+      api.group.create(function (result) {
         wait.close();
 
         var g = {
@@ -224,7 +224,7 @@ define(
 
     function sendFriendRequest(user) {
       var wait = new WaitDialog('sending friend request');
-      api.setFriendshipState(user.id, 'accepted', false, function (result) {
+      api.contact.setFriendshipState(user.id, 'accepted', false, function (result) {
         wait.close();
 
         bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
@@ -261,7 +261,7 @@ define(
     function friendResponse(target, state) {
       var wait = new WaitDialog('sending response');
 
-      api.setFriendshipState(target.id, state, target.isFavorite(), function (result) {
+      api.contact.setFriendshipState(target.id, state, target.isFavorite(), function (result) {
         wait.close();
 
         if (result === 'OK')
@@ -320,7 +320,7 @@ define(
         var wait = new WaitDialog('leaving group');
         var group = appScreen.target();
 
-        api.leaveGroup(group.id, notAgain, function (result) {
+        api.group.leave(group.id, notAgain, function (result) {
           wait.close();
 
           if (result !== 'OK') {
@@ -704,20 +704,20 @@ define(
 
     // API bindings
 
-    api.on('message.receivedEvent', function (msg) {
+    api.message.receivedEvent.push(function (msg) {
       messageManager.processMessage(msg);
 
       updateTitle();
     });
 
-    api.on('contact.onlineEvent', function (data) {
+    api.contact.onlineEvent.push(function (data) {
       if (typeof data !== 'object')
         return;
 
       setFriendOnline(data.contactId, data.isOnline);
     });
 
-    api.on('contact.friendshipStateEvent', function (data) {
+    api.contact.friendshipStateEvent.push(function (data) {
       var localContact = null;
       $.each(app.user.contacts, function (i, c) {
         if (c.id === data.contact.id) {
@@ -738,7 +738,7 @@ define(
       syncContactList();
     });
 
-    api.on('group.memberLeftEvent', function (data) {
+    api.group.memberLeftEvent.push(function (data) {
       if (typeof data !== 'object')
         return;
 
@@ -766,7 +766,7 @@ define(
       messageManager.systemMessage(g, m.displayName() + ' left this group');
     });
 
-    api.on('group.destroyEvent', function (data) {
+    api.group.destroyEvent.push(function (data) {
       if (typeof data !== 'object')
         return;
 
@@ -777,7 +777,7 @@ define(
       syncContactList();
     });
 
-    api.on('group.inviteEvent', function (data) {
+    api.group.inviteEvent.push(function (data) {
       if (typeof data !== 'object')
         return;
 
@@ -840,7 +840,7 @@ define(
         return;
 
       var wait = new WaitDialog('restoring login');
-      api.restoreLogin(app.user.loginToken, function (result) {
+      api.account.restoreLogin(app.user.loginToken, function (result) {
         wait.close();
 
         if (result === 'ERR_INVALID') {

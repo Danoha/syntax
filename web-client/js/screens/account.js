@@ -30,7 +30,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   function activateAccount(activationCode) {
     var wait = new WaitDialog('activating account');
 
-    api.activateAccount(activationCode, function (result) {
+    api.account.activate(activationCode, function (result) {
       wait.close();
 
       var message;
@@ -72,7 +72,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
     var wait = new WaitDialog('creating account');
 
-    api.createAccount(email, nick, password, function (result) {
+    api.account.create(email, nick, password, function (result) {
       wait.close();
 
       var message;
@@ -118,7 +118,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
 
     var wait = new WaitDialog('logging in');
 
-    api.login(email, password, function (result) {
+    api.account.login(email, password, function (result) {
       wait.close();
 
       var message = null;
@@ -145,7 +145,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
   function restoreLogin(token) {
     var wait = new WaitDialog('logging in');
 
-    api.restoreLogin(token, function (result) {
+    api.account.restoreLogin(token, function (result) {
       wait.close();
 
       storage.remove('loginToken');
@@ -191,6 +191,8 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
     app.resetUniqueId();
     app.user = undefined;
     bus.userStorage = null;
+
+    api.reset();
   };
 
   var firstShow = true;
