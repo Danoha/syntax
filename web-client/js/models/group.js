@@ -38,7 +38,7 @@ define(['./target', '../vendor/knockout', '../core/bus'], function (BaseTarget, 
     });
 
     this.alias.subscribe(function (newValue) {
-      bus.userStorage.set('contact.' + id + '.alias', newValue);
+      bus.userStorage.set('group.' + id + '.alias', newValue);
     });
   }
 
