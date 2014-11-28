@@ -235,8 +235,8 @@ function group_create(api, sock, data, name) {
   api.grpMan.create(sock.userId, function (result) {
     sock.emit(name, result);
 
-    if (typeof result === 'object' && result.id)
-      addUserToGroup(api, sock.userId, result.id);
+    if (typeof result === 'object' && result.groupId)
+      addUserToGroup(api, sock.userId, result.groupId);
   });
 }
 
