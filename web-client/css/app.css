@@ -55,6 +55,9 @@ div.syntax-logo {
   padding: 25px 0;
   font-weight: 300;
 }
+div.left-side {
+  max-height: calc(100vh - 42px);
+}
 div.app .messages .panel-body {
   height: calc(100vh - 209px);
   overflow-y: scroll;
@@ -89,15 +92,29 @@ div.app .contact .rename {
 div.app .contact:hover .rename.available {
   display: inline-block;
 }
+div.app .contact .status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-bottom: 1px;
+}
 div.app .contact .status.online {
-  color: rgb(127, 186, 0);
+  background-color: rgb(127, 186, 0);
 }
 div.app .contact .status.offline {
-  color: #888;
+  background-color: #888;
 }
 div.app .contact {
   padding: 10px;
   margin: 3px 0;
+}
+div.left-side.panel-group > div.panel {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+div.app .contacts. panel-body {
+  overflow: scroll;
 }
 div.app .contacts .contact:hover {
   background-color: #fafafa;
@@ -168,6 +185,9 @@ a.link-attachment {
 }
 div.panel.embed .panel-body {
   padding: 5px 5px 0 5px;
+}
+div.panel.embed .panel-body .embed-responsive {
+  margin-bottom: 5px;
 }
 span.icon {
   display: inline-block;

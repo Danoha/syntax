@@ -32,16 +32,16 @@
     </div>
   </div>
 
-  <div class="col-md-2">
+  <div class="col-md-3 col-lg-2 left-side panel-group" id="left-side__panel-group" role="tablist">
     <div class="friend-search panel panel-default" data-bind="slideVisible: friendSearch.visible, with: friendSearch">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab">
         <a class="pull-right" href="#" data-bind="click: toggle"><span class="glyphicon glyphicon-remove"></span></a>
         <h3 class="panel-title">add friend</h3>
       </div>
       <div class="panel-body">
         <div data-bind="foreach: results">
           <div class="contact">
-            <span class="glyphicon glyphicon-user status offline"></span>
+            <span class="status offline"></span>
             <span class="nick" data-bind="text: nick"></span>
             <button class="btn btn-primary btn-xs pull-right" data-bind="click: $parent.sendRequest">add</button>
           </div>
@@ -63,38 +63,40 @@
     </div>
 
     <div class="contacts panel panel-default" data-bind="slideVisible: !friendSearch.visible(), with: contactList">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab" id="contacts-panel-heading">
         <span class="pull-right">
           <a href="#" data-bind="click: $parent.friendSearch.toggle" title="add friend"><span class="glyphicon glyphicon-user"></span></a>
           &nbsp;
           <a href="#" data-bind="click: createGroup" title="create group">G</a>
         </span>
-        <h3 class="panel-title">contacts</h3>
+        <h3 class="panel-title"><a data-toggle="collapse" data-parent="#left-side__panel-group" href="#contacts-panel-body" aria-expanded="true" aria-controls="contacts-panel-body">contacts</a></h3>
       </div>
-      <div class="panel-body">
-        <div data-bind="foreach: all">
-          <div class="contact" data-bind="css: { active: $root.isTargetActive($data) }, click: $root.openTarget">
-            <!-- ko if: type === 'contact' -->
-            <span class="glyphicon glyphicon-user status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
-            <!-- /ko -->
+      <div aria-labelledby="contacts-panel-heading" id="contacts-panel-body" role="tabpanel" class="panel-collapse collapse in">
+        <div class="panel-body">
+          <div data-bind="foreach: all">
+            <div class="contact" data-bind="css: { active: $root.isTargetActive($data) }, click: $root.openTarget">
+              <!-- ko if: type === 'contact' -->
+              <span class="status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
+              <!-- /ko -->
 
-            <!-- ko if: type === 'group' -->
-            <span class="glyphicon glyphicon-link"></span>
-            <!-- /ko -->
+              <!-- ko if: type === 'group' -->
+              <span class="status"></span>
+              <!-- /ko -->
 
-            <span class="nick" data-bind="text: displayName"></span>
-            <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
-            <a href="#" class="rename pull-right" title="rename" data-bind="click: rename, css: { available: $root.isStorageAvailable }"><span class="glyphicon glyphicon-pencil"></span></a>
+              <span class="nick" data-bind="text: displayName"></span>
+              <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
+              <a href="#" class="rename pull-right" title="rename" data-bind="click: rename, css: { available: $root.isStorageAvailable }"><span class="glyphicon glyphicon-pencil"></span></a>
+            </div>
           </div>
-        </div>
-        <div class="no-result" data-bind="visible: all().length === 0">
-          no contacts
+          <div class="no-result" data-bind="visible: all().length === 0">
+            no contacts
+          </div>
         </div>
       </div>
     </div>
 
     <div class="embed panel panel-default" data-bind="visible: embed.html() !== null">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab">
         <span class="pull-right">
           <a href="#" data-bind="click: embed.close" title="close"><span class="glyphicon glyphicon-remove"></span></a>
         </span>
@@ -103,7 +105,9 @@
       <div class="panel-body" data-bind="html: embed.html"></div>
     </div>
   </div>
-  <div class="col-md-10">
+
+
+  <div class="col-md-9 col-lg-10">
     <div data-bind="if: target() !== null">
       <div class="messages panel panel-default">
         <div class="panel-heading">

@@ -29,17 +29,21 @@ define(['jquery'], function ($) {
     };
   }
 
+  function wrap4by3(html) {
+    return '<div class="embed-responsive embed-responsive-4by3">' + html + '</div>';
+  }
+
   function formatYoutube(a) {
     return {
       title: 'YouTube',
-      html: '<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + a.data('id') + '?autoplay=1" frameborder="0" allowfullscreen></iframe>'
+      html: wrap4by3('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + a.data('id') + '?autoplay=1" allowfullscreen></iframe>')
     };
   }
 
   function formatTwitch(a) {
     return {
       title: 'Twitch',
-      html: '<object bgcolor="#000000" data="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" height="100%" type="application/x-shockwave-flash" width="100%"><param name="movie" value="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" /><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="flashvars" value="auto_play=true&amp;start_volume=25&amp;chapter_id=5069854" /></object>'
+      html: wrap4by3('<object bgcolor="#000000" data="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" height="100%" type="application/x-shockwave-flash" width="100%"><param name="movie" value="https://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" /><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="flashvars" value="auto_play=true&amp;start_volume=25&amp;chapter_id=5069854" /></object>')
     };
   }
 
