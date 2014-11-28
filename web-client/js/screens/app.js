@@ -532,6 +532,7 @@ define(
     }
 
     function setVolume(value) {
+      value = parseInt(value);
       appScreen.panel.soundVolume(value);
       bus.userStorage.set('sound-volume', value);
     }

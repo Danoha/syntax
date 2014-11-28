@@ -126,7 +126,7 @@ define(['./base', '../vendor/knockout', '../lib/api', '../utils/waitdialog', '..
         case 'ERR_NOT_ACTIVATED':
           message = 'account is not activated';
           break;
-        case 'ERR_NOT_FOUND':
+        case 'ERR_INVALID_CREDENTIALS':
           message = 'email or password incorrect';
           break;
         case 'ERR_INVALID_VALUES':
