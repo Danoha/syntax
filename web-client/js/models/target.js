@@ -50,15 +50,6 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
 
       bus.post('apptitle.update');
     });
-
-    this.rename = function () {
-      // TODO: move to appScreen
-
-      bootbox.prompt('enter new alias (leave empty for default name)', function (result) {
-        if (result !== null)
-          self.alias(result);
-      });
-    };
   };
 
   BaseTarget.prototype.id = 0;

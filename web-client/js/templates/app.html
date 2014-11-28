@@ -21,10 +21,10 @@
           <a href="#" id="accountButtonDrop" role="button" class="dropdown-toggle" data-toggle="dropdown"><span data-bind="text: $root.user.nick"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu" aria-labelledby="accountButtonDrop" data-bind="with: menu">
             <li role="presentation">
-              <a role="menuitem" tabindex="-1" href="#" data-bind="click: settings"><span class="glyphicon glyphicon-cog"></span> options</a>
+              <a role="menuitem" tabindex="-1" href="#" data-bind="click: settings"><span class="glyphicon glyphicon-cog"></span>&nbsp; options</a>
             </li>
             <li role="presentation">
-              <a role="menuitem" tabindex="-1" href="#" data-bind="click: logout"><span class="glyphicon glyphicon-off"></span> logout</a>
+              <a role="menuitem" tabindex="-1" href="#" data-bind="click: logout"><span class="glyphicon glyphicon-off"></span>&nbsp; logout</a>
             </li>
           </ul>
         </li>
@@ -32,16 +32,16 @@
     </div>
   </div>
 
-  <div class="col-md-2">
+  <div class="col-md-3 col-lg-2 left-side panel-group" id="left-side__panel-group" role="tablist">
     <div class="friend-search panel panel-default" data-bind="slideVisible: friendSearch.visible, with: friendSearch">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab">
         <a class="pull-right" href="#" data-bind="click: toggle"><span class="glyphicon glyphicon-remove"></span></a>
         <h3 class="panel-title">add friend</h3>
       </div>
       <div class="panel-body">
         <div data-bind="foreach: results">
           <div class="contact">
-            <span class="glyphicon glyphicon-user status offline"></span>
+            <span class="status offline"></span>
             <span class="nick" data-bind="text: nick"></span>
             <button class="btn btn-primary btn-xs pull-right" data-bind="click: $parent.sendRequest">add</button>
           </div>
@@ -55,7 +55,7 @@
           <div class="input-group">
             <input type="text" data-bind="value: query" class="form-control">
             <span class="input-group-btn">
-              <button class="btn btn-default" type="submit">search</button>
+              <button class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span></button>
             </span>
           </div>
         </form>
@@ -63,38 +63,42 @@
     </div>
 
     <div class="contacts panel panel-default" data-bind="slideVisible: !friendSearch.visible(), with: contactList">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab" id="contacts-panel-heading">
         <span class="pull-right">
-          <a href="#" data-bind="click: $parent.friendSearch.toggle" title="add friend"><span class="glyphicon glyphicon-user"></span></a>
+          <a href="#" data-bind="click: $parent.friendSearch.toggle" title="add friend"><span class="glyphicon glyphicon-search"></span></a>
           &nbsp;
-          <a href="#" data-bind="click: createGroup" title="create group">G</a>
+          <a href="#" data-bind="click: createGroup" title="create group"><span class="glyphicon glyphicon-plus-sign"></span></a>
         </span>
-        <h3 class="panel-title">contacts</h3>
+        <h3 class="panel-title"><a data-toggle="collapse" data-parent="#left-side__panel-group" href="#contacts-panel-body" aria-expanded="true" aria-controls="contacts-panel-body">contacts <span class="caret"></span></a></h3>
       </div>
-      <div class="panel-body">
-        <div data-bind="foreach: all">
-          <div class="contact" data-bind="css: { active: $root.isTargetActive($data) }, click: $root.openTarget">
-            <!-- ko if: type === 'contact' -->
-            <span class="glyphicon glyphicon-user status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
-            <!-- /ko -->
+      <div aria-labelledby="contacts-panel-heading" id="contacts-panel-body" role="tabpanel" class="panel-collapse collapse in">
+        <div class="panel-body">
+          <div data-bind="foreach: all">
+            <div class="contact" data-bind="css: { active: $root.isTargetActive($data) }, click: $root.openTarget">
+              <!-- ko if: type === 'contact' -->
+              <span class="status" data-bind="css: { online: isOnline, offline: !isOnline() }"></span>
+              <!-- /ko -->
 
-            <!-- ko if: type === 'group' -->
-            <span class="glyphicon glyphicon-link"></span>
-            <!-- /ko -->
+              <!-- ko if: type === 'group' -->
+              <span class="status group"></span>
+              <!-- /ko -->
 
-            <span class="nick" data-bind="text: displayName"></span>
-            <span class="badge pull-right" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
-            <a href="#" class="rename pull-right" title="rename" data-bind="click: rename, css: { available: $root.isStorageAvailable }"><span class="glyphicon glyphicon-pencil"></span></a>
+              <span class="nick" data-bind="text: displayName"></span>
+
+              <div class="pull-right">
+                <span class="badge unread-messages" data-bind="visible: unreadMessages() > 0, text: unreadMessages()">0</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="no-result" data-bind="visible: all().length === 0">
-          no contacts
+          <div class="no-result" data-bind="visible: all().length === 0">
+            no contacts
+          </div>
         </div>
       </div>
     </div>
 
     <div class="embed panel panel-default" data-bind="visible: embed.html() !== null">
-      <div class="panel-heading">
+      <div class="panel-heading" role="tab">
         <span class="pull-right">
           <a href="#" data-bind="click: embed.close" title="close"><span class="glyphicon glyphicon-remove"></span></a>
         </span>
@@ -103,99 +107,144 @@
       <div class="panel-body" data-bind="html: embed.html"></div>
     </div>
   </div>
-  <div class="col-md-10">
-    <div data-bind="if: target() !== null">
-      <div class="messages panel panel-default">
-        <div class="panel-heading">
-          <div class="pull-right">
-            <div class="dropdown">
-              <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown" id="chatTargetDropdown"><span class="caret"></span></a>
-              <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="chatTargetDropdown" data-bind="with: (target().type === 'group' ? groupMenu : contactMenu)">
-                <!-- ko if: $parent.target().type === 'contact' -->
-                <li role="presentation"><a href="#">coming soon...</a>
-                </li>
-                <!-- /ko -->
-                <!-- ko if: $parent.target().type === 'group' -->
-                <li role="presentation"><a href="#" data-bind="click: showMembers"><span class="glyphicon glyphicon-user"></span>&nbsp; members</a></li>
-                <li role="presentation"><a href="#" data-bind="click: leave"><span class="glyphicon glyphicon-ban-circle"></span>&nbsp;leave</a>
-                </li>
-                <!-- /ko -->
-              </ul>
-            </div>
-          </div>
-          <h3 class="panel-title" data-bind="text: target().displayName()"></h3>
-        </div>
-        <div class="panel-body">
-          <div class="no-result" data-bind="visible: target().totalMessages() === 0">
-            there are no messages
-          </div>
-          <div class="messages-content" data-bind="contents: target().messages"></div>
-        </div>
-        <div class="panel-footer clearfix">
-          <div class="composer" data-bind="with: target">
-            <!-- ko if: type === 'group' || (type === 'contact' && state.left() === 'accepted' && state.right() === 'accepted') -->
-            <div data-bind="with: composer">
-              <form data-bind="submit: submit">
-                <div class="col-sm-2 custom-btns-col">
-                  <button class="btn btn-xs btn-default" data-bind="click: openCoder"><span class="glyphicon glyphicon-file"></span> coder</button>
-                </div>
-                <div class="col-sm-8">
-                  <textarea data-bind="value: text, valueUpdate: 'keypress', event: { keypress: keyPress }" class="form-control"></textarea>
-                </div>
-                <div class="col-sm-2 send-btn-col">
-                  <button class="btn btn-sm btn-default" type="submit">send</button>
-                </div>
-              </form>
-            </div>
-            <!-- /ko -->
-            <!-- ko if: type === 'contact' -->
-              <!-- ko if: state.right() === 'waiting' -->
-              <div class="no-result">
-                waiting for response
-              </div>
-              <!-- /ko -->
-              <!-- ko if: state.left() === 'waiting' -->
-              <div>
-                respond to friendship request:&nbsp;
-                <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
-                  <button class="btn btn-success" data-bind="click: sendAccepted">accept</button>
-                  <button class="btn btn-warning" data-bind="click: sendNotNow">not now</button>
-                  <button class="btn btn-danger" data-bind="click: sendDenied">deny</button>
-                </span>
-              </div>
-              <!-- /ko -->
-            <!-- /ko-->
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- ko if: target() === null -->
-    <div class="panel panel-default">
+
+
+  <div class="col-md-9 col-lg-10 right-side">
+    <!-- ko if: target() !== null -->
+    <div class="messages panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">no contact selected</h3>
+        <h3 class="panel-title">
+          <span data-bind="text: target().displayName()"></span>
+
+          <div class="dropdown pull-right">
+            <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown" id="chatTargetDropdown">options <span class="caret"></span></a>
+            <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="chatTargetDropdown" data-bind="with: (target().type === 'group' ? groupMenu : contactMenu)">
+              <!-- ko if: $parent.target().type === 'contact' -->
+              <li role="presentation"><a href="#">coming soon...</a>
+              </li>
+              <!-- /ko -->
+              <!-- ko if: $parent.target().type === 'group' -->
+              <li role="presentation"><a href="#" data-bind="click: showMembers"><span class="glyphicon glyphicon-user"></span>&nbsp; members</a></li>
+              <li role="presentation"><a href="#" data-bind="click: leave"><span class="glyphicon glyphicon-ban-circle"></span>&nbsp; leave</a>
+              </li>
+              <!-- /ko -->
+              <!-- ko if: $root.isStorageAvailable -->
+              <li role="presentation" class="divider"></li>
+              <li role="presentation"><a href="#" data-bind="click: rename"><span class="glyphicon glyphicon-edit"></span>&nbsp; rename</a></li>
+              <!-- /ko -->
+            </ul>
+          </div>
+        </h3>
       </div>
       <div class="panel-body">
-        start with selecting contact on the left side<br>
-        <br>
-        TODO: usage tips & tricks
+        <div class="no-result" data-bind="visible: target().totalMessages() === 0">
+          there are no messages
+        </div>
+        <div class="messages-content" data-bind="contents: target().messages"></div>
+      </div>
+      <div class="panel-footer clearfix">
+        <div class="composer" data-bind="with: target">
+          <!-- ko if: type === 'group' || (type === 'contact' && state.left() === 'accepted' && state.right() === 'accepted') -->
+          <div data-bind="with: composer">
+            <form data-bind="submit: submit">
+              <!--<button class="btn btn-sm btn-default pull-right" type="submit"><span class="glyphicon glyphicon-send"></span></button>-->
+              <div class="form-group">
+                <textarea data-bind="value: text, valueUpdate: 'keypress', event: { keypress: keyPress }" class="form-control"></textarea>
+              </div>
+            </form>
+          </div>
+          <!-- /ko -->
+          <!-- ko if: type === 'contact' -->
+            <!-- ko if: state.right() === 'waiting' -->
+            <div class="no-result">
+              waiting for response
+            </div>
+            <!-- /ko -->
+            <!-- ko if: state.left() === 'waiting' -->
+            <div>
+              respond to friendship request:&nbsp;
+              <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
+                <button class="btn btn-success" data-bind="click: sendAccepted">accept</button>
+                <button class="btn btn-warning" data-bind="click: sendNotNow">not now</button>
+                <button class="btn btn-danger" data-bind="click: sendDenied">deny</button>
+              </span>
+            </div>
+            <!-- /ko -->
+          <!-- /ko-->
+        </div>
       </div>
     </div>
+    <!-- /ko -->
+    <!-- ko if: target() === null -->
     <div class="row">
       <div class="col-md-6">
-        <div class="panel panel-success">
+        <div class="panel panel-info">
+          <div class="panel-heading">
+            <h3 class="panel-title">cheat sheet</h3>
+          </div>
+          <div class="panel-body">
+            <h4 class="h4">managing contacts</h4>
+            <ul>
+              <li>click on <kbd>syntax.im</kbd> in navbar to close current conversation</li>
+              <li>click on <kbd>options <span class="caret"></span></kbd> to perform some neat actions with selected contact</li>
+              <li>coder mode removed</li>
+            </ul>
+
+            <h4 class="h4">writing message</h4>
+            <ul>
+              <li>
+                <kbd>shift</kbd> + <kbd>enter</kbd> creates new line
+              </li>
+              <li>
+                <kbd>alt</kbd> + <kbd>enter</kbd> sends message as code
+              </li>
+              <li>
+                write 2 spaces on line beginning to transform whole line into code line
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel panel-warning">
+          <div class="panel-heading">
+            <h3 class="panel-title">roadmap</h3>
+          </div>
+          <div class="panel-body">
+            <ul>
+              <li>
+                make more phone/tablet friendly
+              </li>
+            </ul>
+          </div>
+          <div class="panel-footer">
+            want to help? visit us on <a target="_blank" href="https://github.com/Danoha/syntax">github</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="panel panel-success changelog">
           <div class="panel-heading">
             <h3 class="panel-title">changelog</h3>
           </div>
           <div class="panel-body">
-            <h4>16/11/2014</h4>
+            <h4 class="h4">28/11/2014</h4>
+            <ul>
+              <li>cheat sheet added</li>
+              <li>some cosmetic changes</li>
+            </ul>
+            <h4 class="h4">21/11/2014</h4>
+            <ul>
+              <li>published <a target="_blank" href="https://github.com/Danoha/syntax/wiki/Socket.io-API">API</a></li>
+            </ul>
+            <h4 class="h4">16/11/2014</h4>
             <ul>
               <li>basic coder mode added</li>
             </ul>
-            <h4>15/11/2014</h4>
+            <h4 class="h4">15/11/2014</h4>
             <ul>
               <li>sound volume slider added</li>
             </ul>
-            <h4>14/11/2014</h4>
+            <h4 class="h4">14/11/2014</h4>
             <ul>
               <li>Imgur link can be replaced with image/album title</li>
               <li>webm and gifv preview added</li>
@@ -210,29 +259,6 @@
               <li>added /me command</li>
               <li>code highlight style selecting added</li>
             </ul>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="panel panel-warning">
-          <div class="panel-heading">
-            <h3 class="panel-title">roadmap</h3>
-          </div>
-          <div class="panel-body">
-            <ul>
-              <li>
-                publish API
-              </li>
-              <li>
-                <del>invent</del> <ins>improve</ins> coder mode
-              </li>
-              <li>
-                make more phone/tablet friendly
-              </li>
-            </ul>
-          </div>
-          <div class="panel-footer">
-            want to help? visit us on <a target="_blank" href="https://github.com/Danoha/syntax">github</a>
           </div>
         </div>
       </div>

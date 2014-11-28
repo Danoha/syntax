@@ -542,6 +542,15 @@ define(
       modal.show();
     }
 
+    function renameTarget() {
+      var target = appScreen.target();
+
+      bootbox.prompt('enter new alias (leave empty for default name)', function (result) {
+        if (result !== null)
+          target.alias(result);
+      });
+    }
+
     // Model definition
 
     appScreen.target = ko.observable(null);
@@ -595,10 +604,14 @@ define(
 
     appScreen.groupMenu = {
       leave: groupLeave,
-      showMembers: groupShowMembers
+      showMembers: groupShowMembers,
+
+      rename: renameTarget
     };
 
-    appScreen.contactMenu = {};
+    appScreen.contactMenu = {
+      rename: renameTarget
+    };
 
     appScreen.isStorageAvailable = storage.isAvailable;
 
