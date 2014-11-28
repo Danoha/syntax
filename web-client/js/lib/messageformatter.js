@@ -352,13 +352,13 @@ define(['jquery', '../app', 'moment', './emoticons', './messageparser', '../vend
     ).append(
       $('<div>').addClass('col-xs-2 col-sm-1 pull-right time')
     ).append(
-      $('<div>').addClass('col-xs-12 col-sm-9 text')
+      $('<div>').addClass('col-xs-12 col-sm-10 text')
     );
   }
 
   function getSystemRow() {
     return $('<div>').addClass('message system row').append(
-      $('<div>').addClass('col-sm-offset-1 col-xs-10 text')
+      $('<div>').addClass('col-xs-10 col-sm-offset-1 col-sm-10 text')
     ).append(
       $('<div>').addClass('col-xs-2 col-sm-1 time')
     );

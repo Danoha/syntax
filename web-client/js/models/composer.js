@@ -24,12 +24,15 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
     return $('.app .composer textarea');
   }
 
-  function submit(composer) {
+  function submit(composer, asCode) {
     var text = composer.text();
     if (text.trim().length === 0)
       return;
 
     composer.text('');
+
+    if (asCode)
+      text = text.replace(/^/gm, "  ");
 
     var msg = {
       text: text,
@@ -54,29 +57,11 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
 
   function keyPress(composer, event) {
     if ((event.which === 13 || event.keyCode === 13) && !event.shiftKey && !event.ctrlKey) {
-      composer.submit();
+      composer.submit(event.altKey);
       return false;
     }
 
     return true;
-  }
-
-  function getComposerSelection() {
-    var t = getTextarea().get(0);
-
-    return {
-      start: t.selectionStart,
-      end: t.selectionEnd
-    };
-  }
-
-  function setComposerSelection(start, end) {
-    if (end === undefined)
-      end = start;
-
-    var t = getTextarea().get(0);
-    t.selectionStart = start;
-    t.selectionEnd = end;
   }
 
   function Composer(target) {
@@ -85,35 +70,12 @@ define(['../vendor/knockout', '../lib/api', 'jquery', '../app', '../modals/coder
     this.target = target;
     this.text = ko.observable('');
 
-    this.submit = function () {
-      return submit(self);
+    this.submit = function (asCode) {
+      return submit(self, asCode);
     };
 
     this.keyPress = keyPress;
   }
-
-  Composer.prototype.openCoder = function () {
-    // TODO: move to appScreen
-    var coder = new CoderModal();
-    coder.show();
-
-    var self = this;
-    coder.onAttach.push(function () {
-      if (coder.code !== null) {
-        var text = self.text();
-        var sel = getComposerSelection();
-        var insert = coder.code.trim().replace(/^/gm, "  ") + "\n";
-
-        if (sel.start !== 0)
-          insert = "\n" + insert;
-
-        text = text.slice(0, sel.start) + insert + text.slice(sel.end);
-        self.text(text);
-
-        setComposerSelection(sel.start + insert.length);
-      }
-    });
-  };
 
   return Composer;
 });

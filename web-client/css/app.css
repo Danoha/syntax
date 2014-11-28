@@ -55,13 +55,17 @@ div.syntax-logo {
   padding: 25px 0;
   font-weight: 300;
 }
-div.left-side {
-  max-height: calc(100vh - 42px);
+div.app .left-side {
+  margin-bottom: 0;
 }
 div.app .messages .panel-body {
-  height: calc(100vh - 209px);
   overflow-y: scroll;
+  height: calc(100vh - 249px);
 }
+div.app .messages .panel-footer {
+  padding: 15px 15px 0 15px;
+}
+
 div.app .no-result {
   font-style: italic;
   color: #888;
@@ -83,6 +87,7 @@ div.app div.message div.time {
 }
 div.app div.message div.text {
   word-wrap: break-word;
+  text-align: justify;
 }
 div.app .contact .rename {
   display: none;
@@ -98,12 +103,16 @@ div.app .contact .status {
   height: 10px;
   border-radius: 50%;
   margin-bottom: 1px;
+  margin-right: 3px;
 }
 div.app .contact .status.online {
   background-color: rgb(127, 186, 0);
 }
 div.app .contact .status.offline {
   background-color: #888;
+}
+div.app .contact .status.group {
+  background-color: #008cba;
 }
 div.app .contact {
   padding: 10px;
@@ -113,8 +122,9 @@ div.left-side.panel-group > div.panel {
   margin-top: 0;
   margin-bottom: 15px;
 }
-div.app .contacts. panel-body {
-  overflow: scroll;
+div.app .contacts .panel-body {
+  max-height: calc(100vh - 126px);
+  overflow-y: scroll;
 }
 div.app .contacts .contact:hover {
   background-color: #fafafa;
@@ -129,18 +139,7 @@ div.app .contacts .contact.active {
 }
 div.app .composer textarea {
   resize: none;
-  height: 60px;
-}
-div.app .composer .custom-btns-col {
-  text-align: right;
-}
-div.app .composer .send-btn-col {
-  position: relative;
-  height: 60px;
-}
-div.app .composer .send-btn-col button {
-  position: absolute;
-  bottom: 0;
+  height: 90px;
 }
 pre {
   margin-top: 5px;
@@ -216,4 +215,56 @@ span.icon-imgur {
 }
 .groupmembers .contact {
   padding: 5px;
+}
+.modal-backdrop {
+  height: 100%;
+}
+kbd {
+  padding: .1em .6em;
+  border: 1px solid #ccc;
+  font-size: 11px;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+  -moz-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
+  -webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 0 .1em;
+  text-shadow: 0 1px 0 #fff;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+div.app .changelog.panel .panel-body {
+  max-height: 400px;
+  overflow-y: scroll;
+}
+.badge.unread-messages {
+  background-color: #e99002;
+  -webkit-animation: unread-messages-blink .5s infinite linear;
+  animation: unread-messages-blink .5s infinite linear;
+}
+/* blink animation */
+@-webkit-keyframes unread-messages-blink {
+  0% {
+    background-color: #e99002;
+  }
+  50% {
+    background-color: #f04124;
+  }
+  100% {
+    background-color: #e99002;
+  }
+}
+@keyframes unread-messages-blink {
+  0% {
+    background-color: #e99002;
+  }
+  50% {
+    background-color: #f04124;
+  }
+  100% {
+    background-color: #e99002;
+  }
 }
