@@ -38,7 +38,7 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
 
     this.unreadMessages = ko.computed(function () {
       return self.totalMessages() - self.lastReadMessage();
-    });
+    }).extend({throttle: 20});
 
     this.isFavorite = ko.observable(false);
 
@@ -63,7 +63,11 @@ define(['../vendor/knockout', 'jquery', '../vendor/bootbox', './composer', '../c
 
     $(this.messages).append(msg);
 
-    this.totalMessages(this.totalMessages() + 1);
+    var total = this.totalMessages() + 1
+    this.totalMessages(total);
+
+    if (isOwn)
+      this.lastReadMessage(total);
   };
 
   return BaseTarget;

@@ -23,12 +23,12 @@ define(
     './base', '../app', '../vendor/knockout', '../vendor/bootbox', './account', '../lib/storage',
     '../utils/waitdialog', '../lib/api', 'jquery', 'require', '../core/socket', '../lib/messagemanager',
     '../models/contactlist', '../models/target', '../core/apptitle', '../core/bus', '../core/notificator',
-    '../core/focus', '../modals/settings', '../lib/embedmanager', '../modals/groupmembers',
+    '../core/focus', '../modals/settings', '../lib/embedmanager', '../modals/groupmembers', '../lib/throttler',
     '../utils/ko.bindings'
   ],
   function (BaseScreen, app, ko, bootbox, accountScreen, storage, WaitDialog, api, $, require, socket,
             messageManager, contactList, BaseTarget, appTitle, bus, notificator, focus, SettingsModal,
-            embedManager, GroupMembersModal) {
+            embedManager, GroupMembersModal, throttler) {
     var appScreen = new BaseScreen('.app', 'app');
 
     // Helper functions
@@ -373,14 +373,22 @@ define(
       });
     }
 
-    // TODO: test and optimize
-    function processMessageScroll() {
+    var _messagesPanelBody = null;
+
+    function getMessagesPanelBody() {
+      if (_messagesPanelBody === null || _messagesPanelBody.length === 0)
+        _messagesPanelBody = $('div.app .messages > .panel-body');
+
+      return _messagesPanelBody;
+    }
+
+    function doProcessMessageScroll() {
       var target = appScreen.target();
 
       if (target === null)
         return;
 
-      var el = $('.messages > .panel-body');
+      var el = getMessagesPanelBody();
       var bottom = el.height();
       var skip = target.lastReadMessage();
 
@@ -399,10 +407,12 @@ define(
       });
     }
 
+    var processMessageScroll = throttler(doProcessMessageScroll, 200);
+
     var isAutoScrollDisabledByScrolling = false;
 
     function updateAutoScroll() {
-      var el = $('.messages > .panel-body');
+      var el = getMessagesPanelBody();
 
       if (el.length === 0)
         return;
@@ -428,12 +438,12 @@ define(
     }
 
     function scrollMessagesDown() {
-      var el = $('.messages > .panel-body');
+      var el = getMessagesPanelBody();
       el.scrollTop(el.prop('scrollHeight') - el.outerHeight());
     }
 
     function bindMessagesEvents() {
-      $('.messages > .panel-body')
+      getMessagesPanelBody()
         .off('scroll', messagesScrollHandler)
         .on('scroll', messagesScrollHandler);
 
@@ -441,7 +451,7 @@ define(
         .off('focus', processMessageScroll)
         .on('focus', processMessageScroll);
 
-      $('.messages > .panel-body').tooltip({
+      getMessagesPanelBody().tooltip({
         selector: '[data-imagepreview],[data-tooltiptext]',
         html: true,
         title: function () {
@@ -483,7 +493,7 @@ define(
       if (firstUnreadIndex >= target.totalMessages())
         return;
 
-      var el = $('.messages > .panel-body');
+      var el = getMessagesPanelBody();
       var firstUnread = $(target.messages).children().eq(firstUnreadIndex);
       var top = firstUnread.position().top;
       var scrollTop = el.scrollTop();
