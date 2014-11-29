@@ -52,7 +52,7 @@ define(
       var target = appScreen.target();
 
       if (target !== null) {
-        var e = $('.messages > .panel-body');
+        var e = getMessagesPanelBody();
 
         target.scroll = {
           top: e.scrollTop(),
@@ -60,6 +60,7 @@ define(
         };
 
         appScreen.target(null);
+        _messagesPanelBody = null;
       }
     }
 
@@ -69,7 +70,7 @@ define(
       appScreen.target(target);
 
       if (target.scroll !== null) {
-        var e = $('.messages > .panel-body');
+        var e = getMessagesPanelBody();
         e.scrollTop(target.scroll.top).scrollLeft(target.scroll.left);
       }
     }
@@ -407,7 +408,7 @@ define(
       });
     }
 
-    var processMessageScroll = throttler(doProcessMessageScroll, 200);
+    var processMessageScroll = throttler(doProcessMessageScroll, 200, true);
 
     var isAutoScrollDisabledByScrolling = false;
 

@@ -17,7 +17,7 @@
  */
 
 define(function () {
-  return function throttler(method, delay) {
+  return function throttler(method, delay, callOnEnd) {
     var called = false;
     var interval = null;
 
@@ -28,6 +28,9 @@ define(function () {
         else {
           clearInterval(interval);
           interval = null;
+
+          if (callOnEnd)
+            method();
         }
 
         called = false;
