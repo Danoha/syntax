@@ -7,7 +7,7 @@
   margin-top: 1px;
 }
 
-.emoticon.emoticon-angel { background-position: 0 0; } 
+.emoticon.emoticon-angel { background-position: 0 0; }
 .emoticon.emoticon-angry { background-position: 0 -22px; } 
 .emoticon.emoticon-aww { background-position: 0 -42px; } 
 .emoticon.emoticon-blushing { background-position: 0 -62px; } 
@@ -56,4 +56,11 @@
 .emoticon.emoticon-unsure_2 { background-position: 0 -923px; } 
 .emoticon.emoticon-winking { background-position: 0 -943px; } 
 .emoticon.emoticon-winking_grinning { background-position: 0 -963px; } 
-.emoticon.emoticon-winking_tongue_out { background-position: 0 -983px; } 
+.emoticon.emoticon-winking_tongue_out { background-position: 0 -983px; }
+
+.emoticon.emoticon-kappa {
+  background-image: url(../img/kappa.png);
+  background-size: cover;
+  width: 14px;
+  height: 19px;
+}
