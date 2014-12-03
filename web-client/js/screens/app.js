@@ -166,7 +166,12 @@ define(
         wait.close();
 
         results = $.grep(results, function (user) {
-          return app.user.id !== user.id && contactList.findContact(user.id) === null;
+          if (app.user.id === user.id)
+            return false;
+
+          var contact = contactList.findContact(user.id);
+
+          return contact === null || contact.state.left() !== 'accepted';
         });
 
         appScreen.friendSearch.results(results);
@@ -228,9 +233,9 @@ define(
       api.contact.setFriendshipState(user.id, 'accepted', false, function (result) {
         wait.close();
 
-        bootbox.alert(result === 'OK' ? 'friend request sent' : 'something went wrong');
-
-        if (result === 'OK') {
+        if (result !== 'OK')
+          bootbox.alert('something went wrong');
+        else {
           appScreen.friendSearch.results.remove(user);
 
           var f = null;
@@ -255,6 +260,14 @@ define(
           }
 
           syncContactList();
+          toggleFriendSearch();
+
+          contactList.query({
+            id: user.id,
+            type: 'contact'
+          }, function (target) {
+            openTarget(target);
+          });
         }
       });
     }
@@ -563,6 +576,48 @@ define(
       });
     }
 
+    function removeContact() {
+      var target = appScreen.target();
+
+      function cb(ban) {
+        var wait = new WaitDialog('removing contact');
+        var state = ban ? 'denied' : 'none';
+
+        api.contact.setFriendshipState(target.id, state, false, function (result) {
+          wait.close();
+
+          if (result !== 'OK')
+            bootbox.alert('something went wrong');
+          else
+            setFriendshipState(target.id, state);
+        });
+      }
+
+      bootbox.dialog({
+        message: 'do you really want to remove this contact?',
+        buttons: {
+          cancel: {
+            label: 'no',
+            className: 'btn-default'
+          },
+          yes: {
+            label: 'yes',
+            className: 'btn-warning',
+            callback: function () {
+              cb(false);
+            }
+          },
+          ban: {
+            label: 'ban',
+            className: 'btn-danger',
+            callback: function () {
+              cb(true);
+            }
+          }
+        }
+      });
+    }
+
     // Model definition
 
     appScreen.target = ko.observable(null);
@@ -622,6 +677,8 @@ define(
     };
 
     appScreen.contactMenu = {
+      remove: removeContact,
+
       rename: renameTarget
     };
 
@@ -751,6 +808,8 @@ define(
         }
       });
 
+      var wereFriends = localContact !== null && localContact.state.left === 'accepted' && localContact.state.right === 'accepted';
+
       if (localContact !== null) {
         localContact.state = data.state;
         localContact.isOnline = data.contact.isOnline;
@@ -761,6 +820,15 @@ define(
       }
 
       syncContactList();
+
+      if (!wereFriends && data.state.left === 'accepted' && data.state.right === 'accepted') {
+        contactList.query({
+          id: data.contact.id,
+          type: 'contact'
+        }, function (t) {
+          messageManager.systemMessage(t, t.displayName() + ' is now your friend');
+        });
+      }
     });
 
     api.group.memberLeftEvent.push(function (data) {

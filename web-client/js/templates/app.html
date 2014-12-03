@@ -120,8 +120,7 @@
             <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown" id="chatTargetDropdown">options <span class="caret"></span></a>
             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="chatTargetDropdown" data-bind="with: (target().type === 'group' ? groupMenu : contactMenu)">
               <!-- ko if: $parent.target().type === 'contact' -->
-              <li role="presentation"><a href="#">coming soon...</a>
-              </li>
+              <li role="presentation"><a href="#" data-bind="click: remove"><span class="glyphicon glyphicon-remove-circle"></span>&nbsp; remove from contacts</a></li>
               <!-- /ko -->
               <!-- ko if: $parent.target().type === 'group' -->
               <li role="presentation"><a href="#" data-bind="click: showMembers"><span class="glyphicon glyphicon-user"></span>&nbsp; members</a></li>
@@ -161,7 +160,7 @@
             </div>
             <!-- /ko -->
             <!-- ko if: state.left() === 'waiting' -->
-            <div>
+            <div class="friendship">
               respond to friendship request:&nbsp;
               <span class="btn-group btn-group-sm" data-bind="with: $root.friendResponses">
                 <button class="btn btn-success" data-bind="click: sendAccepted">accept</button>
@@ -226,6 +225,10 @@
             <h3 class="panel-title">changelog</h3>
           </div>
           <div class="panel-body">
+            <h4 class="h4">03/12/2014</h4>
+            <ul>
+              <li>contact can be removed</li>
+            </ul>
             <h4 class="h4">28/11/2014</h4>
             <ul>
               <li>cheat sheet added</li>

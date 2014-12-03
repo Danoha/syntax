@@ -94,8 +94,6 @@ define([], function () {
 
       this.emoticons[name] = list;
     }
-
-    console.log(this.emoticons);
   };
 
   Emoticons.prototype.replace = function (text) {

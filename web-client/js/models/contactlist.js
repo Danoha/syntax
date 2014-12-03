@@ -47,6 +47,9 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
       contact.state.right(f.state.right);
 
       validIds.push(f.id);
+
+      if (exports.contacts.indexOf(contact) === -1)
+        exports.contacts.push(contact);
     });
 
     removeInvalid(validIds, exports.contacts);
@@ -154,10 +157,11 @@ define(['exports', '../vendor/knockout', './contact', './group', 'jquery'], func
     return data;
   };
 
-  function find(type, id) {
+  function find(type, id, deep) {
     return exports.query({
       type: type,
-      id: id
+      id: id,
+      deep: deep
     });
   }
 

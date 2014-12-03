@@ -160,10 +160,16 @@ function notifyUser(am, userId, name, data) {
 
 function notifyFriendshipState(am, leftId, rightId) {
   function n(userId, contactId, state) {
+    if (state.left === 'none')
+      return;
+
     if (state.right !== 'accepted')
       state.right = 'waiting';
 
     getContact(am, contactId, function (contact) {
+      if (state.left !== 'accepted' || state.right !== 'accepted')
+        contact.isOnline = false;
+
       notifyUser(am, userId, 'contact.friendshipStateEvent', {
         contact: contact,
         state: state
@@ -172,7 +178,10 @@ function notifyFriendshipState(am, leftId, rightId) {
   }
 
   getFriendshipState(am, leftId, rightId, function (state) {
-    n(leftId, rightId, state);
+    n(leftId, rightId, {
+      left: state.left,
+      right: state.right
+    });
     n(rightId, leftId, {
       left: state.right,
       right: state.left
@@ -180,9 +189,12 @@ function notifyFriendshipState(am, leftId, rightId) {
   });
 }
 
-function notifyContacts(am, userId, name, data) {
+function notifyContacts(am, userId, name, data, onlyAccepted) {
   listContacts(am, userId, function (contacts) {
     contacts.forEach(function (row) {
+      if (onlyAccepted && (row.state.left !== 'accepted' || row.state.right !== 'accepted'))
+        return;
+
       notifyUser(am, row.contactId, name, data);
     });
   });
@@ -272,6 +284,12 @@ function loginValid(am, row, callback) {
         contacts.forEach(function (c) {
           if (c.state.right !== 'accepted')
             c.state.right = 'waiting';
+
+          if (c.state.left !== 'accepted' || c.state.right !== 'accepted')
+            c.isOnline = false;
+
+          if (c.state.left === 'none')
+            c.state.left = 'waiting';
         });
 
         cb(null, contacts);
@@ -299,7 +317,7 @@ function loginValid(am, row, callback) {
     notifyContacts(am, user.id, 'contact.onlineEvent', {
       contactId: user.id,
       isOnline: true
-    });
+    }, true);
   });
 }
 
@@ -353,7 +371,7 @@ function logout(am, userId, callback) {
         notifyContacts(am, userId, 'contact.onlineEvent', {
           contactId: userId,
           isOnline: false
-        });
+        }, true);
       }
 
       callback();
@@ -382,13 +400,35 @@ AccManager.prototype.lookup = function (query, callback) {
 };
 
 function setFriendshipState(am, userId, targetId, state, isFavorite, callback) {
+  var done = function () {
+    callback('OK');
+
+    notifyFriendshipState(am, userId, targetId);
+  };
+
   var cb = function (err) {
     if (am.cm.handleError(err))
       return callback('ERR');
 
-    callback('OK');
+    if (state !== 'accepted')
+      done();
+    else {
+      am.cm.query('SELECT COUNT(*) AS c FROM contacts WHERE leftId = ? AND rightId = ?', [targetId, userId], function (err, rows) {
+        if (am.cm.handleError(err))
+          return callback('ERR');
 
-    notifyFriendshipState(am, userId, targetId);
+        if (rows && rows.length === 1 && rows[0].c === 1)
+          done();
+        else {
+          am.cm.query('INSERT INTO contacts SET leftId = ?, rightId = ?, state = ?, isFavorite = 0', [targetId, userId, 'waiting'], function (err) {
+            if (am.cm.handleError(err) || err)
+              return callback('ERR');
+
+            done();
+          });
+        }
+      });
+    }
   };
 
   if (state !== 'none')

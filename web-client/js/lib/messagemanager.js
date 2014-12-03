@@ -65,6 +65,8 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
   }
 
   function putMessage(target, msg, isOwn) {
+    isOwn = isOwn ? true : false;
+
     bus.post('messages.updateAutoScroll');
 
     target.putMessage(msg, isOwn);
@@ -86,17 +88,15 @@ define(['../lib/messageformatter', '../models/contactlist', '../app', 'jquery', 
     else
       target = flow.sender;
 
-    var isOwn = false;
-    if (msg.instanceId === app.getUniqueId())
-      isOwn = true;
+    var isOwn = msg.instanceId === app.getUniqueId();
 
     putMessage(target, row, isOwn);
   };
 
-  MessageManager.prototype.systemMessage = function (target, text) {
+  MessageManager.prototype.systemMessage = function (target, text, isOwn) {
     var row = messageFormatter.format(text);
 
-    putMessage(target, row, true);
+    putMessage(target, row, isOwn);
   };
 
   return new MessageManager();

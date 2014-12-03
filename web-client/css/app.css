@@ -65,7 +65,9 @@ div.app .messages .panel-body {
 div.app .messages .panel-footer {
   padding: 15px 15px 0 15px;
 }
-
+div.app .messages .panel-footer .no-result, div.app .messages .panel-footer .friendship {
+  margin-bottom: 15px;
+}
 div.app .no-result {
   font-style: italic;
   color: #888;
@@ -123,7 +125,7 @@ div.left-side.panel-group > div.panel {
   margin-bottom: 15px;
 }
 div.app .contacts .panel-body {
-  max-height: calc(100vh - 126px);
+  max-height: calc(100vh - 136px);
   overflow-y: scroll;
 }
 div.app .contacts .contact:hover {
@@ -139,7 +141,7 @@ div.app .contacts .contact.active {
 }
 div.app .composer textarea {
   resize: none;
-  height: 90px;
+  height: 80px;
 }
 pre {
   margin-top: 5px;

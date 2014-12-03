@@ -19,6 +19,8 @@
 'use strict';
 
 define(['../core/socket', 'jquery', '../vendor/sha256.min'], function (socket, $) {
+  var log = true;
+
   var io = socket();
 
   function Api() {
@@ -40,6 +42,9 @@ define(['../core/socket', 'jquery', '../vendor/sha256.min'], function (socket, $
     var listeners = [];
 
     io.on(name, function (data) {
+      if (log)
+        console.log('api event=' + name + ' data=', data);
+
       $.each(listeners, function (i, listener) {
         tryCallback(listener, data);
       });
@@ -49,13 +54,15 @@ define(['../core/socket', 'jquery', '../vendor/sha256.min'], function (socket, $
   }
 
   function emit(method, data, callback) {
-    if (callback) {
-      io.on(method, function (result) {
-        io.removeAllListeners(method);
+    io.on(method, function (result) {
+      io.removeAllListeners(method);
 
+      if (log)
+        console.log('api method=' + method + ' data=', data, 'result=', result);
+
+      if (callback)
         tryCallback(callback, result);
-      });
-    }
+    });
 
     io.emit(method, data);
   }
