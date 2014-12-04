@@ -73,7 +73,7 @@ div.app .no-result {
   color: #888;
 }
 div.app div.message {
-  padding: 5px;
+  line-height: 28px;
 }
 div.app div.message.unread {
   background-color: #f8f8f8;

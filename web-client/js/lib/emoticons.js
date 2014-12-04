@@ -28,7 +28,8 @@ define([], function () {
     caseSensitive: {
       'surprised': ['o.O', 'o_O'],
       'surprised_2': ['O.o', 'O_o'],
-      'kappa': ['Kappa']
+      'kappa': ['Kappa'],
+      'kvappa': ['Kvappa']
     },
     caseInsensitive: {
       'cool': ['B)', '8)', 'B-)', '8-)'],
