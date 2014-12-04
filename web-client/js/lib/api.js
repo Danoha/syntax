@@ -19,7 +19,7 @@
 'use strict';
 
 define(['../core/socket', 'jquery', '../vendor/sha256.min'], function (socket, $) {
-  var log = true;
+  var log = false;
 
   var io = socket();
 
